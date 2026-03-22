@@ -88,14 +88,16 @@ export function VTCGame() {
     speedingTimer: 0, policeActive: false, policeY: 0, policeStopTimer: 0, policeCooldown: 0,
   });
   const keysRef = useRef<Record<string, boolean>>({});
-  const playerRef = useRef({ x: CANVAS_W / 2 - 24, y: 540, w: 48, h: 90, tilt: 0 });
+  const playerRef = useRef({ x: CANVAS_W / 2 - 24, y: 450, w: 48, h: 90, tilt: 0 });
   const trafficRef = useRef<TrafficCar[]>([]);
   const sceneryRef = useRef<SceneryObj[]>([]);
   const powerupsRef = useRef<Powerup[]>([]);
   const particlesRef = useRef<Particle[]>([]);
   const rainRef = useRef<RainDrop[]>([]);
   const frameRef = useRef(0);
-  const touchStateRef = useRef<TouchState>({ joyActive: false, joyDx: 0, joyDy: 0, joyBaseX: 75, joyBaseY: CANVAS_H - 110, joyThumbX: 75, joyThumbY: CANVAS_H - 110, brake: false });
+  const JOY_CX = 75, JOY_CY = CANVAS_H - 58;
+  const BRAKE_CX = CANVAS_W - 72, BRAKE_CY = CANVAS_H - 58;
+  const touchStateRef = useRef<TouchState>({ joyActive: false, joyDx: 0, joyDy: 0, joyBaseX: 75, joyBaseY: CANVAS_H - 58, joyThumbX: 75, joyThumbY: CANVAS_H - 58, brake: false });
   const isTouchRef = useRef(false);
   const idleOffsetRef = useRef(0);
   const brakeSoundPlayed = useRef(false);
@@ -108,7 +110,7 @@ export function VTCGame() {
   const [finalStars, setFinalStars] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [hudData, setHudData] = useState({ dist: TOTAL_DISTANCE, score: 0, speed: 0, combo: 0, boost: false, zone: "campagne" as Zone, clients: 0, passengerAboard: false });
+  const [hudData, setHudData] = useState({ dist: TOTAL_DISTANCE, score: 0, speedKmh: 0, speedLimit: 110, overLimit: false, combo: 0, boost: false, zone: "campagne" as Zone, clients: 0, passengerAboard: false });
   const [scale, setScale] = useState(1);
 
   useEffect(() => {
@@ -131,7 +133,7 @@ export function VTCGame() {
       passenger: { state: "none", x: 0, y: 0, side: "left", emoji: "🧑", timer: 0, maxTimer: 0, dropoffY: -1, dropoffSpawned: false }, clientsServed: 0, braking: false, flashRed: 0,
       speedingTimer: 0, policeActive: false, policeY: 0, policeStopTimer: 0, policeCooldown: 0,
     });
-    playerRef.current = { x: CANVAS_W / 2 - 24, y: 540, w: 48, h: 90, tilt: 0 };
+    playerRef.current = { x: CANVAS_W / 2 - 24, y: 450, w: 48, h: 90, tilt: 0 };
     trafficRef.current = []; sceneryRef.current = []; powerupsRef.current = [];
     particlesRef.current = []; rainRef.current = []; frameRef.current = 0;
     brakeSoundPlayed.current = false;
@@ -178,52 +180,62 @@ export function VTCGame() {
     return () => { window.removeEventListener("keydown", d); window.removeEventListener("keyup", u); };
   }, []);
 
-  // --- JOYSTICK TOUCH CONTROLS ---
+  // --- JOYSTICK TOUCH CONTROLS (fixed position) ---
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const JOY_MAX_R = 45;
-    let joyTouchId = -1;
-    let baseX = 75, baseY = CANVAS_H - 110;
+    const JOY_R = 52;
+    // Fixed center positions (must match JOY_CX/BRAKE_CX above)
+    const jBX = 75, jBY = CANVAS_H - 58;
+    const brBX = CANVAS_W - 72, brBY = CANVAS_H - 58;
 
     function process(touches: TouchList) {
       const rect = canvas!.getBoundingClientRect();
       const sx = CANVAS_W / rect.width, sy = CANVAS_H / rect.height;
-      const state: TouchState = { joyActive: false, joyDx: 0, joyDy: 0, joyBaseX: baseX, joyBaseY: baseY, joyThumbX: baseX, joyThumbY: baseY, brake: false };
-      let foundJoy = false;
+      const state: TouchState = { joyActive: false, joyDx: 0, joyDy: 0, joyBaseX: jBX, joyBaseY: jBY, joyThumbX: jBX, joyThumbY: jBY, brake: false };
       for (let i = 0; i < touches.length; i++) {
         const t = touches[i];
         const cx = (t.clientX - rect.left) * sx;
         const cy = (t.clientY - rect.top) * sy;
-        if (cx > CANVAS_W * 0.6 && cy > CANVAS_H * 0.6) {
+        // Right side = brake
+        if (cx > CANVAS_W * 0.55 && cy > CANVAS_H * 0.7) {
           state.brake = true;
-        } else if (cy > CANVAS_H * 0.45 && !foundJoy) {
-          foundJoy = true;
+        } else if (cx <= CANVAS_W * 0.55 && cy > CANVAS_H * 0.7) {
+          // Left side = joystick (fixed base)
           state.joyActive = true;
-          if (joyTouchId !== t.identifier) { joyTouchId = t.identifier; baseX = cx; baseY = cy; }
-          state.joyBaseX = baseX; state.joyBaseY = baseY;
-          const dx = cx - baseX, dy = baseY - cy;
+          const dx = cx - jBX, dy = jBY - cy;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          const clamped = Math.min(dist, JOY_MAX_R);
-          if (dist > 2) {
-            state.joyDx = (dx / dist) * (clamped / JOY_MAX_R);
-            state.joyDy = (dy / dist) * (clamped / JOY_MAX_R);
+          const clamped = Math.min(dist, JOY_R);
+          if (dist > 3) {
+            state.joyDx = (dx / dist) * (clamped / JOY_R);
+            state.joyDy = (dy / dist) * (clamped / JOY_R);
           }
-          state.joyThumbX = baseX + (dist > 2 ? (dx / dist) * clamped : 0);
-          state.joyThumbY = baseY - (dist > 2 ? (dy / dist) * clamped : 0);
+          state.joyThumbX = jBX + (dist > 3 ? (dx / dist) * clamped : 0);
+          state.joyThumbY = jBY - (dist > 3 ? (dy / dist) * clamped : 0);
+        } else if (cy > CANVAS_H * 0.5) {
+          // Middle bottom: also joystick zone (wider)
+          if (cx <= brBX - 60) {
+            state.joyActive = true;
+            const dx = cx - jBX, dy = jBY - cy;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const clamped = Math.min(dist, JOY_R);
+            if (dist > 3) {
+              state.joyDx = (dx / dist) * (clamped / JOY_R);
+              state.joyDy = (dy / dist) * (clamped / JOY_R);
+            }
+            state.joyThumbX = jBX + (dist > 3 ? (dx / dist) * clamped : 0);
+            state.joyThumbY = jBY - (dist > 3 ? (dy / dist) * clamped : 0);
+          }
         }
       }
-      if (!foundJoy) joyTouchId = -1;
       touchStateRef.current = state;
     }
 
     const ts = (e: TouchEvent) => { e.preventDefault(); process(e.touches); };
     const te = (e: TouchEvent) => {
       e.preventDefault();
-      if (!e.touches.length) {
-        joyTouchId = -1;
-        touchStateRef.current = { joyActive: false, joyDx: 0, joyDy: 0, joyBaseX: 75, joyBaseY: CANVAS_H - 110, joyThumbX: 75, joyThumbY: CANVAS_H - 110, brake: false };
-      } else process(e.touches);
+      if (!e.touches.length) touchStateRef.current = { joyActive: false, joyDx: 0, joyDy: 0, joyBaseX: jBX, joyBaseY: jBY, joyThumbX: jBX, joyThumbY: jBY, brake: false };
+      else process(e.touches);
     };
     canvas.addEventListener("touchstart", ts, { passive: false });
     canvas.addEventListener("touchmove", ts, { passive: false });
@@ -365,7 +377,7 @@ export function VTCGame() {
       const currentMax = s.boostActive ? 11 : (s.isRaining ? 6 : (s.zone === "autoroute" ? 9 : 7));
       const touchAccel = ts.joyActive && ts.joyDy > 0.15;
       const keyAccel = keys["ArrowUp"] || keys["KeyW"];
-      const braking = ts.brake || keys["Space"] || keys["ArrowDown"] || keys["KeyS"];
+      const braking = ts.brake || (ts.joyActive && ts.joyDy < -0.3) || keys["Space"] || keys["ArrowDown"] || keys["KeyS"];
 
       if (braking && s.speed > 0.5) {
         s.speed = Math.max(s.speed - 0.45, 0);
@@ -549,7 +561,9 @@ export function VTCGame() {
 
       setHudData({
         dist: s.distance, score: Math.floor(s.score + s.envOffset / 10),
-        speed: Math.floor(s.speed * 18), combo: s.combo, boost: s.boostActive,
+        speedKmh: Math.floor(s.speed * 18), speedLimit: getSpeedLimitKmh(s.zone),
+        overLimit: Math.floor(s.speed * 18) > getSpeedLimitKmh(s.zone) && !s.boostActive,
+        combo: s.combo, boost: s.boostActive,
         zone: s.zone, clients: s.clientsServed, passengerAboard: s.passenger.state === "aboard",
       });
     }
@@ -908,78 +922,80 @@ export function VTCGame() {
         ctx.fillText(`${psg.emoji} EN COURSE`, CANVAS_W / 2, tbY - 5);
       }
 
-      // --- Speedometer ---
-      {
-        const isTouch = isTouchRef.current;
-        const gaugeR = 52;
-        const gaugeCx = CANVAS_W / 2;
-        const gaugeCy = isTouch ? CANVAS_H - 170 : CANVAS_H - 50;
-        const speedKmh = Math.floor(s.speed * 18);
-        const maxKmh = 200;
-        const limitKmh = getSpeedLimitKmh(s.zone);
-        const startAngle = Math.PI * 0.78;
-        const endAngle = Math.PI * 2.22;
-        const totalSweep = endAngle - startAngle;
+      // Mobile controls: Joystick + Brake (always visible)
+      if (isTouchRef.current && s.gameActive) {
+        const ts2 = touchStateRef.current;
+        const jBX = 75, jBY = CANVAS_H - 58;
+        const brBX = CANVAS_W - 72, brBY = CANVAS_H - 58;
+        const jR = 52;
 
+        // Control zone separator
         ctx.save();
-        ctx.fillStyle = "rgba(10,10,10,0.75)";
-        ctx.beginPath(); ctx.arc(gaugeCx, gaugeCy, gaugeR + 6, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = "rgba(255,255,255,0.1)"; ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.arc(gaugeCx, gaugeCy, gaugeR + 6, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = "rgba(0,0,0,0.45)";
+        ctx.fillRect(0, CANVAS_H - 120, CANVAS_W, 120);
+        ctx.strokeStyle = "rgba(255,255,255,0.08)"; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(0, CANVAS_H - 120); ctx.lineTo(CANVAS_W, CANVAS_H - 120); ctx.stroke();
 
-        const segments = [
-          { from: 0, to: 0.5, color: "#27ae60" },
-          { from: 0.5, to: 0.75, color: "#f39c12" },
-          { from: 0.75, to: 1, color: "#e74c3c" },
-        ];
-        ctx.lineWidth = 6;
-        segments.forEach(seg => {
-          const a1 = startAngle + totalSweep * seg.from;
-          const a2 = startAngle + totalSweep * seg.to;
-          ctx.strokeStyle = seg.color;
-          ctx.globalAlpha = 0.5;
-          ctx.beginPath(); ctx.arc(gaugeCx, gaugeCy, gaugeR - 4, a1, a2); ctx.stroke();
-        });
+        // Joystick base — always visible
+        ctx.globalAlpha = 0.55;
+        ctx.fillStyle = "rgba(255,255,255,0.07)";
+        ctx.beginPath(); ctx.arc(jBX, jBY, jR, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = ts2.joyActive ? "rgba(255,133,51,0.7)" : "rgba(255,255,255,0.2)"; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(jBX, jBY, jR, 0, Math.PI * 2); ctx.stroke();
+        // Inner ring
+        ctx.strokeStyle = "rgba(255,255,255,0.1)"; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(jBX, jBY, jR * 0.5, 0, Math.PI * 2); ctx.stroke();
+        // Directional arrows hint when inactive
+        if (!ts2.joyActive) {
+          ctx.globalAlpha = 0.25;
+          ctx.fillStyle = "#fff"; ctx.font = "bold 13px sans-serif"; ctx.textAlign = "center";
+          ctx.fillText("▲", jBX, jBY - jR * 0.55 + 5);
+          ctx.fillText("▼", jBX, jBY + jR * 0.55 + 5);
+          ctx.fillText("◀", jBX - jR * 0.55 + 2, jBY + 5);
+          ctx.fillText("▶", jBX + jR * 0.55 - 2, jBY + 5);
+          ctx.globalAlpha = 0.3;
+          ctx.fillStyle = "rgba(255,133,51,0.7)"; ctx.font = "bold 8px sans-serif";
+          ctx.fillText("CONDUITE", jBX, jBY + jR + 13);
+        }
         ctx.globalAlpha = 1;
 
-        const speedFrac = Math.min(speedKmh / maxKmh, 1);
-        const needleAngle = startAngle + totalSweep * speedFrac;
-        ctx.strokeStyle = "#fff"; ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.moveTo(gaugeCx, gaugeCy);
-        ctx.lineTo(gaugeCx + Math.cos(needleAngle) * (gaugeR - 10), gaugeCy + Math.sin(needleAngle) * (gaugeR - 10));
-        ctx.stroke();
+        // Joystick thumb
+        const thumbX = ts2.joyActive ? ts2.joyThumbX : jBX;
+        const thumbY = ts2.joyActive ? ts2.joyThumbY : jBY;
+        ctx.fillStyle = ts2.joyActive ? "rgba(255,133,51,0.9)" : "rgba(200,200,200,0.45)";
+        ctx.shadowBlur = ts2.joyActive ? 12 : 0; ctx.shadowColor = PRIMARY;
+        ctx.beginPath(); ctx.arc(thumbX, thumbY, 22, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = "rgba(255,255,255,0.5)"; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(thumbX, thumbY, 22, 0, Math.PI * 2); ctx.stroke();
 
-        const limitFrac = Math.min(limitKmh / maxKmh, 1);
-        const limitAngle = startAngle + totalSweep * limitFrac;
-        ctx.strokeStyle = "#ff2222"; ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(gaugeCx + Math.cos(limitAngle) * (gaugeR - 12), gaugeCy + Math.sin(limitAngle) * (gaugeR - 12));
-        ctx.lineTo(gaugeCx + Math.cos(limitAngle) * (gaugeR + 2), gaugeCy + Math.sin(limitAngle) * (gaugeR + 2));
-        ctx.stroke();
-        ctx.fillStyle = "#ff2222"; ctx.font = "bold 7px sans-serif"; ctx.textAlign = "center";
-        ctx.fillText(`${limitKmh}`, gaugeCx + Math.cos(limitAngle) * (gaugeR + 10), gaugeCy + Math.sin(limitAngle) * (gaugeR + 10));
+        // Brake button
+        const brR = 42;
+        ctx.globalAlpha = 0.6;
+        ctx.fillStyle = ts2.brake ? "rgba(239,68,68,0.7)" : "rgba(255,255,255,0.07)";
+        ctx.beginPath(); ctx.arc(brBX, brBY, brR, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = ts2.brake ? "rgba(239,68,68,0.9)" : "rgba(255,255,255,0.2)"; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(brBX, brBY, brR, 0, Math.PI * 2); ctx.stroke();
+        ctx.globalAlpha = ts2.brake ? 1 : 0.55;
+        ctx.fillStyle = ts2.brake ? "#fff" : "rgba(255,255,255,0.7)";
+        ctx.font = "bold 11px sans-serif"; ctx.textAlign = "center";
+        ctx.fillText("⛔ FREIN", brBX, brBY + 4);
+        ctx.globalAlpha = 0.3;
+        ctx.fillStyle = "rgba(255,80,80,0.7)"; ctx.font = "bold 8px sans-serif";
+        ctx.fillText("JOY BAS = FREIN", brBX, brBY + brR + 12);
 
-        const overLimit = speedKmh > limitKmh && !s.boostActive;
-        if (overLimit) {
-          const pulseA = 0.3 + Math.sin(frameRef.current * 0.15) * 0.3;
-          ctx.strokeStyle = `rgba(255,30,30,${pulseA})`; ctx.lineWidth = 4;
-          ctx.beginPath(); ctx.arc(gaugeCx, gaugeCy, gaugeR + 10, 0, Math.PI * 2); ctx.stroke();
-        }
-
-        ctx.fillStyle = overLimit ? "#ff4444" : "#fff"; ctx.font = "bold 22px sans-serif"; ctx.textAlign = "center";
-        ctx.fillText(`${speedKmh}`, gaugeCx, gaugeCy + 6);
-        ctx.fillStyle = "rgba(255,255,255,0.5)"; ctx.font = "8px sans-serif";
-        ctx.fillText("km/h", gaugeCx, gaugeCy + 18);
-
-        if (s.speedingTimer > 60 && frameRef.current % 40 < 20) {
-          ctx.fillStyle = "#ff4444"; ctx.font = "bold 14px sans-serif";
-          ctx.fillText("⚠", gaugeCx, gaugeCy - gaugeR - 14);
-        }
+        ctx.globalAlpha = 1;
         ctx.restore();
       }
 
-      // Tip popups
+      // Speed warning (top center, below HUD)
+      if (s.speedingTimer > 60 && frameRef.current % 40 < 20) {
+        ctx.save();
+        ctx.fillStyle = "rgba(255,68,68,0.9)"; ctx.font = "bold 13px sans-serif"; ctx.textAlign = "center";
+        ctx.fillText("⚠ TROP VITE !", CANVAS_W / 2, 56);
+        ctx.restore();
+      }
+
       s.tipPopups.forEach(tp => { ctx.globalAlpha = tp.life / 60; ctx.fillStyle = tp.text.startsWith("-") ? "#e74c3c" : GOLD; ctx.font = "bold 16px sans-serif"; ctx.textAlign = "center"; ctx.fillText(tp.text, tp.x, tp.y); tp.y -= 1.5; tp.life--; });
       ctx.globalAlpha = 1;
       s.tipPopups = s.tipPopups.filter(tp => tp.life > 0);
@@ -997,33 +1013,6 @@ export function VTCGame() {
       // Red flash on crash
       if (s.flashRed > 0) {
         ctx.fillStyle = `rgba(220,40,40,${s.flashRed * 0.02})`; ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-      }
-
-      // Mobile controls: Joystick + Brake
-      if (isTouchRef.current && s.gameActive) {
-        const ts2 = touchStateRef.current;
-
-        ctx.save();
-        ctx.globalAlpha = 0.35;
-        ctx.fillStyle = "rgba(255,255,255,0.15)";
-        ctx.beginPath(); ctx.arc(ts2.joyBaseX, ts2.joyBaseY, 50, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = "rgba(255,255,255,0.25)"; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(ts2.joyBaseX, ts2.joyBaseY, 50, 0, Math.PI * 2); ctx.stroke();
-        ctx.globalAlpha = 1;
-
-        ctx.fillStyle = ts2.joyActive ? "rgba(255,133,51,0.8)" : "rgba(200,200,200,0.5)";
-        ctx.beginPath(); ctx.arc(ts2.joyThumbX, ts2.joyThumbY, 20, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.arc(ts2.joyThumbX, ts2.joyThumbY, 20, 0, Math.PI * 2); ctx.stroke();
-
-        const brakeX = CANVAS_W - 65, brakeY = CANVAS_H - 65;
-        ctx.fillStyle = ts2.brake ? "rgba(239,68,68,0.6)" : "rgba(255,255,255,0.1)";
-        ctx.beginPath(); ctx.arc(brakeX, brakeY, 40, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = ts2.brake ? "rgba(239,68,68,0.8)" : "rgba(255,255,255,0.2)"; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(brakeX, brakeY, 40, 0, Math.PI * 2); ctx.stroke();
-        ctx.fillStyle = ts2.brake ? "#fff" : "rgba(255,255,255,0.4)"; ctx.font = "bold 12px sans-serif"; ctx.textAlign = "center";
-        ctx.fillText("FREIN", brakeX, brakeY + 5);
-        ctx.restore();
       }
 
       ctx.restore();
@@ -1093,6 +1082,19 @@ export function VTCGame() {
               <div className="flex items-center gap-2.5">
                 <div className="flex flex-col"><span className="text-[7px] text-gray-500 uppercase">Dist.</span><span className="text-[11px] font-bold tabular-nums" style={{ color: PRIMARY }}>{hudData.dist.toFixed(1)} km</span></div>
                 <div className="flex flex-col"><span className="text-[7px] text-gray-500 uppercase">Clients</span><span className="text-[11px] font-bold tabular-nums text-green-400">{hudData.clients}</span></div>
+              </div>
+              {/* Speedometer — centre HUD */}
+              <div className="flex flex-col items-center gap-0.5">
+                <div className="flex items-end gap-1">
+                  <span className="font-black tabular-nums leading-none" style={{ fontSize: 18, color: hudData.overLimit ? "#ef4444" : "#4ade80" }}>{hudData.speedKmh}</span>
+                  <span className="text-[8px] text-gray-400 mb-0.5">km/h</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="h-1 w-14 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.1)" }}>
+                    <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(hudData.speedKmh / 160 * 100, 100)}%`, background: hudData.overLimit ? "#ef4444" : hudData.speedKmh > hudData.speedLimit * 0.8 ? "#f59e0b" : "#4ade80" }} />
+                  </div>
+                  <span className="text-[6px]" style={{ color: hudData.overLimit ? "#ef4444" : "rgba(255,255,255,0.3)" }}>🚦{hudData.speedLimit}</span>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 {hudData.passengerAboard && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-green-600 text-white animate-pulse">EN COURSE</span>}
