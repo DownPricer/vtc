@@ -186,8 +186,10 @@ export default function TarifsPage() {
             className="object-cover object-center"
             sizes="100vw"
           />
-          <div className="absolute inset-0 bg-black/88" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-transparent to-transparent" />
+          {/* Fond sombre homogène — pas de zone « transparente » sur une photo claire */}
+          <div className="absolute inset-0 bg-black/82" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/45 to-black/35" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/25" />
         </div>
         <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
         <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
@@ -196,25 +198,25 @@ export default function TarifsPage() {
           <div className="max-w-2xl">
 
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/15 border border-primary/30 mb-5">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/35 border border-primary/35 backdrop-blur-sm mb-5 shadow-[0_2px_20px_rgba(0,0,0,0.45)]">
               <svg className="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
               <span className="text-primary text-[11px] font-bold tracking-widest uppercase">Grille tarifaire</span>
             </div>
 
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 leading-tight tracking-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 leading-tight tracking-tight [text-shadow:0_2px_4px_rgba(0,0,0,0.85),0_8px_32px_rgba(0,0,0,0.55)]">
               Tarifs fixes &amp;<br />
-              <span className="text-gradient">transparents</span>
+              <span className="text-gradient drop-shadow-[0_2px_12px_rgba(0,0,0,0.75)]">transparents</span>
             </h1>
-            <p className="text-gray-400 text-base md:text-lg max-w-lg leading-relaxed mb-8">
+            <p className="text-gray-200/95 text-base md:text-lg max-w-lg leading-relaxed mb-8 [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">
               Le prix annoncé est le prix payé. Aucun supplément bagage, embouteillage ou heure tardive.
             </p>
 
             {/* Garanties inline */}
             <div className="flex flex-wrap gap-2">
               {garanties.map((g) => (
-                <span key={g.label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] text-gray-300 text-xs font-medium">
+                <span key={g.label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/40 border border-white/15 text-gray-200 text-xs font-medium shadow-[0_1px_8px_rgba(0,0,0,0.35)]">
                   <svg className="w-3 h-3 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={g.icon} />
                   </svg>

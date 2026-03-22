@@ -73,7 +73,7 @@ export function VTCGame() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const soundRef = useRef<SoundManager | null>(null);
   const stateRef = useRef<GameState>({
-    distance: TOTAL_DISTANCE, score: 0, speed: 0, maxSpeed: 11,
+    distance: TOTAL_DISTANCE, score: 0, speed: 0, maxSpeed: 7,
     boostActive: false, boostTimer: 0, envOffset: 0,
     gameActive: false, gameStarted: false, biomeProgress: 0,
     combo: 0, comboTimer: 0, shakeX: 0, shakeY: 0,
@@ -116,7 +116,7 @@ export function VTCGame() {
   const startGame = useCallback(() => {
     const s = stateRef.current;
     Object.assign(s, {
-      distance: TOTAL_DISTANCE, score: 0, speed: 0, maxSpeed: 11,
+      distance: TOTAL_DISTANCE, score: 0, speed: 0, maxSpeed: 7,
       boostActive: false, boostTimer: 0, envOffset: 0,
       gameActive: true, gameStarted: true, biomeProgress: 0,
       combo: 0, comboTimer: 0, shakeX: 0, shakeY: 0,
@@ -217,7 +217,7 @@ export function VTCGame() {
     }
 
     function spawnTraffic(s: GameState) {
-      const rateByZone = { campagne: 0.012, autoroute: 0.02, ville: 0.03 };
+      const rateByZone = { campagne: 0.01, autoroute: 0.016, ville: 0.022 };
       if (Math.random() > rateByZone[s.zone]) return;
       const lane = Math.floor(Math.random() * LANE_COUNT);
       const x = laneCenter(lane);
@@ -256,7 +256,7 @@ export function VTCGame() {
     }
 
     function spawnPowerups(s: GameState) {
-      if (Math.random() < (s.zone === "autoroute" ? 0.006 : 0.003) && !s.boostActive) {
+      if (Math.random() < (s.zone === "autoroute" ? 0.003 : 0.0015) && !s.boostActive) {
         const lane = Math.floor(Math.random() * LANE_COUNT);
         powerupsRef.current.push({ x: laneCenter(lane) - 15, y: -60, type: "telepeage", pulse: 0 });
       }
@@ -269,13 +269,13 @@ export function VTCGame() {
 
     function trySpawnPassenger(s: GameState) {
       if (s.passenger.state !== "none") return;
-      const freq = { campagne: 0.001, autoroute: 0.002, ville: 0.004 };
+      const freq = { campagne: 0.003, autoroute: 0.005, ville: 0.008 };
       if (Math.random() > freq[s.zone]) return;
       const side = Math.random() > 0.5 ? "left" : "right";
       s.passenger = {
         state: "waiting", x: side === "left" ? ROAD_LEFT - 25 : ROAD_RIGHT + 5, y: -60,
         side, emoji: PASSENGER_EMOJIS[Math.floor(Math.random() * PASSENGER_EMOJIS.length)],
-        timer: 0, maxTimer: 600, dropoffY: -1, dropoffSpawned: false,
+        timer: 0, maxTimer: 900, dropoffY: -1, dropoffSpawned: false,
       };
     }
 
@@ -325,7 +325,7 @@ export function VTCGame() {
       if (s.zoneTransTimer > 0) s.zoneTransTimer--;
 
       // --- Controls ---
-      const currentMax = s.boostActive ? 22 : (s.isRaining ? 9 : (s.zone === "autoroute" ? 14 : 11));
+      const currentMax = s.boostActive ? 11 : (s.isRaining ? 6 : (s.zone === "autoroute" ? 9 : 7));
       const touchAccel = ts.left || ts.right;
       const keyAccel = keys["ArrowUp"] || keys["KeyW"];
       const braking = ts.brake || keys["Space"] || keys["ArrowDown"] || keys["KeyS"];
@@ -336,7 +336,7 @@ export function VTCGame() {
         spawnBrakeSmoke(p.x, p.y, p.w, p.h);
         if (!brakeSoundPlayed.current) { soundRef.current?.playBrake(); brakeSoundPlayed.current = true; }
       } else if (touchAccel || keyAccel) {
-        s.speed = Math.min(s.speed + 0.16, currentMax);
+        s.speed = Math.min(s.speed + 0.09, currentMax);
         s.braking = false; brakeSoundPlayed.current = false;
       } else {
         s.speed = Math.max(s.speed - 0.05, 0);
@@ -344,7 +344,7 @@ export function VTCGame() {
       }
 
       // --- Steering ---
-      const steerSpeed = s.boostActive ? 4.5 : (s.isRaining ? 4 : 5.5);
+      const steerSpeed = s.boostActive ? 3.5 : (s.isRaining ? 3 : 4.2);
       const driftFactor = s.isRaining ? 0.92 : 0.85;
       const steerL = (keys["ArrowLeft"] || keys["KeyA"] || (ts.left && !ts.right));
       const steerR = (keys["ArrowRight"] || keys["KeyD"] || (ts.right && !ts.left));
@@ -352,12 +352,12 @@ export function VTCGame() {
       else if (steerR) { p.x += steerSpeed; p.tilt = Math.min(p.tilt + 0.025, 0.15); }
       else { p.tilt *= driftFactor; }
 
-      if (s.speed > 8) { p.x += p.tilt * s.speed * 0.15; }
+      if (s.speed > 5) { p.x += p.tilt * s.speed * 0.1; }
 
       p.x = Math.max(ROAD_LEFT + 3, Math.min(ROAD_RIGHT - p.w - 3, p.x));
       s.biomeProgress = Math.min(1, 1 - s.distance / TOTAL_DISTANCE);
       s.envOffset += s.speed;
-      s.distance -= s.speed / 450;
+      s.distance -= s.speed / 300;
 
       // --- Boost ---
       if (s.boostActive) {
@@ -392,8 +392,8 @@ export function VTCGame() {
       const psg = s.passenger;
       if (psg.state === "waiting") {
         psg.y += s.speed * 0.8;
-        const nearX = psg.side === "left" ? (p.x < ROAD_LEFT + 30) : (p.x + p.w > ROAD_RIGHT - 30);
-        if (nearX && Math.abs(p.y - psg.y) < 60 && s.speed < 4) {
+        const nearX = psg.side === "left" ? (p.x < ROAD_LEFT + 50) : (p.x + p.w > ROAD_RIGHT - 50);
+        if (nearX && Math.abs(p.y - psg.y) < 90 && s.speed < 5) {
           psg.state = "aboard"; psg.timer = psg.maxTimer; s.score += 150;
           s.tipPopups.push({ text: "+150 CLIENT!", x: psg.x + 15, y: psg.y, life: 60 });
           soundRef.current?.playPickupClient();
@@ -409,7 +409,7 @@ export function VTCGame() {
         if (psg.dropoffSpawned && psg.dropoffY >= 0) psg.dropoffY += s.speed;
         if (psg.dropoffSpawned && psg.dropoffY < 0) psg.dropoffY += s.speed;
         if (psg.dropoffSpawned && psg.dropoffY > 0 && psg.dropoffY < CANVAS_H) {
-          if (p.y < psg.dropoffY + 40 && p.y + p.h > psg.dropoffY) {
+          if (p.y < psg.dropoffY + 80 && p.y + p.h > psg.dropoffY) {
             s.score += 300; s.clientsServed++; psg.state = "none";
             s.tipPopups.push({ text: "+300 DÉPOSÉ!", x: CANVAS_W / 2, y: psg.dropoffY, life: 60 });
             soundRef.current?.playDropoffClient();
@@ -436,12 +436,12 @@ export function VTCGame() {
           spawnParticle(t.x + t.w / 2, t.y + t.h / 2, NEON_BLUE, 8); trafficRef.current.splice(i, 1);
         } else {
           const cw = crashWeight(t.type);
-          s.speed *= Math.max(0.05, 0.2 - cw * 0.05);
-          const penalty = Math.floor(100 + cw * 50);
+          s.speed *= Math.max(0.05, 0.15 - cw * 0.04);
+          const penalty = Math.floor(250 + cw * 100);
           s.score = Math.max(0, s.score - penalty); s.combo = 0;
-          s.shakeX = 6 + cw * 4; s.shakeY = 3 + cw * 2;
-          s.flashRed = 10 + cw * 5;
-          const knockback = cw * 8;
+          s.shakeX = 8 + cw * 5; s.shakeY = 4 + cw * 3;
+          s.flashRed = 15 + cw * 8;
+          const knockback = cw * 10;
           if (p.x + p.w / 2 < t.x + t.w / 2) p.x -= knockback; else p.x += knockback;
           s.tipPopups.push({ text: `-${penalty}`, x: p.x + p.w / 2, y: p.y - 10, life: 60 });
           spawnParticle(p.x + p.w / 2, p.y, "#e74c3c", 8 + Math.floor(cw * 5));
@@ -456,8 +456,8 @@ export function VTCGame() {
         const pw = powerupsRef.current[i]; const sz = pw.type === "telepeage" ? 30 : 20;
         if (!(p.x < pw.x + sz && p.x + p.w > pw.x && p.y < pw.y + sz && p.y + p.h > pw.y)) continue;
         if (pw.type === "telepeage") {
-          s.boostActive = true; s.boostTimer = 300; s.score += 500;
-          s.tipPopups.push({ text: "+500 BOOST!", x: pw.x + 15, y: pw.y, life: 60 });
+          s.boostActive = true; s.boostTimer = 150; s.score += 200;
+          s.tipPopups.push({ text: "+200 BOOST!", x: pw.x + 15, y: pw.y, life: 60 });
           spawnParticle(pw.x + 15, pw.y + 15, NEON_BLUE, 20); soundRef.current?.playBoost();
         } else {
           s.combo++; s.comboTimer = 180; const bonus = 100 * Math.min(s.combo, 5);
@@ -474,7 +474,7 @@ export function VTCGame() {
 
       if (s.distance <= 0) {
         s.distance = 0; s.gameActive = false;
-        const totalScore = Math.floor(s.score + s.envOffset / 10 + s.clientsServed * 200);
+        const totalScore = Math.floor(s.score + s.envOffset / 15 + s.clientsServed * 400);
         const stars = totalScore > 4000 ? 5 : totalScore > 2500 ? 4 : totalScore > 1500 ? 3 : totalScore > 700 ? 2 : 1;
         setFinalScore(totalScore); setFinalStars(stars);
         soundRef.current?.stopEngine(); soundRef.current?.playVictory();
@@ -483,7 +483,7 @@ export function VTCGame() {
 
       setHudData({
         dist: s.distance, score: Math.floor(s.score + s.envOffset / 10),
-        speed: Math.floor(s.speed * 14), combo: s.combo, boost: s.boostActive,
+        speed: Math.floor(s.speed * 18), combo: s.combo, boost: s.boostActive,
         zone: s.zone, clients: s.clientsServed, passengerAboard: s.passenger.state === "aboard",
       });
     }
@@ -652,33 +652,41 @@ export function VTCGame() {
       if (psg.state === "aboard" && psg.dropoffSpawned && psg.dropoffY > -50 && psg.dropoffY < CANVAS_H) {
         const pulse = 0.5 + Math.sin(frameRef.current * 0.1) * 0.3;
         ctx.save();
-        ctx.shadowBlur = 20; ctx.shadowColor = `rgba(255,213,128,${pulse * 0.5})`;
-        ctx.fillStyle = `rgba(255,213,128,${0.12 + pulse * 0.08})`;
-        ctx.fillRect(ROAD_LEFT, psg.dropoffY, ROAD_W, 40);
-        ctx.strokeStyle = `rgba(255,213,128,${0.5 + pulse * 0.3})`; ctx.lineWidth = 2.5;
-        ctx.strokeRect(ROAD_LEFT + 1, psg.dropoffY, ROAD_W - 2, 40);
+        ctx.shadowBlur = 30; ctx.shadowColor = `rgba(255,213,128,${pulse * 0.6})`;
+        ctx.fillStyle = `rgba(255,213,128,${0.15 + pulse * 0.1})`;
+        ctx.fillRect(ROAD_LEFT, psg.dropoffY, ROAD_W, 80);
+        ctx.strokeStyle = `rgba(255,213,128,${0.6 + pulse * 0.3})`; ctx.lineWidth = 3;
+        ctx.strokeRect(ROAD_LEFT + 1, psg.dropoffY, ROAD_W - 2, 80);
         ctx.shadowBlur = 0;
         const chevrons = frameRef.current % 30 < 15 ? "▼ ▼ ▼" : "▽ ▽ ▽";
-        ctx.fillStyle = `rgba(255,255,255,${0.5 + pulse * 0.3})`; ctx.font = "bold 12px sans-serif"; ctx.textAlign = "center";
-        ctx.fillText(`📍 DÉPOSER ICI ${chevrons}`, CANVAS_W / 2, psg.dropoffY + 26);
+        ctx.fillStyle = `rgba(255,255,255,${0.6 + pulse * 0.3})`; ctx.font = "bold 14px sans-serif"; ctx.textAlign = "center";
+        ctx.fillText(`📍 DÉPOSER ICI`, CANVAS_W / 2, psg.dropoffY + 35);
+        ctx.fillStyle = `rgba(255,213,128,${0.4 + pulse * 0.2})`; ctx.font = "bold 18px sans-serif";
+        ctx.fillText(chevrons, CANVAS_W / 2, psg.dropoffY + 62);
         ctx.restore();
       }
 
       // Waiting passenger
       if (psg.state === "waiting") {
-        const pulse = Math.sin(frameRef.current * 0.08) * 3;
-        const glowPulse = 0.4 + Math.sin(frameRef.current * 0.1) * 0.3;
+        const pulse = Math.sin(frameRef.current * 0.08) * 4;
+        const glowPulse = 0.4 + Math.sin(frameRef.current * 0.1) * 0.4;
+        const cx = psg.x + 12, cy = psg.y + 15;
         ctx.save();
-        ctx.shadowBlur = 18; ctx.shadowColor = `rgba(74,222,128,${glowPulse})`;
-        ctx.fillStyle = `rgba(74,222,128,${0.08 + glowPulse * 0.06})`;
-        ctx.beginPath(); ctx.roundRect(psg.x - 10, psg.y - 18, 45, 58, 10); ctx.fill();
-        ctx.strokeStyle = `rgba(74,222,128,${0.5 + glowPulse * 0.3})`; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.roundRect(psg.x - 10, psg.y - 18, 45, 58, 10); ctx.stroke();
+        ctx.shadowBlur = 35; ctx.shadowColor = `rgba(74,222,128,${glowPulse * 0.8})`;
+        ctx.fillStyle = `rgba(74,222,128,${0.1 + glowPulse * 0.08})`;
+        ctx.beginPath(); ctx.roundRect(cx - 32, cy - 40, 64, 90, 14); ctx.fill();
+        ctx.strokeStyle = `rgba(74,222,128,${0.6 + glowPulse * 0.4})`; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.roundRect(cx - 32, cy - 40, 64, 90, 14); ctx.stroke();
         ctx.shadowBlur = 0;
-        ctx.font = "26px sans-serif"; ctx.textAlign = "center";
-        ctx.fillText(psg.emoji, psg.x + 12, psg.y + 22 + pulse);
-        ctx.fillStyle = "#4ade80"; ctx.font = "bold 10px sans-serif";
-        ctx.fillText("⬇ STOP", psg.x + 12, psg.y - 6);
+        ctx.font = "38px sans-serif"; ctx.textAlign = "center";
+        ctx.fillText(psg.emoji, cx, cy + 18 + pulse);
+        ctx.fillStyle = "#4ade80"; ctx.font = "bold 13px sans-serif";
+        ctx.fillText("⬇ CLIENT", cx, cy - 26);
+        const arrowBlink = frameRef.current % 20 < 10;
+        if (arrowBlink) {
+          ctx.fillStyle = "rgba(74,222,128,0.6)"; ctx.font = "bold 16px sans-serif";
+          ctx.fillText("▼", cx, cy + 48);
+        }
         ctx.restore();
       }
 
@@ -790,28 +798,30 @@ export function VTCGame() {
           const urgency = Math.max(0, 1 - raw / 400);
 
           if (tgtY < -10 || tgtY > CANVAS_H + 10) {
-            const iy = above ? 68 : CANVAS_H - (isTouchRef.current ? 155 : 88);
+            const iy = above ? 70 : CANVAS_H - (isTouchRef.current ? 160 : 90);
             const ar = above ? "▲" : "▼";
             ctx.globalAlpha = 0.5 + blink * 0.5;
-            ctx.fillStyle = "rgba(0,0,0,0.88)";
-            ctx.beginPath(); ctx.roundRect(CANVAS_W / 2 - 75, iy - 17, 150, 34, 17); ctx.fill();
-            ctx.strokeStyle = clr; ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.roundRect(CANVAS_W / 2 - 75, iy - 17, 150, 34, 17); ctx.stroke();
-            ctx.fillStyle = "#fff"; ctx.font = "bold 12px sans-serif"; ctx.textAlign = "center";
-            ctx.fillText(`${ar} ${emj} ${lbl} — ${dTxt} ${ar}`, CANVAS_W / 2, iy + 5);
+            ctx.fillStyle = "rgba(0,0,0,0.9)";
+            ctx.beginPath(); ctx.roundRect(CANVAS_W / 2 - 95, iy - 22, 190, 44, 22); ctx.fill();
+            ctx.shadowBlur = 15; ctx.shadowColor = clr;
+            ctx.strokeStyle = clr; ctx.lineWidth = 2.5;
+            ctx.beginPath(); ctx.roundRect(CANVAS_W / 2 - 95, iy - 22, 190, 44, 22); ctx.stroke();
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = "#fff"; ctx.font = "bold 15px sans-serif"; ctx.textAlign = "center";
+            ctx.fillText(`${ar} ${emj} ${lbl} — ${dTxt} ${ar}`, CANVAS_W / 2, iy + 7);
             ctx.globalAlpha = 1;
           } else if (dPx > 35) {
             const bY = psg.state === "waiting"
-              ? Math.max(70, Math.min(CANVAS_H - 60, psg.y - 28))
-              : Math.max(70, Math.min(CANVAS_H - 60, psg.dropoffY - 18));
+              ? Math.max(70, Math.min(CANVAS_H - 60, psg.y - 35))
+              : Math.max(70, Math.min(CANVAS_H - 60, psg.dropoffY - 22));
             const bc = urgency > 0.6 ? "#4ade80" : urgency > 0.3 ? PRIMARY : "#ccc";
-            ctx.globalAlpha = 0.7 + blink * 0.3;
-            ctx.fillStyle = "rgba(0,0,0,0.75)";
-            ctx.beginPath(); ctx.roundRect(CANVAS_W / 2 - 32, bY - 10, 64, 20, 10); ctx.fill();
-            ctx.strokeStyle = bc; ctx.lineWidth = 1;
-            ctx.beginPath(); ctx.roundRect(CANVAS_W / 2 - 32, bY - 10, 64, 20, 10); ctx.stroke();
-            ctx.fillStyle = bc; ctx.font = "bold 10px sans-serif"; ctx.textAlign = "center";
-            ctx.fillText(dTxt, CANVAS_W / 2, bY + 4);
+            ctx.globalAlpha = 0.75 + blink * 0.25;
+            ctx.fillStyle = "rgba(0,0,0,0.8)";
+            ctx.beginPath(); ctx.roundRect(CANVAS_W / 2 - 42, bY - 13, 84, 26, 13); ctx.fill();
+            ctx.strokeStyle = bc; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.roundRect(CANVAS_W / 2 - 42, bY - 13, 84, 26, 13); ctx.stroke();
+            ctx.fillStyle = bc; ctx.font = "bold 13px sans-serif"; ctx.textAlign = "center";
+            ctx.fillText(dTxt, CANVAS_W / 2, bY + 5);
             ctx.globalAlpha = 1;
           }
         }
