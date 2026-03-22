@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# YGvtc VTC76 - Site Next.js
 
-## Getting Started
+Migration du site VTC76.fr de Wix vers Next.js. VTC et navettes aéroport en Seine-Maritime.
 
-First, run the development server:
+## Développement
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Ouvrir [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Variables d'environnement
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Créer `.env.local` (voir `.env.example`) :
 
-## Learn More
+| Variable | Description |
+|----------|-------------|
+| `DISTANCE_MATRIX_API_KEY` | Clé API DistanceMatrix.ai (calcul des distances) |
+| `N8N_WEBHOOK_URL` | URL webhook n8n (réservations, devis, contact) |
+| `PAYPAL_CLIENT_ID` | PayPal (création/capture commandes, optionnel) |
+| `PAYPAL_CLIENT_SECRET` | PayPal (optionnel) |
+| `NEXT_PUBLIC_PAYPAL_CLIENT_ID` | PayPal SDK client (optionnel) |
+| `NEXT_PUBLIC_SITE_URL` | URL du site (ex: https://vtc76.netlify.app) |
 
-To learn more about Next.js, take a look at the following resources:
+## Déploiement Netlify
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Créer un site sur [Netlify](https://app.netlify.com)
+2. Connecter le dépôt Git
+3. Configurer les variables d'environnement dans Paramètres > Environment variables
+4. Build : `npm run build` (déjà configuré via `netlify.toml`)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Le plugin `@netlify/plugin-nextjs` gère automatiquement Next.js.
 
-## Deploy on Vercel
+## Compatibilité n8n
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Les payloads envoyés au webhook restent **strictement identiques** à l'ancien site Wix :
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Formulaire** (réservation) : `Etiquette: "Formulaire"`
+- **Devis** : `Etiquette: "Devis"`
+- **Contact** : `Etiquette: "CONTACT"`
+
+Aucune modification du workflow n8n n'est requise.
+
+## Structure
+
+- `/calculateur` - Calculateur de prix + réservation
+- `/devis` - Demande de devis
+- `/contact` - Formulaire contact
+- `/api/calculer-tarif` - Calcul du tarif (DistanceMatrix.ai)
+- `/api/reservation` - Envoi réservation → n8n
+- `/api/devis` - Envoi devis → n8n
+- `/api/contact` - Envoi contact → n8n

@@ -1,0 +1,239 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
+
+export function IntroScreen() {
+  const [visible, setVisible] = useState(true);
+  const [phase, setPhase] = useState<'playing' | 'exit'>('playing');
+  const particlesRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Ne rejouer qu'une fois par session
+    if (sessionStorage.getItem('intro-done')) {
+      setVisible(false);
+      return;
+    }
+
+    // Génère les particules de vitesse
+    const container = particlesRef.current;
+    if (container) {
+      for (let i = 0; i < 22; i++) {
+        const p = document.createElement('div');
+        p.style.cssText = `
+          position: absolute;
+          width: 2px;
+          left: ${Math.random() * 100}%;
+          top: 0;
+          background: linear-gradient(to bottom, #FF8533, transparent);
+          border-radius: 2px;
+          opacity: 0;
+          animation: introParticle ${0.5 + Math.random() * 0.9}s linear infinite;
+          animation-delay: ${Math.random() * 2}s;
+        `;
+        container.appendChild(p);
+      }
+    }
+
+    // Déclenche l'onde de choc et le halo au moment où le logo s'arrête
+    const shockTimer = setTimeout(() => {
+      document.querySelectorAll('.intro-shockwave').forEach((el, i) => {
+        (el as HTMLElement).style.animation = `introShockwave 1s cubic-bezier(.25,.8,.25,1) ${i * 0.18}s forwards`;
+      });
+      const glow = document.getElementById('intro-glow');
+      if (glow) glow.style.animation = 'introGlow 1.4s ease forwards';
+      const reflection = document.getElementById('intro-reflection');
+      if (reflection) reflection.style.animation = 'introReflection 0.8s ease forwards';
+    }, 2900);
+
+    // Texte sous le logo
+    const textTimer = setTimeout(() => {
+      const text = document.getElementById('intro-tagline');
+      if (text) text.style.animation = 'introTextIn 0.7s ease forwards';
+    }, 3500);
+
+    // Arrêt des particules
+    const stopTimer = setTimeout(() => {
+      if (container) {
+        container.childNodes.forEach(p => {
+          (p as HTMLElement).style.animationPlayState = 'paused';
+          (p as HTMLElement).style.opacity = '0';
+        });
+      }
+    }, 3900);
+
+    // Transition vers le site
+    const exitTimer = setTimeout(() => {
+      setPhase('exit');
+      setTimeout(() => {
+        setVisible(false);
+        sessionStorage.setItem('intro-done', '1');
+        document.body.style.overflow = '';
+      }, 900);
+    }, 4800);
+
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      clearTimeout(shockTimer);
+      clearTimeout(textTimer);
+      clearTimeout(stopTimer);
+      clearTimeout(exitTimer);
+      document.body.style.overflow = '';
+    };
+  }, []);
+
+  if (!visible) return null;
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        background: '#000',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        overflow: 'hidden',
+        animation: phase === 'exit' ? 'introFadeOut 0.9s ease forwards' : 'none',
+      }}
+    >
+      {/* Route en perspective */}
+      <div style={{
+        position: 'absolute', bottom: 0, left: 0, width: '100%', height: '55%',
+        perspective: '450px', overflow: 'hidden',
+        opacity: 0, animation: 'introRoadFadeIn 1s ease 0.2s forwards',
+      }}>
+        <div style={{
+          position: 'absolute', bottom: 0, left: '50%',
+          width: '220%', height: '100%',
+          transform: 'translateX(-50%) rotateX(58deg)',
+          transformOrigin: 'bottom center',
+          background: 'linear-gradient(to top, #0f0f0f 0%, #050505 100%)',
+        }}>
+          {/* Bandes latérales de la route */}
+          <div style={{
+            position: 'absolute', left: '35%', top: 0, bottom: 0, width: '2px',
+            background: 'rgba(255,133,51,0.15)',
+          }} />
+          <div style={{
+            position: 'absolute', right: '35%', top: 0, bottom: 0, width: '2px',
+            background: 'rgba(255,133,51,0.15)',
+          }} />
+          {/* Lignes centrales */}
+          {[0, 1, 2, 3, 4].map(i => (
+            <div key={i} style={{
+              position: 'absolute', left: '50%',
+              transform: 'translateX(-50%)',
+              width: '5px',
+              bottom: `${10 + i * 15}%`,
+              height: `${28 - i * 3}px`,
+              background: '#FF8533',
+              borderRadius: '2px',
+              opacity: 0,
+              animation: `introRoadLine 1.1s linear infinite`,
+              animationDelay: `${i * 0.22}s`,
+            }} />
+          ))}
+        </div>
+      </div>
+
+      {/* Phares */}
+      <div style={{
+        position: 'absolute', top: '38%', left: 'calc(50% - 110px)',
+        width: '130px', height: '320px',
+        background: 'radial-gradient(ellipse at top, rgba(255,220,120,0.18) 0%, transparent 70%)',
+        transform: 'rotate(-6deg)',
+        opacity: 0, animation: 'introHeadlight 1.8s ease 0.6s forwards',
+        pointerEvents: 'none', zIndex: 1,
+      }} />
+      <div style={{
+        position: 'absolute', top: '38%', right: 'calc(50% - 110px)',
+        width: '130px', height: '320px',
+        background: 'radial-gradient(ellipse at top, rgba(255,220,120,0.18) 0%, transparent 70%)',
+        transform: 'rotate(6deg)',
+        opacity: 0, animation: 'introHeadlight 1.8s ease 0.6s forwards',
+        pointerEvents: 'none', zIndex: 1,
+      }} />
+
+      {/* Particules de vitesse */}
+      <div ref={particlesRef} style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2,
+      }} />
+
+      {/* Ondes de choc (positionnées au centre) */}
+      {[0, 1, 2].map(i => (
+        <div key={i} className="intro-shockwave" style={{
+          position: 'absolute', top: '50%', left: '50%',
+          width: '220px', height: '220px',
+          borderRadius: '50%',
+          border: `2px solid ${i === 1 ? '#FFD580' : i === 2 ? 'rgba(255,133,51,0.35)' : '#FF8533'}`,
+          transform: 'translate(-50%, -50%) scale(0)',
+          opacity: 0, pointerEvents: 'none', zIndex: 5,
+        }} />
+      ))}
+
+      {/* Halo */}
+      <div id="intro-glow" style={{
+        position: 'absolute', top: '50%', left: '50%',
+        width: '280px', height: '280px', borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(255,133,51,0.55) 0%, rgba(255,133,51,0.2) 35%, transparent 70%)',
+        transform: 'translate(-50%, -50%) scale(0)',
+        opacity: 0, pointerEvents: 'none', zIndex: 4,
+      }} />
+
+      {/* Logo + tagline */}
+      <div style={{
+        position: 'relative', zIndex: 10,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px',
+      }}>
+        <Image
+          src="/images/vtc76.png"
+          alt="VTC76"
+          width={200}
+          height={200}
+          priority
+          style={{
+            objectFit: 'contain',
+            borderRadius: '50%',
+            opacity: 0,
+            filter: 'blur(18px) brightness(2.5)',
+            animation: 'introLogoArrival 2.2s cubic-bezier(.16,1,.3,1) 0.9s forwards',
+          }}
+        />
+
+        {/* Reflet sol */}
+        <div id="intro-reflection" style={{
+          width: '130px', height: '28px',
+          background: 'radial-gradient(ellipse, rgba(255,133,51,0.35) 0%, transparent 70%)',
+          borderRadius: '50%',
+          filter: 'blur(6px)',
+          opacity: 0,
+          marginTop: '-18px',
+        }} />
+
+        {/* Tagline */}
+        <p id="intro-tagline" style={{
+          fontFamily: 'system-ui, sans-serif',
+          fontSize: '0.78rem',
+          letterSpacing: '2px',
+          textTransform: 'uppercase',
+          color: 'rgba(255,255,255,0.6)',
+          opacity: 0,
+          transform: 'translateY(12px)',
+          margin: 0,
+        }}>
+          Votre chauffeur VTC en Normandie
+        </p>
+      </div>
+
+      {/* Scanlines TV subtiles */}
+      <div style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 8,
+        background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px)',
+      }} />
+    </div>
+  );
+}
