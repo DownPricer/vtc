@@ -21,7 +21,7 @@ interface Powerup { x: number; y: number; type: "telepeage" | "pourboire"; pulse
 interface RainDrop { x: number; y: number; speed: number; length: number }
 interface TipPopup { text: string; x: number; y: number; life: number }
 interface ScoreEntry { pseudo: string; score: number; date: number }
-interface TouchState { left: boolean; right: boolean; brake: boolean }
+interface TouchState { joyActive: boolean; joyDx: number; joyDy: number; joyBaseX: number; joyBaseY: number; joyThumbX: number; joyThumbY: number; brake: boolean }
 
 interface PassengerInfo {
   state: "none" | "waiting" | "aboard";
@@ -39,6 +39,7 @@ interface GameState {
   zone: Zone; prevZone: Zone; zoneTransTimer: number; zoneName: string;
   passenger: PassengerInfo; clientsServed: number; braking: boolean;
   flashRed: number;
+  speedingTimer: number; policeActive: boolean; policeY: number; policeStopTimer: number; policeCooldown: number;
 }
 
 const CAR_COLORS = ["#c0392b", "#2980b9", "#27ae60", "#8e44ad", "#e74c3c", "#2c3e50", "#d35400", "#1abc9c"];
@@ -50,6 +51,10 @@ function zoneName(z: Zone): string { return z === "campagne" ? "CAMPAGNE — Nor
 
 function crashWeight(type: VehicleType): number {
   switch (type) { case "moto": return 0.4; case "scooter": return 0.3; case "car": return 1; case "truck": return 1.8; case "bus": return 2.2; }
+}
+
+function getSpeedLimitKmh(zone: Zone): number {
+  return zone === "campagne" ? 110 : zone === "autoroute" ? 140 : 80;
 }
 
 function LeaderboardTable({ scores }: { scores: ScoreEntry[] }) {
@@ -80,6 +85,7 @@ export function VTCGame() {
     isRaining: false, rainTimer: 600, tipPopups: [],
     zone: "campagne", prevZone: "campagne", zoneTransTimer: 0, zoneName: "",
     passenger: { state: "none", x: 0, y: 0, side: "left", emoji: "🧑", timer: 0, maxTimer: 0, dropoffY: -1, dropoffSpawned: false }, clientsServed: 0, braking: false, flashRed: 0,
+    speedingTimer: 0, policeActive: false, policeY: 0, policeStopTimer: 0, policeCooldown: 0,
   });
   const keysRef = useRef<Record<string, boolean>>({});
   const playerRef = useRef({ x: CANVAS_W / 2 - 24, y: 540, w: 48, h: 90, tilt: 0 });
@@ -89,7 +95,7 @@ export function VTCGame() {
   const particlesRef = useRef<Particle[]>([]);
   const rainRef = useRef<RainDrop[]>([]);
   const frameRef = useRef(0);
-  const touchStateRef = useRef<TouchState>({ left: false, right: false, brake: false });
+  const touchStateRef = useRef<TouchState>({ joyActive: false, joyDx: 0, joyDy: 0, joyBaseX: 75, joyBaseY: CANVAS_H - 110, joyThumbX: 75, joyThumbY: CANVAS_H - 110, brake: false });
   const isTouchRef = useRef(false);
   const idleOffsetRef = useRef(0);
   const brakeSoundPlayed = useRef(false);
@@ -123,6 +129,7 @@ export function VTCGame() {
       isRaining: false, rainTimer: 600, tipPopups: [],
       zone: "campagne" as Zone, prevZone: "campagne" as Zone, zoneTransTimer: 0, zoneName: "",
       passenger: { state: "none", x: 0, y: 0, side: "left", emoji: "🧑", timer: 0, maxTimer: 0, dropoffY: -1, dropoffSpawned: false }, clientsServed: 0, braking: false, flashRed: 0,
+      speedingTimer: 0, policeActive: false, policeY: 0, policeStopTimer: 0, policeCooldown: 0,
     });
     playerRef.current = { x: CANVAS_W / 2 - 24, y: 540, w: 48, h: 90, tilt: 0 };
     trafficRef.current = []; sceneryRef.current = []; powerupsRef.current = [];
@@ -171,23 +178,53 @@ export function VTCGame() {
     return () => { window.removeEventListener("keydown", d); window.removeEventListener("keyup", u); };
   }, []);
 
-  // --- NEW TOUCH CONTROLS: 3 zones ---
+  // --- JOYSTICK TOUCH CONTROLS ---
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    function updateTouch(touches: TouchList) {
+    const JOY_MAX_R = 45;
+    let joyTouchId = -1;
+    let baseX = 75, baseY = CANVAS_H - 110;
+
+    function process(touches: TouchList) {
       const rect = canvas!.getBoundingClientRect();
-      let left = false, right = false, brake = false;
+      const sx = CANVAS_W / rect.width, sy = CANVAS_H / rect.height;
+      const state: TouchState = { joyActive: false, joyDx: 0, joyDy: 0, joyBaseX: baseX, joyBaseY: baseY, joyThumbX: baseX, joyThumbY: baseY, brake: false };
+      let foundJoy = false;
       for (let i = 0; i < touches.length; i++) {
-        const cx = (touches[i].clientX - rect.left) / rect.width * CANVAS_W;
-        if (cx < CANVAS_W * 0.33) left = true;
-        else if (cx > CANVAS_W * 0.67) right = true;
-        else brake = true;
+        const t = touches[i];
+        const cx = (t.clientX - rect.left) * sx;
+        const cy = (t.clientY - rect.top) * sy;
+        if (cx > CANVAS_W * 0.6 && cy > CANVAS_H * 0.6) {
+          state.brake = true;
+        } else if (cy > CANVAS_H * 0.45 && !foundJoy) {
+          foundJoy = true;
+          state.joyActive = true;
+          if (joyTouchId !== t.identifier) { joyTouchId = t.identifier; baseX = cx; baseY = cy; }
+          state.joyBaseX = baseX; state.joyBaseY = baseY;
+          const dx = cx - baseX, dy = baseY - cy;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const clamped = Math.min(dist, JOY_MAX_R);
+          if (dist > 2) {
+            state.joyDx = (dx / dist) * (clamped / JOY_MAX_R);
+            state.joyDy = (dy / dist) * (clamped / JOY_MAX_R);
+          }
+          state.joyThumbX = baseX + (dist > 2 ? (dx / dist) * clamped : 0);
+          state.joyThumbY = baseY - (dist > 2 ? (dy / dist) * clamped : 0);
+        }
       }
-      touchStateRef.current = { left, right, brake };
+      if (!foundJoy) joyTouchId = -1;
+      touchStateRef.current = state;
     }
-    const ts = (e: TouchEvent) => { e.preventDefault(); updateTouch(e.touches); };
-    const te = (e: TouchEvent) => { e.preventDefault(); if (!e.touches.length) touchStateRef.current = { left: false, right: false, brake: false }; else updateTouch(e.touches); };
+
+    const ts = (e: TouchEvent) => { e.preventDefault(); process(e.touches); };
+    const te = (e: TouchEvent) => {
+      e.preventDefault();
+      if (!e.touches.length) {
+        joyTouchId = -1;
+        touchStateRef.current = { joyActive: false, joyDx: 0, joyDy: 0, joyBaseX: 75, joyBaseY: CANVAS_H - 110, joyThumbX: 75, joyThumbY: CANVAS_H - 110, brake: false };
+      } else process(e.touches);
+    };
     canvas.addEventListener("touchstart", ts, { passive: false });
     canvas.addEventListener("touchmove", ts, { passive: false });
     canvas.addEventListener("touchend", te, { passive: false });
@@ -326,7 +363,7 @@ export function VTCGame() {
 
       // --- Controls ---
       const currentMax = s.boostActive ? 11 : (s.isRaining ? 6 : (s.zone === "autoroute" ? 9 : 7));
-      const touchAccel = ts.left || ts.right;
+      const touchAccel = ts.joyActive && ts.joyDy > 0.15;
       const keyAccel = keys["ArrowUp"] || keys["KeyW"];
       const braking = ts.brake || keys["Space"] || keys["ArrowDown"] || keys["KeyS"];
 
@@ -336,7 +373,8 @@ export function VTCGame() {
         spawnBrakeSmoke(p.x, p.y, p.w, p.h);
         if (!brakeSoundPlayed.current) { soundRef.current?.playBrake(); brakeSoundPlayed.current = true; }
       } else if (touchAccel || keyAccel) {
-        s.speed = Math.min(s.speed + 0.09, currentMax);
+        const accelMul = ts.joyActive ? Math.max(0.3, ts.joyDy) : 1;
+        s.speed = Math.min(s.speed + 0.09 * accelMul, currentMax);
         s.braking = false; brakeSoundPlayed.current = false;
       } else {
         s.speed = Math.max(s.speed - 0.05, 0);
@@ -346,10 +384,12 @@ export function VTCGame() {
       // --- Steering ---
       const steerSpeed = s.boostActive ? 3.5 : (s.isRaining ? 3 : 4.2);
       const driftFactor = s.isRaining ? 0.92 : 0.85;
-      const steerL = (keys["ArrowLeft"] || keys["KeyA"] || (ts.left && !ts.right));
-      const steerR = (keys["ArrowRight"] || keys["KeyD"] || (ts.right && !ts.left));
-      if (steerL) { p.x -= steerSpeed; p.tilt = Math.max(p.tilt - 0.025, -0.15); }
-      else if (steerR) { p.x += steerSpeed; p.tilt = Math.min(p.tilt + 0.025, 0.15); }
+      const joySteerX = ts.joyActive ? ts.joyDx : 0;
+      const steerL = (keys["ArrowLeft"] || keys["KeyA"] || joySteerX < -0.15);
+      const steerR = (keys["ArrowRight"] || keys["KeyD"] || joySteerX > 0.15);
+      const steerMag = ts.joyActive ? Math.min(Math.abs(joySteerX) * 1.3, 1) : 1;
+      if (steerL) { p.x -= steerSpeed * steerMag; p.tilt = Math.max(p.tilt - 0.025 * steerMag, -0.15); }
+      else if (steerR) { p.x += steerSpeed * steerMag; p.tilt = Math.min(p.tilt + 0.025 * steerMag, 0.15); }
       else { p.tilt *= driftFactor; }
 
       if (s.speed > 5) { p.x += p.tilt * s.speed * 0.1; }
@@ -368,6 +408,32 @@ export function VTCGame() {
       if (s.speed > 3 && frameRef.current % 3 === 0) spawnParticle(p.x + p.w / 2, p.y + p.h, "rgba(255,133,51,0.6)", 1);
 
       s.comboTimer--; if (s.comboTimer <= 0) s.combo = 0;
+
+      // --- Police speed control ---
+      if (s.policeCooldown > 0) s.policeCooldown--;
+      const spdLimitKmh = getSpeedLimitKmh(s.zone);
+      const spdLimitGame = spdLimitKmh / 18;
+      if (s.speed > spdLimitGame && !s.boostActive && s.policeCooldown <= 0 && s.policeStopTimer <= 0) {
+        s.speedingTimer++;
+        if (s.speedingTimer > 180 && !s.policeActive) {
+          s.policeActive = true; s.policeY = CANVAS_H + 60;
+        }
+      } else {
+        s.speedingTimer = Math.max(0, s.speedingTimer - 3);
+      }
+      if (s.policeActive && s.policeStopTimer <= 0) {
+        s.policeY -= 3.5;
+        if (s.policeY <= p.y + p.h + 5) {
+          s.policeStopTimer = 120;
+          s.score = Math.max(0, s.score - 200);
+          s.tipPopups.push({ text: "🚔 -200 AMENDE!", x: CANVAS_W / 2, y: p.y - 30, life: 100 });
+          s.speedingTimer = 0;
+        }
+      }
+      if (s.policeStopTimer > 0) {
+        s.speed = 0; s.policeStopTimer--;
+        if (s.policeStopTimer <= 0) { s.policeActive = false; s.policeCooldown = 600; }
+      }
 
       // --- Rain ---
       s.rainTimer--;
@@ -610,44 +676,36 @@ export function VTCGame() {
       ctx.save();
       ctx.translate(s.shakeX * (Math.random() - 0.5), s.shakeY * (Math.random() - 0.5));
 
-      // Background by zone
       if (s.zone === "campagne") { ctx.fillStyle = "#1a3a12"; }
       else if (s.zone === "autoroute") { ctx.fillStyle = "#1a2a1a"; }
       else { ctx.fillStyle = "#1a1a20"; }
       ctx.fillRect(0, 0, ROAD_LEFT, CANVAS_H); ctx.fillRect(ROAD_RIGHT, 0, CANVAS_W - ROAD_RIGHT, CANVAS_H);
 
-      // Guardrails on autoroute
       if (s.zone === "autoroute") {
         ctx.fillStyle = "#778"; ctx.fillRect(ROAD_LEFT - 4, 0, 4, CANVAS_H); ctx.fillRect(ROAD_RIGHT, 0, 4, CANVAS_H);
       }
 
-      // Road
       const roadG = ctx.createLinearGradient(ROAD_LEFT, 0, ROAD_RIGHT, 0);
       roadG.addColorStop(0, "#181818"); roadG.addColorStop(0.15, "#2a3540"); roadG.addColorStop(0.5, "#303e4e");
       roadG.addColorStop(0.85, "#2a3540"); roadG.addColorStop(1, "#181818");
       ctx.fillStyle = roadG; ctx.fillRect(ROAD_LEFT, 0, ROAD_W, CANVAS_H);
 
-      // Road edges
       ctx.strokeStyle = s.zone === "autoroute" ? "#aaa" : PRIMARY; ctx.lineWidth = s.zone === "autoroute" ? 3 : 4;
       ctx.beginPath(); ctx.moveTo(ROAD_LEFT, 0); ctx.lineTo(ROAD_LEFT, CANVAS_H); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(ROAD_RIGHT, 0); ctx.lineTo(ROAD_RIGHT, CANVAS_H); ctx.stroke();
 
-      // Lane lines
       ctx.strokeStyle = "rgba(255,255,255,0.5)"; ctx.setLineDash([35, 45]); ctx.lineDashOffset = -s.envOffset; ctx.lineWidth = 3;
       for (let i = 1; i < LANE_COUNT; i++) { ctx.beginPath(); ctx.moveTo(ROAD_LEFT + LANE_W * i, 0); ctx.lineTo(ROAD_LEFT + LANE_W * i, CANVAS_H); ctx.stroke(); }
       ctx.setLineDash([]);
 
-      // Speed lines
       if (s.speed > 6) {
         const a = Math.min((s.speed - 6) / 16, 0.25);
         ctx.strokeStyle = `rgba(255,133,51,${a})`; ctx.lineWidth = 1.5;
         for (let i = 0; i < 5; i++) { const lx = ROAD_LEFT + 5 + Math.random() * (ROAD_W - 10); const ly = Math.random() * CANVAS_H; ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx, ly + 20 + s.speed * 3); ctx.stroke(); }
       }
 
-      // Scenery
       sceneryRef.current.forEach(item => drawSceneryItem(ctx, item));
 
-      // Dropoff zone
       const psg = s.passenger;
       if (psg.state === "aboard" && psg.dropoffSpawned && psg.dropoffY > -50 && psg.dropoffY < CANVAS_H) {
         const pulse = 0.5 + Math.sin(frameRef.current * 0.1) * 0.3;
@@ -666,7 +724,6 @@ export function VTCGame() {
         ctx.restore();
       }
 
-      // Waiting passenger
       if (psg.state === "waiting") {
         const pulse = Math.sin(frameRef.current * 0.08) * 4;
         const glowPulse = 0.4 + Math.sin(frameRef.current * 0.1) * 0.4;
@@ -674,23 +731,50 @@ export function VTCGame() {
         ctx.save();
         ctx.shadowBlur = 35; ctx.shadowColor = `rgba(74,222,128,${glowPulse * 0.8})`;
         ctx.fillStyle = `rgba(74,222,128,${0.1 + glowPulse * 0.08})`;
-        ctx.beginPath(); ctx.roundRect(cx - 32, cy - 40, 64, 90, 14); ctx.fill();
+        ctx.beginPath(); ctx.roundRect(cx - 35, cy - 45, 70, 110, 14); ctx.fill();
         ctx.strokeStyle = `rgba(74,222,128,${0.6 + glowPulse * 0.4})`; ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.roundRect(cx - 32, cy - 40, 64, 90, 14); ctx.stroke();
+        ctx.beginPath(); ctx.roundRect(cx - 35, cy - 45, 70, 110, 14); ctx.stroke();
         ctx.shadowBlur = 0;
         ctx.font = "38px sans-serif"; ctx.textAlign = "center";
-        ctx.fillText(psg.emoji, cx, cy + 18 + pulse);
-        ctx.fillStyle = "#4ade80"; ctx.font = "bold 13px sans-serif";
-        ctx.fillText("⬇ CLIENT", cx, cy - 26);
+        ctx.fillText(psg.emoji, cx - 5, cy + 18 + pulse);
+        ctx.fillStyle = "#8B4513";
+        ctx.fillRect(cx + 12, cy + 5 + pulse, 12, 18);
+        ctx.fillStyle = "#A0522D";
+        ctx.fillRect(cx + 10, cy + 2 + pulse, 16, 5);
+        ctx.fillStyle = "#654321";
+        ctx.fillRect(cx + 16, cy - 2 + pulse, 4, 6);
+        ctx.fillStyle = "rgba(255,255,255,0.92)";
+        ctx.beginPath();
+        ctx.moveTo(cx - 2, cy - 28);
+        ctx.lineTo(cx + 28, cy - 28);
+        ctx.lineTo(cx + 28, cy - 48);
+        ctx.lineTo(cx - 2, cy - 48);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = "rgba(74,222,128,0.8)"; ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(cx - 2, cy - 28);
+        ctx.lineTo(cx + 28, cy - 28);
+        ctx.lineTo(cx + 28, cy - 48);
+        ctx.lineTo(cx - 2, cy - 48);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cx + 8, cy - 28);
+        ctx.lineTo(cx + 13, cy - 22);
+        ctx.lineTo(cx + 3, cy - 22);
+        ctx.closePath();
+        ctx.fillStyle = "rgba(255,255,255,0.92)"; ctx.fill();
+        ctx.fillStyle = "#222"; ctx.font = "bold 11px sans-serif"; ctx.textAlign = "center";
+        ctx.fillText("VTC ?", cx + 13, cy - 33);
         const arrowBlink = frameRef.current % 20 < 10;
         if (arrowBlink) {
-          ctx.fillStyle = "rgba(74,222,128,0.6)"; ctx.font = "bold 16px sans-serif";
-          ctx.fillText("▼", cx, cy + 48);
+          ctx.fillStyle = "rgba(74,222,128,0.7)"; ctx.font = "bold 18px sans-serif";
+          ctx.fillText("▼", cx, cy + 52);
         }
         ctx.restore();
       }
 
-      // Powerups
       powerupsRef.current.forEach(pw => {
         ctx.save(); pw.pulse += 0.08; const pf = 1 + Math.sin(pw.pulse) * 0.15;
         if (pw.type === "telepeage") {
@@ -705,7 +789,6 @@ export function VTCGame() {
         ctx.restore();
       });
 
-      // Traffic
       trafficRef.current.forEach(car => drawVehicle(ctx, car));
 
       // Player car
@@ -729,11 +812,60 @@ export function VTCGame() {
         ctx.strokeStyle = `rgba(255,133,51,${Math.min(s.speed / 15, 0.4)})`; ctx.lineWidth = 2;
         for (let i = 0; i < 3; i++) { const tx = -hw + 5 + i * (hw - 5); ctx.beginPath(); ctx.moveTo(tx, hh); ctx.lineTo(tx + (Math.random() - 0.5) * 4, hh + 15 + s.speed * 2); ctx.stroke(); }
       }
-      // Passenger aboard indicator
       if (psg.state === "aboard") {
         ctx.fillStyle = "#4ade80"; ctx.font = "14px sans-serif"; ctx.fillText(psg.emoji, 0, -hh - 8);
       }
       ctx.restore();
+
+      // Police car
+      if (s.policeActive) {
+        ctx.save();
+        const pcx = p.x, pcy = s.policeY;
+        const pcw = 48, pch = 85;
+        ctx.fillStyle = "#1a3a8a";
+        ctx.beginPath(); ctx.roundRect(pcx, pcy, pcw, pch, 6); ctx.fill();
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(pcx + 4, pcy + pch * 0.35, pcw - 8, 10);
+        ctx.fillStyle = "#ccc";
+        ctx.fillRect(pcx + 5, pcy + 8, pcw - 10, 16);
+        const flashFrame = frameRef.current % 20;
+        ctx.fillStyle = flashFrame < 10 ? "#ff0000" : "#333";
+        ctx.beginPath(); ctx.arc(pcx + 10, pcy + 4, 5, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = flashFrame < 10 ? "#333" : "#0055ff";
+        ctx.beginPath(); ctx.arc(pcx + pcw - 10, pcy + 4, 5, 0, Math.PI * 2); ctx.fill();
+        if (flashFrame < 10) {
+          ctx.shadowBlur = 15; ctx.shadowColor = "#ff0000";
+          ctx.beginPath(); ctx.arc(pcx + 10, pcy + 4, 5, 0, Math.PI * 2); ctx.fill();
+          ctx.shadowBlur = 0;
+        } else {
+          ctx.shadowBlur = 15; ctx.shadowColor = "#0055ff";
+          ctx.beginPath(); ctx.arc(pcx + pcw - 10, pcy + 4, 5, 0, Math.PI * 2); ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+        ctx.fillStyle = "#fff"; ctx.font = "bold 7px sans-serif"; ctx.textAlign = "center";
+        ctx.fillText("POLICE", pcx + pcw / 2, pcy + pch * 0.55);
+        ctx.fillStyle = "#e74c3c";
+        ctx.fillRect(pcx + 5, pcy + pch - 7, 8, 4); ctx.fillRect(pcx + pcw - 13, pcy + pch - 7, 8, 4);
+        ctx.restore();
+      }
+
+      if (s.policeStopTimer > 0) {
+        ctx.save();
+        const flashPhase = frameRef.current % 30;
+        ctx.fillStyle = flashPhase < 15 ? "rgba(0,0,180,0.25)" : "rgba(180,0,0,0.25)";
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+        ctx.fillStyle = "rgba(0,0,0,0.7)";
+        ctx.beginPath(); ctx.roundRect(20, CANVAS_H / 2 - 55, CANVAS_W - 40, 110, 16); ctx.fill();
+        ctx.strokeStyle = flashPhase < 15 ? "#4444ff" : "#ff4444"; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.roundRect(20, CANVAS_H / 2 - 55, CANVAS_W - 40, 110, 16); ctx.stroke();
+        ctx.fillStyle = "#fff"; ctx.font = "bold 18px sans-serif"; ctx.textAlign = "center";
+        ctx.fillText("🚔 CONTRÔLE DE POLICE 🚔", CANVAS_W / 2, CANVAS_H / 2 - 15);
+        ctx.fillStyle = "#ff4444"; ctx.font = "bold 15px sans-serif";
+        ctx.fillText("EXCÈS DE VITESSE !", CANVAS_W / 2, CANVAS_H / 2 + 20);
+        ctx.fillStyle = "#ccc"; ctx.font = "12px sans-serif";
+        ctx.fillText(`Amende : -200 pts`, CANVAS_W / 2, CANVAS_H / 2 + 42);
+        ctx.restore();
+      }
 
       // Particles
       particlesRef.current.forEach(pt => { ctx.globalAlpha = pt.life / pt.maxLife; ctx.fillStyle = pt.color; ctx.fillRect(pt.x, pt.y, pt.size, pt.size); });
@@ -745,7 +877,7 @@ export function VTCGame() {
         rainRef.current.forEach(r => { ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x - 1, r.y + r.length); ctx.stroke(); });
       }
 
-      // Progress bar with zone markers
+      // Progress bar
       const barX = CANVAS_W - 22, barY = 55, barH = CANVAS_H - 200;
       const progress = 1 - s.distance / TOTAL_DISTANCE;
       ctx.fillStyle = "rgba(30,30,30,0.8)"; ctx.beginPath(); ctx.roundRect(barX - 6, barY - 5, 18, barH + 10, 9); ctx.fill();
@@ -757,9 +889,9 @@ export function VTCGame() {
         ctx.fillStyle = "rgba(255,255,255,0.35)"; ctx.font = "6px sans-serif"; ctx.textAlign = "center"; ctx.fillText(zm.label, barX + 3, my - 2);
       });
       const fillH = barH * progress;
-      const pg = ctx.createLinearGradient(0, barY + barH - fillH, 0, barY + barH);
-      pg.addColorStop(0, PRIMARY); pg.addColorStop(1, PRIMARY_DARK);
-      ctx.fillStyle = pg; ctx.beginPath(); ctx.roundRect(barX - 3, barY + barH - fillH, 12, Math.max(fillH, 4), 6); ctx.fill();
+      const pg2 = ctx.createLinearGradient(0, barY + barH - fillH, 0, barY + barH);
+      pg2.addColorStop(0, PRIMARY); pg2.addColorStop(1, PRIMARY_DARK);
+      ctx.fillStyle = pg2; ctx.beginPath(); ctx.roundRect(barX - 3, barY + barH - fillH, 12, Math.max(fillH, 4), 6); ctx.fill();
       ctx.fillStyle = "#fff"; ctx.font = "10px sans-serif"; ctx.textAlign = "center";
       ctx.fillText("✈", barX + 3, barY - 8); ctx.fillText("🏠", barX + 3, barY + barH + 16);
       ctx.fillStyle = PRIMARY; ctx.beginPath(); ctx.arc(barX + 3, barY + barH - fillH, 5, 0, Math.PI * 2); ctx.fill();
@@ -776,55 +908,75 @@ export function VTCGame() {
         ctx.fillText(`${psg.emoji} EN COURSE`, CANVAS_W / 2, tbY - 5);
       }
 
-      // --- Distance proximity indicator for pickup / dropoff ---
+      // --- Speedometer ---
       {
-        let tgtY: number | null = null;
-        let lbl = ""; let clr = ""; let emj = "";
+        const isTouch = isTouchRef.current;
+        const gaugeR = 52;
+        const gaugeCx = CANVAS_W / 2;
+        const gaugeCy = isTouch ? CANVAS_H - 170 : CANVAS_H - 50;
+        const speedKmh = Math.floor(s.speed * 18);
+        const maxKmh = 200;
+        const limitKmh = getSpeedLimitKmh(s.zone);
+        const startAngle = Math.PI * 0.78;
+        const endAngle = Math.PI * 2.22;
+        const totalSweep = endAngle - startAngle;
 
-        if (psg.state === "waiting") {
-          tgtY = psg.y + 15; lbl = "CLIENT"; clr = "#4ade80"; emj = psg.emoji;
-        } else if (psg.state === "aboard" && psg.dropoffSpawned) {
-          tgtY = psg.dropoffY + 20; lbl = "DÉPOSE"; clr = GOLD; emj = "📍";
+        ctx.save();
+        ctx.fillStyle = "rgba(10,10,10,0.75)";
+        ctx.beginPath(); ctx.arc(gaugeCx, gaugeCy, gaugeR + 6, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = "rgba(255,255,255,0.1)"; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(gaugeCx, gaugeCy, gaugeR + 6, 0, Math.PI * 2); ctx.stroke();
+
+        const segments = [
+          { from: 0, to: 0.5, color: "#27ae60" },
+          { from: 0.5, to: 0.75, color: "#f39c12" },
+          { from: 0.75, to: 1, color: "#e74c3c" },
+        ];
+        ctx.lineWidth = 6;
+        segments.forEach(seg => {
+          const a1 = startAngle + totalSweep * seg.from;
+          const a2 = startAngle + totalSweep * seg.to;
+          ctx.strokeStyle = seg.color;
+          ctx.globalAlpha = 0.5;
+          ctx.beginPath(); ctx.arc(gaugeCx, gaugeCy, gaugeR - 4, a1, a2); ctx.stroke();
+        });
+        ctx.globalAlpha = 1;
+
+        const speedFrac = Math.min(speedKmh / maxKmh, 1);
+        const needleAngle = startAngle + totalSweep * speedFrac;
+        ctx.strokeStyle = "#fff"; ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(gaugeCx, gaugeCy);
+        ctx.lineTo(gaugeCx + Math.cos(needleAngle) * (gaugeR - 10), gaugeCy + Math.sin(needleAngle) * (gaugeR - 10));
+        ctx.stroke();
+
+        const limitFrac = Math.min(limitKmh / maxKmh, 1);
+        const limitAngle = startAngle + totalSweep * limitFrac;
+        ctx.strokeStyle = "#ff2222"; ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(gaugeCx + Math.cos(limitAngle) * (gaugeR - 12), gaugeCy + Math.sin(limitAngle) * (gaugeR - 12));
+        ctx.lineTo(gaugeCx + Math.cos(limitAngle) * (gaugeR + 2), gaugeCy + Math.sin(limitAngle) * (gaugeR + 2));
+        ctx.stroke();
+        ctx.fillStyle = "#ff2222"; ctx.font = "bold 7px sans-serif"; ctx.textAlign = "center";
+        ctx.fillText(`${limitKmh}`, gaugeCx + Math.cos(limitAngle) * (gaugeR + 10), gaugeCy + Math.sin(limitAngle) * (gaugeR + 10));
+
+        const overLimit = speedKmh > limitKmh && !s.boostActive;
+        if (overLimit) {
+          const pulseA = 0.3 + Math.sin(frameRef.current * 0.15) * 0.3;
+          ctx.strokeStyle = `rgba(255,30,30,${pulseA})`; ctx.lineWidth = 4;
+          ctx.beginPath(); ctx.arc(gaugeCx, gaugeCy, gaugeR + 10, 0, Math.PI * 2); ctx.stroke();
         }
 
-        if (tgtY !== null) {
-          const pcY = p.y + p.h / 2;
-          const dPx = Math.abs(pcY - tgtY);
-          const raw = Math.round(dPx * 0.85);
-          const dM = raw > 100 ? Math.round(raw / 50) * 50 : Math.round(raw / 10) * 10;
-          const dTxt = `${Math.max(10, dM)}m`;
-          const above = tgtY < pcY;
-          const blink = 0.5 + Math.sin(frameRef.current * 0.12) * 0.5;
-          const urgency = Math.max(0, 1 - raw / 400);
+        ctx.fillStyle = overLimit ? "#ff4444" : "#fff"; ctx.font = "bold 22px sans-serif"; ctx.textAlign = "center";
+        ctx.fillText(`${speedKmh}`, gaugeCx, gaugeCy + 6);
+        ctx.fillStyle = "rgba(255,255,255,0.5)"; ctx.font = "8px sans-serif";
+        ctx.fillText("km/h", gaugeCx, gaugeCy + 18);
 
-          if (tgtY < -10 || tgtY > CANVAS_H + 10) {
-            const iy = above ? 70 : CANVAS_H - (isTouchRef.current ? 160 : 90);
-            const ar = above ? "▲" : "▼";
-            ctx.globalAlpha = 0.5 + blink * 0.5;
-            ctx.fillStyle = "rgba(0,0,0,0.9)";
-            ctx.beginPath(); ctx.roundRect(CANVAS_W / 2 - 95, iy - 22, 190, 44, 22); ctx.fill();
-            ctx.shadowBlur = 15; ctx.shadowColor = clr;
-            ctx.strokeStyle = clr; ctx.lineWidth = 2.5;
-            ctx.beginPath(); ctx.roundRect(CANVAS_W / 2 - 95, iy - 22, 190, 44, 22); ctx.stroke();
-            ctx.shadowBlur = 0;
-            ctx.fillStyle = "#fff"; ctx.font = "bold 15px sans-serif"; ctx.textAlign = "center";
-            ctx.fillText(`${ar} ${emj} ${lbl} — ${dTxt} ${ar}`, CANVAS_W / 2, iy + 7);
-            ctx.globalAlpha = 1;
-          } else if (dPx > 35) {
-            const bY = psg.state === "waiting"
-              ? Math.max(70, Math.min(CANVAS_H - 60, psg.y - 35))
-              : Math.max(70, Math.min(CANVAS_H - 60, psg.dropoffY - 22));
-            const bc = urgency > 0.6 ? "#4ade80" : urgency > 0.3 ? PRIMARY : "#ccc";
-            ctx.globalAlpha = 0.75 + blink * 0.25;
-            ctx.fillStyle = "rgba(0,0,0,0.8)";
-            ctx.beginPath(); ctx.roundRect(CANVAS_W / 2 - 42, bY - 13, 84, 26, 13); ctx.fill();
-            ctx.strokeStyle = bc; ctx.lineWidth = 1.5;
-            ctx.beginPath(); ctx.roundRect(CANVAS_W / 2 - 42, bY - 13, 84, 26, 13); ctx.stroke();
-            ctx.fillStyle = bc; ctx.font = "bold 13px sans-serif"; ctx.textAlign = "center";
-            ctx.fillText(dTxt, CANVAS_W / 2, bY + 5);
-            ctx.globalAlpha = 1;
-          }
+        if (s.speedingTimer > 60 && frameRef.current % 40 < 20) {
+          ctx.fillStyle = "#ff4444"; ctx.font = "bold 14px sans-serif";
+          ctx.fillText("⚠", gaugeCx, gaugeCy - gaugeR - 14);
         }
+        ctx.restore();
       }
 
       // Tip popups
@@ -847,24 +999,31 @@ export function VTCGame() {
         ctx.fillStyle = `rgba(220,40,40,${s.flashRed * 0.02})`; ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
       }
 
-      // Mobile controls
+      // Mobile controls: Joystick + Brake
       if (isTouchRef.current && s.gameActive) {
         const ts2 = touchStateRef.current;
-        const ty = CANVAS_H - 80;
-        ctx.fillStyle = ts2.left ? "rgba(255,133,51,0.35)" : "rgba(255,255,255,0.06)";
-        ctx.beginPath(); ctx.roundRect(8, ty, 115, 65, 14); ctx.fill();
-        ctx.fillStyle = ts2.left ? "#fff" : "rgba(255,255,255,0.35)";
-        ctx.font = "bold 26px sans-serif"; ctx.textAlign = "center"; ctx.fillText("◀", 65, ty + 42);
 
-        ctx.fillStyle = ts2.brake ? "rgba(239,68,68,0.4)" : "rgba(255,255,255,0.06)";
-        ctx.beginPath(); ctx.roundRect(130, ty, 140, 65, 14); ctx.fill();
-        ctx.fillStyle = ts2.brake ? "#fff" : "rgba(255,255,255,0.3)";
-        ctx.font = "bold 14px sans-serif"; ctx.fillText("🛑 FREIN", CANVAS_W / 2, ty + 42);
+        ctx.save();
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = "rgba(255,255,255,0.15)";
+        ctx.beginPath(); ctx.arc(ts2.joyBaseX, ts2.joyBaseY, 50, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = "rgba(255,255,255,0.25)"; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(ts2.joyBaseX, ts2.joyBaseY, 50, 0, Math.PI * 2); ctx.stroke();
+        ctx.globalAlpha = 1;
 
-        ctx.fillStyle = ts2.right ? "rgba(255,133,51,0.35)" : "rgba(255,255,255,0.06)";
-        ctx.beginPath(); ctx.roundRect(CANVAS_W - 123, ty, 115, 65, 14); ctx.fill();
-        ctx.fillStyle = ts2.right ? "#fff" : "rgba(255,255,255,0.35)";
-        ctx.font = "bold 26px sans-serif"; ctx.fillText("▶", CANVAS_W - 65, ty + 42);
+        ctx.fillStyle = ts2.joyActive ? "rgba(255,133,51,0.8)" : "rgba(200,200,200,0.5)";
+        ctx.beginPath(); ctx.arc(ts2.joyThumbX, ts2.joyThumbY, 20, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(ts2.joyThumbX, ts2.joyThumbY, 20, 0, Math.PI * 2); ctx.stroke();
+
+        const brakeX = CANVAS_W - 65, brakeY = CANVAS_H - 65;
+        ctx.fillStyle = ts2.brake ? "rgba(239,68,68,0.6)" : "rgba(255,255,255,0.1)";
+        ctx.beginPath(); ctx.arc(brakeX, brakeY, 40, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = ts2.brake ? "rgba(239,68,68,0.8)" : "rgba(255,255,255,0.2)"; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(brakeX, brakeY, 40, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = ts2.brake ? "#fff" : "rgba(255,255,255,0.4)"; ctx.font = "bold 12px sans-serif"; ctx.textAlign = "center";
+        ctx.fillText("FREIN", brakeX, brakeY + 5);
+        ctx.restore();
       }
 
       ctx.restore();
@@ -922,7 +1081,7 @@ export function VTCGame() {
                 </div>
               )}
               <button onClick={startGame} className="w-full py-4 rounded-xl font-bold text-white text-base transition-all hover:scale-[1.03] active:scale-95" style={{ background: `linear-gradient(135deg, ${PRIMARY}, ${PRIMARY_DARK})`, boxShadow: "0 0 40px rgba(255,133,51,0.3), inset 0 1px 0 rgba(255,255,255,0.15)" }}>DÉMARRER LA COURSE</button>
-              <p className="text-gray-600 text-[9px] text-center leading-relaxed">Clavier : Flèches + Espace (frein)<br />Mobile : ◀ ▶ pour tourner+accélérer, centre = frein</p>
+              <p className="text-gray-600 text-[9px] text-center leading-relaxed">Clavier : Flèches + Espace (frein)<br />Mobile : Joystick gauche + Frein droit</p>
               <Link href="/" className="text-gray-600 text-[11px] hover:text-gray-400 transition-colors pb-4">← Retour au site vtc76.fr</Link>
             </div>
           </div>
@@ -933,7 +1092,6 @@ export function VTCGame() {
             <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-3 py-2 pointer-events-none" style={{ background: "rgba(10,10,10,0.85)", backdropFilter: "blur(8px)", borderBottom: `1px solid ${PRIMARY}40` }}>
               <div className="flex items-center gap-2.5">
                 <div className="flex flex-col"><span className="text-[7px] text-gray-500 uppercase">Dist.</span><span className="text-[11px] font-bold tabular-nums" style={{ color: PRIMARY }}>{hudData.dist.toFixed(1)} km</span></div>
-                <div className="flex flex-col"><span className="text-[7px] text-gray-500 uppercase">Vit.</span><span className="text-[11px] font-bold tabular-nums text-white">{hudData.speed}</span></div>
                 <div className="flex flex-col"><span className="text-[7px] text-gray-500 uppercase">Clients</span><span className="text-[11px] font-bold tabular-nums text-green-400">{hudData.clients}</span></div>
               </div>
               <div className="flex items-center gap-2">
