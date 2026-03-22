@@ -22,6 +22,7 @@ interface RainDrop { x: number; y: number; speed: number; length: number }
 interface TipPopup { text: string; x: number; y: number; life: number }
 interface ScoreEntry { pseudo: string; score: number; date: number }
 interface TouchState { joyActive: boolean; joyDx: number; joyDy: number; joyBaseX: number; joyBaseY: number; joyThumbX: number; joyThumbY: number; brake: boolean }
+interface PoliceZone { y: number; zoneH: number; hasPolice: boolean; announced: boolean; passed: boolean }
 
 interface PassengerInfo {
   state: "none" | "waiting" | "aboard";
@@ -40,6 +41,8 @@ interface GameState {
   passenger: PassengerInfo; clientsServed: number; braking: boolean;
   flashRed: number;
   speedingTimer: number; policeActive: boolean; policeY: number; policeStopTimer: number; policeCooldown: number;
+  policeZones: PoliceZone[]; policeZoneSpawnTimer: number;
+  zoneWarningTimer: number; zoneWarningText: string; zoneWarningHasPolice: boolean;
 }
 
 const CAR_COLORS = ["#c0392b", "#2980b9", "#27ae60", "#8e44ad", "#e74c3c", "#2c3e50", "#d35400", "#1abc9c"];
@@ -86,6 +89,8 @@ export function VTCGame() {
     zone: "campagne", prevZone: "campagne", zoneTransTimer: 0, zoneName: "",
     passenger: { state: "none", x: 0, y: 0, side: "left", emoji: "🧑", timer: 0, maxTimer: 0, dropoffY: -1, dropoffSpawned: false }, clientsServed: 0, braking: false, flashRed: 0,
     speedingTimer: 0, policeActive: false, policeY: 0, policeStopTimer: 0, policeCooldown: 0,
+    policeZones: [], policeZoneSpawnTimer: 500,
+    zoneWarningTimer: 0, zoneWarningText: "", zoneWarningHasPolice: false,
   });
   const keysRef = useRef<Record<string, boolean>>({});
   const playerRef = useRef({ x: CANVAS_W / 2 - 24, y: 450, w: 48, h: 90, tilt: 0 });
@@ -95,8 +100,6 @@ export function VTCGame() {
   const particlesRef = useRef<Particle[]>([]);
   const rainRef = useRef<RainDrop[]>([]);
   const frameRef = useRef(0);
-  const JOY_CX = 75, JOY_CY = CANVAS_H - 58;
-  const BRAKE_CX = CANVAS_W - 72, BRAKE_CY = CANVAS_H - 58;
   const touchStateRef = useRef<TouchState>({ joyActive: false, joyDx: 0, joyDy: 0, joyBaseX: 75, joyBaseY: CANVAS_H - 58, joyThumbX: 75, joyThumbY: CANVAS_H - 58, brake: false });
   const isTouchRef = useRef(false);
   const idleOffsetRef = useRef(0);
@@ -132,6 +135,8 @@ export function VTCGame() {
       zone: "campagne" as Zone, prevZone: "campagne" as Zone, zoneTransTimer: 0, zoneName: "",
       passenger: { state: "none", x: 0, y: 0, side: "left", emoji: "🧑", timer: 0, maxTimer: 0, dropoffY: -1, dropoffSpawned: false }, clientsServed: 0, braking: false, flashRed: 0,
       speedingTimer: 0, policeActive: false, policeY: 0, policeStopTimer: 0, policeCooldown: 0,
+      policeZones: [], policeZoneSpawnTimer: 500,
+      zoneWarningTimer: 0, zoneWarningText: "", zoneWarningHasPolice: false,
     });
     playerRef.current = { x: CANVAS_W / 2 - 24, y: 450, w: 48, h: 90, tilt: 0 };
     trafficRef.current = []; sceneryRef.current = []; powerupsRef.current = [];
@@ -187,7 +192,7 @@ export function VTCGame() {
     const JOY_R = 52;
     // Fixed center positions (must match JOY_CX/BRAKE_CX above)
     const jBX = 75, jBY = CANVAS_H - 58;
-    const brBX = CANVAS_W - 72, brBY = CANVAS_H - 58;
+    const brBX = CANVAS_W - 72;
 
     function process(touches: TouchList) {
       const rect = canvas!.getBoundingClientRect();
@@ -375,21 +380,32 @@ export function VTCGame() {
 
       // --- Controls ---
       const currentMax = s.boostActive ? 11 : (s.isRaining ? 6 : (s.zone === "autoroute" ? 9 : 7));
-      const touchAccel = ts.joyActive && ts.joyDy > 0.15;
       const keyAccel = keys["ArrowUp"] || keys["KeyW"];
       const braking = ts.brake || (ts.joyActive && ts.joyDy < -0.3) || keys["Space"] || keys["ArrowDown"] || keys["KeyS"];
 
-      if (braking && s.speed > 0.5) {
-        s.speed = Math.max(s.speed - 0.45, 0);
+      // Progressive speed: joystick position = target speed (proportional)
+      let targetSpeed: number;
+      if (braking) {
+        targetSpeed = 0;
+      } else if (ts.joyActive) {
+        // joyDy from 0 to 1 → cruise at that fraction of max speed
+        targetSpeed = Math.max(0, ts.joyDy) * currentMax;
+      } else if (keyAccel) {
+        targetSpeed = currentMax;
+      } else {
+        targetSpeed = 0;
+      }
+
+      if (braking && s.speed > 0.4) {
+        s.speed = Math.max(s.speed - 0.38, 0);
         s.braking = true;
         spawnBrakeSmoke(p.x, p.y, p.w, p.h);
         if (!brakeSoundPlayed.current) { soundRef.current?.playBrake(); brakeSoundPlayed.current = true; }
-      } else if (touchAccel || keyAccel) {
-        const accelMul = ts.joyActive ? Math.max(0.3, ts.joyDy) : 1;
-        s.speed = Math.min(s.speed + 0.09 * accelMul, currentMax);
-        s.braking = false; brakeSoundPlayed.current = false;
       } else {
-        s.speed = Math.max(s.speed - 0.05, 0);
+        // Smooth lerp: gentle acceleration, natural deceleration
+        const lerpRate = targetSpeed > s.speed ? 0.022 : 0.035;
+        s.speed += (targetSpeed - s.speed) * lerpRate;
+        if (s.speed < 0.05) s.speed = 0;
         s.braking = false; brakeSoundPlayed.current = false;
       }
 
@@ -421,17 +437,53 @@ export function VTCGame() {
 
       s.comboTimer--; if (s.comboTimer <= 0) s.combo = 0;
 
-      // --- Police speed control ---
+      // --- Police ZONES (spawn, move, check) ---
       if (s.policeCooldown > 0) s.policeCooldown--;
       const spdLimitKmh = getSpeedLimitKmh(s.zone);
       const spdLimitGame = spdLimitKmh / 18;
-      if (s.speed > spdLimitGame && !s.boostActive && s.policeCooldown <= 0 && s.policeStopTimer <= 0) {
+
+      // Spawn new police zones
+      if (s.policeZoneSpawnTimer > 0) {
+        s.policeZoneSpawnTimer--;
+      } else if (!s.policeActive && s.policeStopTimer <= 0 && s.distance > 12) {
+        const hasPolice = Math.random() < 0.55;
+        s.policeZones.push({ y: -200, zoneH: 220, hasPolice, announced: false, passed: false });
+        s.policeZoneSpawnTimer = 700 + Math.floor(Math.random() * 700);
+      }
+
+      // Move zones with road + check intersection
+      let inActivePoliceZone = false;
+      for (let i = s.policeZones.length - 1; i >= 0; i--) {
+        const zone = s.policeZones[i];
+        zone.y += s.speed;
+
+        // Announce when approaching (zone top ~250px above player)
+        if (!zone.announced && zone.y > p.y - 280) {
+          zone.announced = true;
+          s.zoneWarningTimer = 200;
+          s.zoneWarningHasPolice = zone.hasPolice;
+          s.zoneWarningText = zone.hasPolice
+            ? "🚔 ZONE DE CONTRÔLE\nPolice en poste !"
+            : "⚠ ZONE DE CONTRÔLE\nAucun agent présent";
+        }
+
+        // Player inside zone?
+        const inZone = zone.y < p.y + p.h && zone.y + zone.zoneH > p.y;
+        if (inZone && zone.hasPolice) inActivePoliceZone = true;
+
+        if (zone.y > CANVAS_H + 60) s.policeZones.splice(i, 1);
+      }
+
+      if (s.zoneWarningTimer > 0) s.zoneWarningTimer--;
+
+      // Police trigger: only inside zone with police AND speeding
+      if (inActivePoliceZone && s.speed > spdLimitGame && !s.boostActive && s.policeCooldown <= 0 && s.policeStopTimer <= 0) {
         s.speedingTimer++;
-        if (s.speedingTimer > 180 && !s.policeActive) {
+        if (s.speedingTimer > 120 && !s.policeActive) {
           s.policeActive = true; s.policeY = CANVAS_H + 60;
         }
       } else {
-        s.speedingTimer = Math.max(0, s.speedingTimer - 3);
+        s.speedingTimer = Math.max(0, s.speedingTimer - 5);
       }
       if (s.policeActive && s.policeStopTimer <= 0) {
         s.policeY -= 3.5;
@@ -720,6 +772,70 @@ export function VTCGame() {
 
       sceneryRef.current.forEach(item => drawSceneryItem(ctx, item));
 
+      // --- Police zones drawing ---
+      s.policeZones.forEach(zone => {
+        if (zone.y + zone.zoneH < 0 || zone.y > CANVAS_H) return;
+        ctx.save();
+        // Subtle road tint
+        const tintA = zone.hasPolice ? 0.12 : 0.06;
+        ctx.fillStyle = zone.hasPolice ? `rgba(255,60,60,${tintA})` : `rgba(255,200,0,${tintA})`;
+        ctx.fillRect(ROAD_LEFT, zone.y, ROAD_W, zone.zoneH);
+        // Zone entry line
+        const lineCol = zone.hasPolice ? "#ff4444" : "#f59e0b";
+        ctx.strokeStyle = lineCol; ctx.lineWidth = 2.5;
+        ctx.setLineDash([18, 10]);
+        ctx.beginPath(); ctx.moveTo(ROAD_LEFT, zone.y); ctx.lineTo(ROAD_RIGHT, zone.y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(ROAD_LEFT, zone.y + zone.zoneH); ctx.lineTo(ROAD_RIGHT, zone.y + zone.zoneH); ctx.stroke();
+        ctx.setLineDash([]);
+        // Zone label on road
+        const midY = zone.y + zone.zoneH / 2;
+        if (midY > 0 && midY < CANVAS_H) {
+          ctx.globalAlpha = 0.5;
+          ctx.fillStyle = lineCol; ctx.font = "bold 9px sans-serif"; ctx.textAlign = "center";
+          ctx.fillText(zone.hasPolice ? "🚔 CONTRÔLE" : "⚠ ZONE", CANVAS_W / 2, midY + 4);
+        }
+        // Roadside police marker if hasPolice
+        if (zone.hasPolice) {
+          const signY = zone.y + 20;
+          if (signY > -30 && signY < CANVAS_H) {
+            ctx.globalAlpha = 0.85;
+            // Left sign
+            ctx.fillStyle = "#1a3a8a"; ctx.fillRect(ROAD_LEFT - 18, signY, 16, 22); ctx.strokeStyle = "#fff"; ctx.lineWidth = 1; ctx.strokeRect(ROAD_LEFT - 18, signY, 16, 22);
+            ctx.fillStyle = "#fff"; ctx.font = "bold 6px sans-serif"; ctx.textAlign = "center"; ctx.fillText("POL", ROAD_LEFT - 10, signY + 10); ctx.fillText("ICE", ROAD_LEFT - 10, signY + 18);
+            // Right sign
+            ctx.fillStyle = "#1a3a8a"; ctx.fillRect(ROAD_RIGHT + 2, signY, 16, 22); ctx.strokeStyle = "#fff"; ctx.strokeRect(ROAD_RIGHT + 2, signY, 16, 22);
+            ctx.fillStyle = "#fff"; ctx.fillText("POL", ROAD_RIGHT + 10, signY + 10); ctx.fillText("ICE", ROAD_RIGHT + 10, signY + 18);
+            // Flashing beacon on signs
+            const flash = frameRef.current % 20 < 10;
+            ctx.fillStyle = flash ? "#ff2222" : "#0044ff";
+            ctx.beginPath(); ctx.arc(ROAD_LEFT - 10, signY - 4, 3, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(ROAD_RIGHT + 10, signY - 4, 3, 0, Math.PI * 2); ctx.fill();
+          }
+        }
+        ctx.globalAlpha = 1;
+        ctx.restore();
+      });
+
+      // --- Zone warning banner ---
+      if (s.zoneWarningTimer > 0) {
+        const tAlpha = Math.min(s.zoneWarningTimer / 30, 1) * (s.zoneWarningTimer > 170 ? (200 - s.zoneWarningTimer) / 30 : 1);
+        ctx.save(); ctx.globalAlpha = Math.min(tAlpha, 0.97);
+        const bx = 30, bw = CANVAS_W - 60;
+        const lines = s.zoneWarningText.split("\n");
+        ctx.fillStyle = s.zoneWarningHasPolice ? "rgba(180,0,0,0.88)" : "rgba(30,30,0,0.88)";
+        ctx.beginPath(); ctx.roundRect(bx, 62, bw, lines.length === 2 ? 50 : 36, 10); ctx.fill();
+        ctx.strokeStyle = s.zoneWarningHasPolice ? "#ff4444" : "#f59e0b"; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.roundRect(bx, 62, bw, lines.length === 2 ? 50 : 36, 10); ctx.stroke();
+        ctx.fillStyle = "#fff"; ctx.textAlign = "center";
+        if (lines.length === 2) {
+          ctx.font = "bold 12px sans-serif"; ctx.fillText(lines[0], CANVAS_W / 2, 83);
+          ctx.font = "11px sans-serif"; ctx.fillStyle = s.zoneWarningHasPolice ? "#ffaaaa" : "#fde68a"; ctx.fillText(lines[1], CANVAS_W / 2, 101);
+        } else {
+          ctx.font = "bold 12px sans-serif"; ctx.fillText(lines[0], CANVAS_W / 2, 93);
+        }
+        ctx.globalAlpha = 1; ctx.restore();
+      }
+
       const psg = s.passenger;
       if (psg.state === "aboard" && psg.dropoffSpawned && psg.dropoffY > -50 && psg.dropoffY < CANVAS_H) {
         const pulse = 0.5 + Math.sin(frameRef.current * 0.1) * 0.3;
@@ -991,8 +1107,8 @@ export function VTCGame() {
       // Speed warning (top center, below HUD)
       if (s.speedingTimer > 60 && frameRef.current % 40 < 20) {
         ctx.save();
-        ctx.fillStyle = "rgba(255,68,68,0.9)"; ctx.font = "bold 13px sans-serif"; ctx.textAlign = "center";
-        ctx.fillText("⚠ TROP VITE !", CANVAS_W / 2, 56);
+        ctx.fillStyle = "rgba(255,68,68,0.95)"; ctx.font = "bold 13px sans-serif"; ctx.textAlign = "center";
+        ctx.fillText("⚠ RALENTISSEZ !", CANVAS_W / 2, 56);
         ctx.restore();
       }
 
