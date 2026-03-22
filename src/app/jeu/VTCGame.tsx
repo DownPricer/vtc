@@ -651,23 +651,35 @@ export function VTCGame() {
       const psg = s.passenger;
       if (psg.state === "aboard" && psg.dropoffSpawned && psg.dropoffY > -50 && psg.dropoffY < CANVAS_H) {
         const pulse = 0.5 + Math.sin(frameRef.current * 0.1) * 0.3;
-        ctx.fillStyle = `rgba(74,222,128,${0.15 + pulse * 0.1})`;
+        ctx.save();
+        ctx.shadowBlur = 20; ctx.shadowColor = `rgba(255,213,128,${pulse * 0.5})`;
+        ctx.fillStyle = `rgba(255,213,128,${0.12 + pulse * 0.08})`;
         ctx.fillRect(ROAD_LEFT, psg.dropoffY, ROAD_W, 40);
-        ctx.strokeStyle = `rgba(74,222,128,${0.4 + pulse * 0.2})`; ctx.lineWidth = 2;
+        ctx.strokeStyle = `rgba(255,213,128,${0.5 + pulse * 0.3})`; ctx.lineWidth = 2.5;
         ctx.strokeRect(ROAD_LEFT + 1, psg.dropoffY, ROAD_W - 2, 40);
-        ctx.fillStyle = `rgba(255,255,255,${0.4 + pulse * 0.2})`; ctx.font = "bold 11px sans-serif"; ctx.textAlign = "center";
-        ctx.fillText("▼ DÉPOSER ICI ▼", CANVAS_W / 2, psg.dropoffY + 25);
+        ctx.shadowBlur = 0;
+        const chevrons = frameRef.current % 30 < 15 ? "▼ ▼ ▼" : "▽ ▽ ▽";
+        ctx.fillStyle = `rgba(255,255,255,${0.5 + pulse * 0.3})`; ctx.font = "bold 12px sans-serif"; ctx.textAlign = "center";
+        ctx.fillText(`📍 DÉPOSER ICI ${chevrons}`, CANVAS_W / 2, psg.dropoffY + 26);
+        ctx.restore();
       }
 
       // Waiting passenger
       if (psg.state === "waiting") {
         const pulse = Math.sin(frameRef.current * 0.08) * 3;
-        ctx.font = "22px sans-serif"; ctx.textAlign = "center";
-        ctx.fillText(psg.emoji, psg.x + 12, psg.y + 20 + pulse);
-        ctx.fillStyle = "#4ade80"; ctx.font = "bold 9px sans-serif";
-        ctx.fillText("STOP", psg.x + 12, psg.y - 5);
-        ctx.strokeStyle = "rgba(74,222,128,0.4)"; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
-        ctx.strokeRect(psg.x - 5, psg.y - 12, 35, 45); ctx.setLineDash([]);
+        const glowPulse = 0.4 + Math.sin(frameRef.current * 0.1) * 0.3;
+        ctx.save();
+        ctx.shadowBlur = 18; ctx.shadowColor = `rgba(74,222,128,${glowPulse})`;
+        ctx.fillStyle = `rgba(74,222,128,${0.08 + glowPulse * 0.06})`;
+        ctx.beginPath(); ctx.roundRect(psg.x - 10, psg.y - 18, 45, 58, 10); ctx.fill();
+        ctx.strokeStyle = `rgba(74,222,128,${0.5 + glowPulse * 0.3})`; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.roundRect(psg.x - 10, psg.y - 18, 45, 58, 10); ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.font = "26px sans-serif"; ctx.textAlign = "center";
+        ctx.fillText(psg.emoji, psg.x + 12, psg.y + 22 + pulse);
+        ctx.fillStyle = "#4ade80"; ctx.font = "bold 10px sans-serif";
+        ctx.fillText("⬇ STOP", psg.x + 12, psg.y - 6);
+        ctx.restore();
       }
 
       // Powerups
@@ -754,6 +766,55 @@ export function VTCGame() {
         ctx.beginPath(); ctx.roundRect(tbX, tbY, tbW * pct, tbH, 3); ctx.fill();
         ctx.fillStyle = "#fff"; ctx.font = "bold 8px sans-serif"; ctx.textAlign = "center";
         ctx.fillText(`${psg.emoji} EN COURSE`, CANVAS_W / 2, tbY - 5);
+      }
+
+      // --- Distance proximity indicator for pickup / dropoff ---
+      {
+        let tgtY: number | null = null;
+        let lbl = ""; let clr = ""; let emj = "";
+
+        if (psg.state === "waiting") {
+          tgtY = psg.y + 15; lbl = "CLIENT"; clr = "#4ade80"; emj = psg.emoji;
+        } else if (psg.state === "aboard" && psg.dropoffSpawned) {
+          tgtY = psg.dropoffY + 20; lbl = "DÉPOSE"; clr = GOLD; emj = "📍";
+        }
+
+        if (tgtY !== null) {
+          const pcY = p.y + p.h / 2;
+          const dPx = Math.abs(pcY - tgtY);
+          const raw = Math.round(dPx * 0.85);
+          const dM = raw > 100 ? Math.round(raw / 50) * 50 : Math.round(raw / 10) * 10;
+          const dTxt = `${Math.max(10, dM)}m`;
+          const above = tgtY < pcY;
+          const blink = 0.5 + Math.sin(frameRef.current * 0.12) * 0.5;
+          const urgency = Math.max(0, 1 - raw / 400);
+
+          if (tgtY < -10 || tgtY > CANVAS_H + 10) {
+            const iy = above ? 68 : CANVAS_H - (isTouchRef.current ? 155 : 88);
+            const ar = above ? "▲" : "▼";
+            ctx.globalAlpha = 0.5 + blink * 0.5;
+            ctx.fillStyle = "rgba(0,0,0,0.88)";
+            ctx.beginPath(); ctx.roundRect(CANVAS_W / 2 - 75, iy - 17, 150, 34, 17); ctx.fill();
+            ctx.strokeStyle = clr; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.roundRect(CANVAS_W / 2 - 75, iy - 17, 150, 34, 17); ctx.stroke();
+            ctx.fillStyle = "#fff"; ctx.font = "bold 12px sans-serif"; ctx.textAlign = "center";
+            ctx.fillText(`${ar} ${emj} ${lbl} — ${dTxt} ${ar}`, CANVAS_W / 2, iy + 5);
+            ctx.globalAlpha = 1;
+          } else if (dPx > 35) {
+            const bY = psg.state === "waiting"
+              ? Math.max(70, Math.min(CANVAS_H - 60, psg.y - 28))
+              : Math.max(70, Math.min(CANVAS_H - 60, psg.dropoffY - 18));
+            const bc = urgency > 0.6 ? "#4ade80" : urgency > 0.3 ? PRIMARY : "#ccc";
+            ctx.globalAlpha = 0.7 + blink * 0.3;
+            ctx.fillStyle = "rgba(0,0,0,0.75)";
+            ctx.beginPath(); ctx.roundRect(CANVAS_W / 2 - 32, bY - 10, 64, 20, 10); ctx.fill();
+            ctx.strokeStyle = bc; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.roundRect(CANVAS_W / 2 - 32, bY - 10, 64, 20, 10); ctx.stroke();
+            ctx.fillStyle = bc; ctx.font = "bold 10px sans-serif"; ctx.textAlign = "center";
+            ctx.fillText(dTxt, CANVAS_W / 2, bY + 4);
+            ctx.globalAlpha = 1;
+          }
+        }
       }
 
       // Tip popups
