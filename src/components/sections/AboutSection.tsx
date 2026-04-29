@@ -1,5 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
+import { siteConfig } from "@/config/site.config";
+
+const about = siteConfig.about;
 
 const atouts = [
   {
@@ -11,7 +14,7 @@ const atouts = [
     ),
   },
   {
-    label: "Renault Espace 5 · 4 passagers max",
+    label: about.vehicleLabel,
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 17a2 2 0 104 0m-4 0a2 2 0 014 0m0 0h2m-6 0H6m12 0a2 2 0 104 0m-4 0a2 2 0 014 0M4 17H2M3 7l2-2h10l3 4H3V7zm0 4v4" />
@@ -72,16 +75,16 @@ export function AboutSection() {
 
               <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-white/10" style={{ aspectRatio: "3/4" }}>
                 <Image
-                  src="/images/portrait.jpg"
-                  alt="Yoann — Chauffeur privé YGvtc"
+                  src={about.portraitSrc}
+                  alt={about.portraitAlt}
                   fill
                   className="object-cover object-top"
                   sizes="(max-width: 640px) 256px, (max-width: 1024px) 288px, 384px"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 <div className="absolute bottom-0 inset-x-0 p-5">
-                  <p className="text-white font-black text-xl">Yoann G.</p>
-                  <p className="text-primary text-sm font-semibold">Chauffeur privé · YGvtc</p>
+                  <p className="text-white font-black text-xl">{about.driverDisplayName}</p>
+                  <p className="text-primary text-sm font-semibold">{about.roleLabel}</p>
                 </div>
               </div>
 
@@ -90,8 +93,8 @@ export function AboutSection() {
                 <div className="flex items-center gap-2.5">
                   <div className="w-9 h-9 rounded-xl bg-primary/20 border border-primary/40 flex items-center justify-center text-primary text-lg">★</div>
                   <div>
-                    <p className="text-white font-black text-sm">5 / 5 Google</p>
-                    <p className="text-gray-400 text-[10px]">Avis vérifiés</p>
+                    <p className="text-white font-black text-sm">5 / 5</p>
+                    <p className="text-gray-400 text-[10px]">Satisfaction clients</p>
                   </div>
                 </div>
               </div>
@@ -108,7 +111,7 @@ export function AboutSection() {
           <div className="space-y-6 text-center lg:text-left">
             <div>
               <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold tracking-widest uppercase mb-5">
-                Votre chauffeur
+                {about.sectionTitle}
               </span>
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white leading-tight mb-4">
                 Un chauffeur,<br />
@@ -116,17 +119,9 @@ export function AboutSection() {
               </h2>
             </div>
 
-            <p className="text-gray-300 leading-relaxed text-base">
-              Je suis Yoann, votre chauffeur privé basé à Goderville. Depuis plusieurs années,
-              je mets mon expérience, ma ponctualité et mon sens du service au cœur de chaque trajet —
-              aéroports parisiens, événements, déplacements professionnels.
-            </p>
+            <p className="text-gray-300 leading-relaxed text-base">{about.leadParagraph}</p>
 
-            <p className="text-gray-400 leading-relaxed text-sm">
-              À bord du Renault Espace 5 Initiale Paris (jusqu&apos;à 4 passagers), chaque trajet devient une expérience confortable.
-              Je m&apos;adapte à votre programme de vol, surveille les retards en temps réel et
-              vous garantis une prise en charge sereine à domicile.
-            </p>
+            <p className="text-gray-400 leading-relaxed text-sm">{about.secondaryParagraph}</p>
 
             {/* Atouts — icônes SVG monochrome */}
             <div className="grid grid-cols-2 gap-2 pt-2">
@@ -157,7 +152,7 @@ export function AboutSection() {
                 href="/calculateur"
                 className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-primary hover:bg-primary-dark text-white font-bold transition-all duration-300 shadow-glow active:scale-95"
               >
-                Réserver avec Yoann
+                {`Réserver avec ${about.ctaDriverName}`}
               </Link>
             </div>
           </div>

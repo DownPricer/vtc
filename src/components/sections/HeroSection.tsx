@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
+import { siteConfig } from "@/config/site.config";
 
+const hero = siteConfig.hero;
 
 export function HeroSection() {
   return (
@@ -10,7 +12,7 @@ export function HeroSection() {
       <div className="absolute inset-0 z-0">
         <Image
           src="/images/hero2.png"
-          alt="YGvtc — Renault Espace aéroport Normandie"
+          alt={hero.imageAlt}
           fill
           priority
           className="object-cover object-bottom brightness-110"
@@ -34,22 +36,22 @@ export function HeroSection() {
           <div className="animate-fade-down inline-flex items-center gap-2 mb-5 md:mb-6">
             <span className="w-6 h-px bg-primary flex-shrink-0" />
             <span className="text-primary text-[11px] font-bold tracking-[0.2em] uppercase whitespace-nowrap">
-              Disponible 7j / 7 · Seine-Maritime
+              {hero.badge} · {siteConfig.seo.regionLabel}
             </span>
           </div>
 
           {/* Titre principal */}
           <h1 className="animate-fade-up text-[2rem] sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-[1.1] mb-3 md:mb-4 tracking-tight">
-            Transferts Normandie<br />
-            <span className="text-gradient">Aéroports</span>
+            {hero.titleLine1}<br />
+            <span className="text-gradient">{hero.titleHighlight}</span>
           </h1>
 
           {/* Sous-titre */}
           <p className="animate-fade-up delay-100 text-gray-300 text-sm md:text-base leading-relaxed mb-2 max-w-sm md:max-w-md">
-            Navettes vers Orly, CDG, Beauvais et Caen.
+            {hero.subtitle}
           </p>
           <p className="animate-fade-up delay-100 text-gray-400 text-xs md:text-sm leading-relaxed mb-6 md:mb-8 max-w-sm md:max-w-md">
-            Prise en charge à domicile · Tarif fixe garanti · Suivi de vol inclus
+            {hero.bullets}
           </p>
 
           {/* CTA buttons */}

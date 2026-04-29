@@ -6,7 +6,7 @@ interface ScoreEntry {
   date: number;
 }
 
-const KEY = "vtc76-leaderboard";
+const KEY = process.env.LEADERBOARD_KV_KEY?.trim() || "vtc-site-leaderboard";
 
 async function getKV() {
   try {

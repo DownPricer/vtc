@@ -1,52 +1,26 @@
-# Déploiement VTC76
+# Déploiement du template VTC
 
-## Option A : Vercel (recommandé, sans GitHub)
+Le code source peut vivre dans un dossier nommé comme vous voulez ; les instructions ci-dessous supposent que vous êtes à la racine du projet Next.js (là où se trouve `package.json`).
 
-1. **Ouvrez un terminal** dans le dossier `vtc76`
+## Option A : Vercel
 
-2. **Connectez-vous à Vercel** (ouvre le navigateur) :
-   ```
-   vercel login
-   ```
+1. `vercel login`
+2. `vercel` puis `vercel --prod`, ou `npm run deploy` si configuré dans votre `package.json`.
 
-3. **Déployez** :
-   ```
-   npm run deploy
-   ```
-   Ou directement : `vercel --prod`
+Définir dans **Project → Settings → Environment Variables** au minimum :
 
-4. Vercel génère une URL (ex: `vtc76-xxx.vercel.app`)
-
----
-
-## Option B : Netlify (avec CLI, sans GitHub)
-
-1. **Installez** : `npm install -g netlify-cli`
-
-2. **Connectez-vous** : `netlify login`
-
-3. **Dans le dossier vtc76** :
-   ```
-   netlify init
-   ```
-   Choisissez "Create & configure a new site"
-
-4. **Déployez** : `netlify deploy --prod`
-
----
-
-## Variables d'environnement
-
-Sur Vercel : Project Settings → Environment Variables
-
-Sur Netlify : Site settings → Environment variables
-
-À configurer :
 - `DISTANCE_MATRIX_API_KEY`
-- `N8N_WEBHOOK_URL`
-- `NEXT_PUBLIC_SITE_URL` (URL de votre site déployé)
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`, `MAIL_TO`
+- `NEXT_PUBLIC_SITE_URL` (URL finale du site, avec `https://`)
 
-Optionnel (PayPal) :
-- `PAYPAL_CLIENT_ID`
-- `PAYPAL_CLIENT_SECRET`
-- `NEXT_PUBLIC_PAYPAL_CLIENT_ID`
+## Option B : Netlify
+
+1. `npm install -g netlify-cli`
+2. `netlify login`
+3. `netlify init` puis `netlify deploy --prod`
+
+Mêmes variables que sur Vercel (voir `README.md`).
+
+## PayPal (facultatif)
+
+Si vous activez le paiement en ligne : `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_MODE`, `NEXT_PUBLIC_PAYPAL_CLIENT_ID`.

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef } from "react";
 import Image from "next/image";
+import { siteConfig } from "@/config/site.config";
 
 const markers = [
   {
@@ -61,7 +62,7 @@ export function VideoSection() {
             En vidéo
           </span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4">
-            Découvrez <span className="text-gradient">YGvtc</span>
+            Découvrez <span className="text-gradient">{siteConfig.commercialName}</span>
           </h2>
           <p className="text-gray-400 text-base max-w-md mx-auto">
             Un service de prestige, un chauffeur professionnel, un véhicule d&apos;exception.
@@ -75,7 +76,7 @@ export function VideoSection() {
             <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/30 cursor-pointer" onClick={handlePlay}>
               <Image
                 src="/images/s2/s2-8.webp"
-                alt="Vidéo YGvtc"
+                alt={`Vidéo ${siteConfig.commercialName}`}
                 fill
                 className="object-cover opacity-60"
                 sizes="100vw"

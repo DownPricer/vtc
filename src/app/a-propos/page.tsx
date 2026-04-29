@@ -1,12 +1,17 @@
 import Link from "next/link";
 import Image from "next/image";
+import { siteConfig } from "@/config/site.config";
+import { businessConfig } from "@/config/business.config";
+import { seoConfig } from "@/config/seo.config";
+import { getPublicSiteUrl } from "@/lib/siteUrl";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://vtc76.fr";
+const SITE_URL = getPublicSiteUrl();
+const about = siteConfig.about;
+const hq = businessConfig.headquarters;
 
 export const metadata = {
-  title: "À Propos — Yoann, Chauffeur Privé VTC Le Havre, Goderville, Normandie",
-  description:
-    "Yoann, votre chauffeur privé VTC basé à Goderville (76110). Ponctualité, confort premium en Renault Espace Initiale, service personnalisé 7j/7. Transferts aéroport et déplacements en Seine-Maritime.",
+  title: `À propos — ${siteConfig.commercialName}`,
+  description: `${about.leadParagraph} ${seoConfig.defaultDescription}`,
   alternates: {
     canonical: `${SITE_URL}/a-propos`,
   },
@@ -15,7 +20,7 @@ export const metadata = {
 const valeurs = [
   {
     label: "Ponctualité",
-    desc: "Jamais en retard, suivi GPS en temps réel.",
+    desc: "Respect des horaires et suivi des trajets.",
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -24,7 +29,7 @@ const valeurs = [
   },
   {
     label: "Confort premium",
-    desc: "Renault Espace 5 Initiale, climatisé, silencieux.",
+    desc: about.vehicleLabel,
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
@@ -33,7 +38,7 @@ const valeurs = [
   },
   {
     label: "Service 7j/7",
-    desc: "Disponible de nuit comme de jour, jours fériés inclus.",
+    desc: "Disponibilité étendue selon planning — nous contacter pour confirmation.",
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -41,8 +46,8 @@ const valeurs = [
     ),
   },
   {
-    label: "Tarifs fixes",
-    desc: "Prix annoncé = prix payé. Aucune mauvaise surprise.",
+    label: "Tarifs transparents",
+    desc: "Calculateur en ligne et devis sur demande.",
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -51,25 +56,21 @@ const valeurs = [
   },
 ];
 
-const personSchema = {
+const organizationSchema = {
   "@context": "https://schema.org",
-  "@type": "Person",
-  name: "Yoann",
-  jobTitle: "Chauffeur privé VTC",
-  image: `${SITE_URL}/images/prensation.jpg`,
-  worksFor: {
-    "@type": "LocalBusiness",
-    name: "YGvtc VTC76",
-    url: SITE_URL,
-  },
+  "@type": "LocalBusiness",
+  name: siteConfig.legalName,
+  alternateName: siteConfig.commercialName,
+  url: SITE_URL,
+  image: `${SITE_URL}${about.portraitSrc}`,
   address: {
     "@type": "PostalAddress",
-    addressLocality: "Goderville",
-    postalCode: "76110",
-    addressRegion: "Normandie",
-    addressCountry: "FR",
+    streetAddress: hq.street,
+    addressLocality: hq.city,
+    postalCode: hq.postalCode,
+    addressCountry: hq.country,
   },
-  knowsAbout: ["VTC", "Transfert aéroport", "Chauffeur privé", "Normandie", "Seine-Maritime"],
+  knowsAbout: ["VTC", "Transfert aéroport", "Chauffeur privé"],
 };
 
 const breadcrumbSchema = {
@@ -84,31 +85,21 @@ const breadcrumbSchema = {
 export default function AProposPage() {
   return (
     <div className="min-h-screen bg-dark">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
-      {/* ── Hero avec photo de présentation ── */}
       <div className="relative overflow-hidden min-h-[50vh] md:min-h-[60vh] flex items-end md:items-center">
         <div className="absolute inset-0 z-0">
           <Image
             src="/images/prensation.jpg"
-            alt="Yoann, chauffeur privé VTC devant son Renault Espace — YGvtc VTC76 Normandie"
+            alt={about.portraitAlt}
             fill
             priority
             className="object-cover object-[75%_30%] md:object-[center_20%]"
             sizes="100vw"
           />
-          {/* Overlay global pour assurer la lisibilité */}
           <div className="absolute inset-0 bg-black/55" />
-          {/* Dégradé fort côté gauche pour le texte */}
           <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/60 to-black/20" />
-          {/* Dégradé bas pour mobile */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 md:from-transparent" />
         </div>
         <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
@@ -123,50 +114,37 @@ export default function AProposPage() {
               <span className="text-primary text-[11px] font-bold tracking-widest uppercase">À propos</span>
             </div>
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 leading-[1.1] tracking-tight drop-shadow-lg">
-              Yoann,<br />
-              <span className="text-gradient">votre chauffeur privé</span>
+              {about.driverDisplayName}
+              <br />
+              <span className="text-gradient">{about.roleLabel}</span>
             </h1>
             <p className="text-gray-200 text-base md:text-lg leading-relaxed max-w-md drop-shadow-md">
-              Basé à Goderville, en Seine-Maritime. À votre service pour tous vos déplacements en Normandie.
+              {about.storyLocation}
             </p>
             <div className="flex items-center gap-3 mt-6">
               <span className="flex items-center gap-1.5 text-xs text-gray-300 font-medium">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                Disponible 7j/7
+                {siteConfig.hero.badge}
               </span>
               <span className="w-px h-3 bg-white/20" />
-              <span className="text-xs text-gray-300 font-medium">24h/24</span>
-              <span className="w-px h-3 bg-white/20" />
-              <span className="text-xs text-gray-300 font-medium">Seine-Maritime</span>
+              <span className="text-xs text-gray-300 font-medium">{siteConfig.seo.regionLabel}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── Contenu ── */}
       <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8 py-12 md:py-16">
-
-        {/* Présentation */}
         <div className="space-y-4 text-gray-400 leading-relaxed text-base mb-12">
-          <p>
-            Je suis Yoann, votre chauffeur privé dédié à rendre vos trajets en Normandie agréables et sans stress.
-            Basé à Goderville, je mets mon expérience et mon sens du service au profit de vos déplacements vers
-            les aéroports et les grandes gares.
-          </p>
-          <p>
-            Que vous ayez besoin d&apos;un VTC Le Havre — Orly ou d&apos;un transfert depuis le Pays de Caux vers
-            Roissy CDG, je m&apos;engage à vous transporter avec une ponctualité rigoureuse, un confort premium
-            et toujours avec le sourire.
-          </p>
-          <p className="text-white font-semibold text-base md:text-lg">
-            Prêt à voyager différemment ? Montez à bord et profitez de l&apos;expérience YGvtc.
-          </p>
+          <p>{about.storyLead}</p>
+          <p>{about.secondaryParagraph}</p>
+          <p className="text-white font-semibold text-base md:text-lg">{about.storyClosing}</p>
         </div>
 
-        {/* Valeurs */}
         <div className="flex items-center gap-4 mb-8">
           <div className="flex-1 h-px bg-white/[0.06]" />
-          <span className="text-gray-500 text-[11px] font-bold tracking-widest uppercase whitespace-nowrap">Mes engagements</span>
+          <span className="text-gray-500 text-[11px] font-bold tracking-widest uppercase whitespace-nowrap">
+            Nos engagements
+          </span>
           <div className="flex-1 h-px bg-white/[0.06]" />
         </div>
 
@@ -187,10 +165,9 @@ export default function AProposPage() {
           ))}
         </div>
 
-        {/* Véhicule */}
         <div className="flex items-center gap-4 mb-6">
           <div className="flex-1 h-px bg-white/[0.06]" />
-          <span className="text-gray-500 text-[11px] font-bold tracking-widest uppercase whitespace-nowrap">Votre véhicule</span>
+          <span className="text-gray-500 text-[11px] font-bold tracking-widest uppercase whitespace-nowrap">Véhicule</span>
           <div className="flex-1 h-px bg-white/[0.06]" />
         </div>
 
@@ -205,18 +182,22 @@ export default function AProposPage() {
               </svg>
             </div>
             <div>
-              <p className="text-white font-bold text-base mb-1">Renault Espace 5 Initiale Paris</p>
-              <p className="text-gray-500 text-sm mb-2">Véhicule haut de gamme · 4 passagers max · Climatisé · Sièges premium</p>
+              <p className="text-white font-bold text-base mb-1">{about.vehicleLabel}</p>
+              <p className="text-gray-500 text-sm mb-2">À personnaliser selon votre flotte réelle.</p>
               <div className="flex flex-wrap gap-2">
                 {["CB", "Virement", "Espèces", "Chèque"].map((m) => (
-                  <span key={m} className="text-[10px] px-2.5 py-1 rounded-full border border-white/[0.08] bg-white/[0.03] text-gray-400 font-medium">{m}</span>
+                  <span
+                    key={m}
+                    className="text-[10px] px-2.5 py-1 rounded-full border border-white/[0.08] bg-white/[0.03] text-gray-400 font-medium"
+                  >
+                    {m}
+                  </span>
                 ))}
               </div>
             </div>
           </div>
         </div>
 
-        {/* CTA */}
         <div className="flex flex-col sm:flex-row gap-3">
           <Link
             href="/calculateur"
@@ -228,7 +209,7 @@ export default function AProposPage() {
             href="/contact"
             className="flex-1 flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl border border-white/[0.1] text-gray-300 hover:text-white hover:border-white/25 font-semibold text-sm transition-all"
           >
-            Me contacter
+            Nous contacter
           </Link>
         </div>
       </div>

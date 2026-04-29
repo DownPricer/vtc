@@ -1,12 +1,15 @@
 import Link from "next/link";
 import Image from "next/image";
+import { siteConfig } from "@/config/site.config";
+import { seoConfig } from "@/config/seo.config";
+import { getPublicSiteUrl } from "@/lib/siteUrl";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://vtc76.fr";
+const SITE_URL = getPublicSiteUrl();
+const exCity = siteConfig.serviceAreas.cities[0] || "Ville";
 
 export const metadata = {
-  title: "Tarifs VTC Le Havre, Fécamp → Orly, CDG, Beauvais — Prix Fixes Garantis",
-  description:
-    "Grille tarifaire VTC Le Havre, Fécamp, Bolbec, Étretat vers Orly (260€), CDG (270€), Beauvais, Caen. Prix fixe TTC, bagages inclus, aucun supplément. Mise à disposition dès 80€/h. Calculez votre tarif en ligne.",
+  title: `Tarifs VTC — ${siteConfig.commercialName}`,
+  description: `Exemples de trajets et grille indicative. ${seoConfig.defaultDescription} Utilisez le calculateur pour un tarif personnalisé.`,
   alternates: {
     canonical: `${SITE_URL}/tarifs`,
   },
@@ -14,7 +17,7 @@ export const metadata = {
 
 const tarifs = [
   {
-    depart: "Le Havre",
+    depart: "Zone centre",
     destination: "Orly",
     code: "ORY",
     prixAller: "260",
@@ -24,7 +27,7 @@ const tarifs = [
     featured: false,
   },
   {
-    depart: "Fécamp",
+    depart: "Ville côte",
     destination: "Roissy CDG",
     code: "CDG",
     prixAller: "270",
@@ -34,7 +37,7 @@ const tarifs = [
     featured: true,
   },
   {
-    depart: "Bolbec",
+    depart: "Ville est",
     destination: "Roissy CDG",
     code: "CDG",
     prixAller: "260",
@@ -44,7 +47,7 @@ const tarifs = [
     featured: false,
   },
   {
-    depart: "Étretat",
+    depart: "Site touristique",
     destination: "Orly",
     code: "ORY",
     prixAller: "260",
@@ -54,7 +57,7 @@ const tarifs = [
     featured: false,
   },
   {
-    depart: "Goderville",
+    depart: exCity,
     destination: "Caen",
     code: "CFR",
     prixAller: "165",
@@ -64,7 +67,7 @@ const tarifs = [
     featured: false,
   },
   {
-    depart: "Yvetot",
+    depart: "Ville voisine",
     destination: "Beauvais",
     code: "BVA",
     prixAller: "215",
@@ -94,54 +97,54 @@ const garanties = [
 const tarifsSchema = {
   "@context": "https://schema.org",
   "@type": "Service",
-  name: "Transferts Aéroport VTC Normandie",
+  name: `Transferts aéroport VTC — ${siteConfig.commercialName}`,
   provider: {
     "@type": "LocalBusiness",
-    name: "YGvtc VTC76",
+    name: siteConfig.commercialName,
     url: SITE_URL,
   },
   offers: [
     {
       "@type": "Offer",
-      name: "VTC Le Havre → Orly",
+      name: "VTC zone centre → Orly",
       price: "260",
       priceCurrency: "EUR",
-      description: "Transfert VTC Le Havre vers aéroport Paris-Orly, ~2h30, ~220 km, prix fixe TTC bagages inclus",
+      description: "Exemple indicatif : zone centre vers Paris-Orly (prix à confirmer via calculateur).",
     },
     {
       "@type": "Offer",
-      name: "VTC Fécamp → Roissy CDG",
+      name: "VTC ville côte → Roissy CDG",
       price: "270",
       priceCurrency: "EUR",
-      description: "Transfert VTC Fécamp vers aéroport Roissy CDG, ~2h45, ~230 km, prix fixe TTC bagages inclus",
+      description: "Exemple indicatif : ville côte vers Roissy CDG (prix à confirmer via calculateur).",
     },
     {
       "@type": "Offer",
-      name: "VTC Bolbec → Roissy CDG",
+      name: "VTC ville est → Roissy CDG",
       price: "260",
       priceCurrency: "EUR",
-      description: "Transfert VTC Bolbec vers aéroport Roissy CDG, ~2h30, ~210 km",
+      description: "Exemple indicatif : ville est vers Roissy CDG.",
     },
     {
       "@type": "Offer",
-      name: "VTC Étretat → Orly",
+      name: "VTC site touristique → Orly",
       price: "260",
       priceCurrency: "EUR",
-      description: "Transfert VTC Étretat vers aéroport Paris-Orly, ~2h20, ~205 km",
+      description: "Exemple indicatif : site touristique vers Orly.",
     },
     {
       "@type": "Offer",
-      name: "VTC Goderville → Caen",
+      name: `VTC ${exCity} → Caen`,
       price: "165",
       priceCurrency: "EUR",
-      description: "Transfert VTC Goderville vers aéroport de Caen, ~1h45, ~135 km",
+      description: `Exemple de transfert depuis ${exCity} vers l'aéroport de Caen (indicatif).`,
     },
     {
       "@type": "Offer",
-      name: "VTC Yvetot → Beauvais",
+      name: "VTC ville voisine → Beauvais",
       price: "215",
       priceCurrency: "EUR",
-      description: "Transfert VTC Yvetot vers aéroport Beauvais-Tillé, ~2h15, ~185 km",
+      description: "Exemple indicatif : ville voisine vers Beauvais-Tillé.",
     },
     {
       "@type": "Offer",
@@ -329,10 +332,7 @@ export default function TarifsPage() {
         </div>
 
         {/* Mise à disposition */}
-        <div
-          className="relative rounded-2xl overflow-hidden border border-primary/25 mb-10 group hover:border-primary/40 transition-colors"
-          style={{ background: "linear-gradient(135deg, rgba(255,133,51,0.06), rgba(255,133,51,0.02), rgba(0,0,0,0))" }}
-        >
+        <div className="relative rounded-2xl overflow-hidden border border-primary/25 mb-10 group hover:border-primary/40 transition-colors card-brand-glow">
           <div className="h-0.5 bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
           <div className="p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center gap-6 justify-between">
             <div className="flex items-start gap-4">
@@ -344,7 +344,7 @@ export default function TarifsPage() {
               <div>
                 <p className="text-white font-black text-lg mb-1">Mise à Disposition</p>
                 <p className="text-gray-400 text-sm mb-1">Mariage · Soirée · Séminaire · Événement professionnel</p>
-                <p className="text-gray-600 text-xs">Durée libre · Renault Espace 5 Initiale Paris · 4 passagers max</p>
+                <p className="text-gray-600 text-xs">Durée libre · {siteConfig.about.vehicleLabel}</p>
               </div>
             </div>
             <div className="flex-shrink-0 text-right">

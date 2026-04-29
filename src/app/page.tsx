@@ -8,110 +8,92 @@ import { PaymentSection } from "@/components/sections/PaymentSection";
 import { TestimonialsSection } from "@/components/sections/TestimonialsSection";
 import { RadioSection } from "@/components/sections/RadioSection";
 import { CTASection } from "@/components/sections/CTASection";
+import { siteConfig } from "@/config/site.config";
+import { businessConfig } from "@/config/business.config";
+import { seoConfig } from "@/config/seo.config";
+import { getPublicSiteUrl } from "@/lib/siteUrl";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://vtc76.fr";
+const SITE_URL = getPublicSiteUrl();
+const hq = businessConfig.headquarters;
+const ogAbs = `${SITE_URL}${siteConfig.branding.ogImageSrc}`;
+const logoAbs = `${SITE_URL}${siteConfig.branding.logoSrc}`;
 
 export const metadata: Metadata = {
-  title: "VTC Le Havre, Fécamp, Pays de Caux — Navette Aéroport Orly CDG Beauvais | YGvtc VTC76",
-  description:
-    "Chauffeur privé VTC en Seine-Maritime : Le Havre, Fécamp, Goderville, Yvetot. Transferts aéroport Orly, Roissy CDG, Beauvais, Caen. Tarifs fixes, prise en charge à domicile, réservation en ligne 7j/7. Service premium, ponctualité garantie.",
+  title: seoConfig.defaultTitle,
+  description: seoConfig.defaultDescription,
   alternates: {
     canonical: SITE_URL,
   },
 };
 
+const sameAs: string[] = [];
+if (siteConfig.urls.reviewsUrl) sameAs.push(siteConfig.urls.reviewsUrl);
+if (siteConfig.urls.primarySocialUrl) sameAs.push(siteConfig.urls.primarySocialUrl);
+
 const localBusinessSchema = {
   "@context": "https://schema.org",
   "@type": "LocalBusiness",
   "@id": `${SITE_URL}/#localbusiness`,
-  name: "YGvtc VTC76",
-  alternateName: "VTC76",
-  description: "Chauffeur privé VTC en Seine-Maritime. Transferts aéroport vers Orly, Roissy CDG, Beauvais et Caen. Service premium au départ du Havre, Fécamp, Goderville, Pays de Caux.",
+  name: siteConfig.legalName,
+  alternateName: siteConfig.commercialName,
+  description: seoConfig.defaultDescription,
   url: SITE_URL,
-  telephone: "+33769989523",
-  email: "contact@vtc76.fr",
-  image: `${SITE_URL}/images/og-vtc76.jpg`,
-  logo: `${SITE_URL}/images/vtc76.png`,
+  telephone: siteConfig.contact.phoneE164,
+  email: siteConfig.contact.email,
+  image: ogAbs,
+  logo: logoAbs,
   priceRange: "€€",
   currenciesAccepted: "EUR",
   paymentAccepted: "Carte bancaire, Espèces, Virement, Chèque",
   openingHoursSpecification: {
     "@type": "OpeningHoursSpecification",
-    dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-    opens: "00:00",
-    closes: "23:59",
+    dayOfWeek: siteConfig.openingHours.days,
+    opens: siteConfig.openingHours.opens,
+    closes: siteConfig.openingHours.closes,
   },
   address: {
     "@type": "PostalAddress",
-    streetAddress: "30 rue Jean Prévost",
-    addressLocality: "Goderville",
-    postalCode: "76110",
-    addressRegion: "Normandie",
-    addressCountry: "FR",
+    streetAddress: hq.street,
+    addressLocality: hq.city,
+    postalCode: hq.postalCode,
+    addressCountry: hq.country,
   },
   geo: {
     "@type": "GeoCoordinates",
-    latitude: 49.6481,
-    longitude: 0.3706,
+    latitude: hq.latitude,
+    longitude: hq.longitude,
   },
-  areaServed: [
-    { "@type": "City", name: "Le Havre" },
-    { "@type": "City", name: "Fécamp" },
-    { "@type": "City", name: "Goderville" },
-    { "@type": "City", name: "Yvetot" },
-    { "@type": "City", name: "Bolbec" },
-    { "@type": "City", name: "Étretat" },
-    { "@type": "City", name: "Saint-Romain-de-Colbosc" },
-    { "@type": "AdministrativeArea", name: "Pays de Caux" },
-    { "@type": "AdministrativeArea", name: "Seine-Maritime" },
-  ],
+  areaServed: siteConfig.serviceAreas.cities.map((name) => ({
+    "@type": "City",
+    name,
+  })),
   hasOfferCatalog: {
     "@type": "OfferCatalog",
     name: "Services VTC",
-    itemListElement: [
-      {
+    itemListElement: siteConfig.schemaOffers.map((o, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      item: {
         "@type": "Offer",
-        itemOffered: { "@type": "Service", name: "Transfert Aéroport Orly", description: "Navette VTC vers l'aéroport Paris-Orly depuis la Seine-Maritime" },
+        itemOffered: {
+          "@type": "Service",
+          name: o.name,
+          description: o.description,
+        },
       },
-      {
-        "@type": "Offer",
-        itemOffered: { "@type": "Service", name: "Transfert Aéroport Roissy CDG", description: "Navette VTC vers l'aéroport Roissy Charles de Gaulle" },
-      },
-      {
-        "@type": "Offer",
-        itemOffered: { "@type": "Service", name: "Transfert Aéroport Beauvais", description: "Navette VTC vers l'aéroport de Beauvais-Tillé" },
-      },
-      {
-        "@type": "Offer",
-        itemOffered: { "@type": "Service", name: "Mise à Disposition", description: "Chauffeur privé à l'heure pour mariages, séminaires et événements" },
-      },
-      {
-        "@type": "Offer",
-        itemOffered: { "@type": "Service", name: "Chauffeur Privé", description: "Trajets locaux et longue distance en Seine-Maritime et Normandie" },
-      },
-    ],
+    })),
   },
-  aggregateRating: {
-    "@type": "AggregateRating",
-    ratingValue: "5",
-    bestRating: "5",
-    worstRating: "1",
-    reviewCount: "30",
-    ratingCount: "30",
-  },
-  sameAs: [
-    "https://www.google.com/maps/place/YGvtc+VTC76",
-  ],
+  ...(sameAs.length ? { sameAs } : {}),
 };
 
 const websiteSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
   "@id": `${SITE_URL}/#website`,
-  name: "YGvtc VTC76",
-  alternateName: "VTC76",
+  name: siteConfig.commercialName,
+  alternateName: siteConfig.legalName,
   url: SITE_URL,
-  description: "Site officiel de YGvtc VTC76 — Chauffeur privé et transferts aéroport en Normandie",
+  description: seoConfig.defaultDescription,
   publisher: { "@id": `${SITE_URL}/#localbusiness` },
   inLanguage: "fr-FR",
   potentialAction: {
@@ -154,7 +136,7 @@ export default function HomePage() {
       <VideoSection />
       <PaymentSection />
       <TestimonialsSection />
-      <RadioSection />
+      {siteConfig.features.radioHomeSection ? <RadioSection /> : null}
       <CTASection />
     </>
   );

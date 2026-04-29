@@ -1,47 +1,51 @@
 import { ContactForm } from "@/components/forms/ContactForm";
+import { siteConfig } from "@/config/site.config";
+import { businessConfig } from "@/config/business.config";
+import { seoConfig } from "@/config/seo.config";
+import { getPublicSiteUrl } from "@/lib/siteUrl";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://vtc76.fr";
+const SITE_URL = getPublicSiteUrl();
+const hq = businessConfig.headquarters;
+const phoneTel = siteConfig.contact.phoneE164.replace(/\s/g, "");
+const phoneDisplay = siteConfig.contact.phoneDisplay;
+const wa = siteConfig.contact.whatsappDigits;
 
 export const metadata = {
-  title: "Contact VTC Le Havre, Fécamp — Réservation & Devis Chauffeur Privé",
-  description:
-    "Contactez YGvtc VTC76 pour vos transferts aéroport et déplacements en Normandie. Téléphone 07 69 98 95 23, WhatsApp, formulaire en ligne. Réponse rapide, devis gratuit. 30 rue Jean Prévost, 76110 Goderville.",
+  title: `Contact — ${siteConfig.commercialName}`,
+  description: `Contact et réservations pour ${siteConfig.commercialName}. ${seoConfig.defaultDescription}`,
   alternates: {
     canonical: `${SITE_URL}/contact`,
   },
 };
 
-const PHONE = "0769989523";
-const PHONE_DISPLAY = "07 69 98 95 23";
-
 const contactSchema = {
   "@context": "https://schema.org",
   "@type": "ContactPage",
-  name: "Contact YGvtc VTC76",
-  description: "Page de contact pour réserver un VTC en Seine-Maritime ou demander un devis",
+  name: `Contact — ${siteConfig.commercialName}`,
+  description: "Page de contact pour demandes et réservations VTC",
   url: `${SITE_URL}/contact`,
   mainEntity: {
     "@type": "LocalBusiness",
-    name: "YGvtc VTC76",
-    telephone: "+33769989523",
+    name: siteConfig.legalName,
+    telephone: siteConfig.contact.phoneE164,
+    email: siteConfig.contact.email,
     address: {
       "@type": "PostalAddress",
-      streetAddress: "30 rue Jean Prévost",
-      addressLocality: "Goderville",
-      postalCode: "76110",
-      addressRegion: "Normandie",
-      addressCountry: "FR",
+      streetAddress: hq.street,
+      addressLocality: hq.city,
+      postalCode: hq.postalCode,
+      addressCountry: hq.country,
     },
     geo: {
       "@type": "GeoCoordinates",
-      latitude: 49.6481,
-      longitude: 0.3706,
+      latitude: hq.latitude,
+      longitude: hq.longitude,
     },
     openingHoursSpecification: {
       "@type": "OpeningHoursSpecification",
-      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-      opens: "00:00",
-      closes: "23:59",
+      dayOfWeek: siteConfig.openingHours.days,
+      opens: siteConfig.openingHours.opens,
+      closes: siteConfig.openingHours.closes,
     },
   },
 };
@@ -58,19 +62,12 @@ const breadcrumbSchema = {
 export default function ContactPage() {
   return (
     <div className="min-h-screen bg-dark">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(contactSchema) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(contactSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
-      {/* ── Hero ── */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-dark via-dark to-dark-medium" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,133,51,0.07)_0%,transparent_60%)]" />
+        <div className="absolute inset-0 radial-brand-tr" />
         <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
         <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
 
@@ -86,27 +83,23 @@ export default function ContactPage() {
             <span className="text-gradient">en contact</span>
           </h1>
           <p className="text-gray-400 text-base md:text-lg leading-relaxed max-w-lg">
-            Une question, une demande particulière ? Je vous réponds dans les plus brefs délais.
+            Une question ou une demande particulière ? Nous revenons vers vous rapidement.
           </p>
         </div>
       </div>
 
-      {/* ── Contenu ── */}
       <div className="max-w-5xl mx-auto px-5 sm:px-6 lg:px-8 py-10 md:py-14">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
-
-          {/* Formulaire */}
           <div className="lg:col-span-3">
             <p className="text-gray-500 text-[11px] font-bold tracking-widest uppercase mb-5">Envoyer un message</p>
             <ContactForm />
           </div>
 
-          {/* Coordonnées */}
           <div className="lg:col-span-2 space-y-3">
             <p className="text-gray-500 text-[11px] font-bold tracking-widest uppercase mb-5">Coordonnées directes</p>
 
             <a
-              href={`tel:${PHONE}`}
+              href={`tel:${phoneTel}`}
               className="flex items-center gap-3.5 p-4 rounded-xl border border-white/[0.07] hover:border-primary/30 transition-all duration-200 group"
               style={{ background: "linear-gradient(145deg, #1a1a1a, #111)" }}
             >
@@ -117,25 +110,43 @@ export default function ContactPage() {
               </div>
               <div>
                 <p className="text-[10px] text-gray-600 uppercase tracking-wider mb-0.5">Téléphone</p>
-                <p className="text-white font-bold text-sm">{PHONE_DISPLAY}</p>
+                <p className="text-white font-bold text-sm">{phoneDisplay}</p>
               </div>
             </a>
 
+            {wa ? (
+              <a
+                href={`https://wa.me/${wa}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3.5 p-4 rounded-xl border border-white/[0.07] hover:border-[#25D366]/30 transition-all duration-200 group"
+                style={{ background: "linear-gradient(145deg, #1a1a1a, #111)" }}
+              >
+                <div className="w-10 h-10 rounded-lg bg-[#25D366]/10 border border-[#25D366]/20 flex items-center justify-center text-[#25D366] flex-shrink-0 group-hover:scale-105 transition-transform">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-[10px] text-gray-600 uppercase tracking-wider mb-0.5">WhatsApp</p>
+                  <p className="text-[#25D366] font-bold text-sm">Écrire un message</p>
+                </div>
+              </a>
+            ) : null}
+
             <a
-              href={`https://wa.me/33${PHONE.replace(/^0/, "")}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3.5 p-4 rounded-xl border border-white/[0.07] hover:border-[#25D366]/30 transition-all duration-200 group"
+              href={`mailto:${siteConfig.contact.email}`}
+              className="flex items-center gap-3.5 p-4 rounded-xl border border-white/[0.07] hover:border-primary/30 transition-all duration-200 group"
               style={{ background: "linear-gradient(145deg, #1a1a1a, #111)" }}
             >
-              <div className="w-10 h-10 rounded-lg bg-[#25D366]/10 border border-[#25D366]/20 flex items-center justify-center text-[#25D366] flex-shrink-0 group-hover:scale-105 transition-transform">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+              <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary flex-shrink-0 group-hover:scale-105 transition-transform">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
               </div>
               <div>
-                <p className="text-[10px] text-gray-600 uppercase tracking-wider mb-0.5">WhatsApp</p>
-                <p className="text-[#25D366] font-bold text-sm">Écrire un message</p>
+                <p className="text-[10px] text-gray-600 uppercase tracking-wider mb-0.5">E-mail</p>
+                <p className="text-white font-bold text-sm">{siteConfig.contact.email}</p>
               </div>
             </a>
 
@@ -151,7 +162,11 @@ export default function ContactPage() {
               </div>
               <div>
                 <p className="text-[10px] text-gray-600 uppercase tracking-wider mb-0.5">Adresse</p>
-                <p className="text-gray-300 text-sm">30 rue Jean Prévost<br />76110 Goderville</p>
+                <p className="text-gray-300 text-sm">
+                  {hq.street}
+                  <br />
+                  {hq.postalCode} {hq.city}
+                </p>
               </div>
             </div>
           </div>

@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import Link from "next/link";
 import { AddressAutocomplete } from "./AddressAutocomplete";
+import { postCentralApi } from "@/lib/centralApi";
 
 type TypeService = "Transfert Aéroport" | "Trajet Classique" | "MAD Evenementiel";
 type TypeTrajet = "Aller Simple" | "Aller/Retour" | "A/R + Mise à disposition";
@@ -113,7 +114,7 @@ function TrajetTypeToggle({ value, options, onChange }: {
   onChange: (v: string) => void;
 }) {
   return (
-    <div className="flex gap-1.5 p-1 rounded-lg" style={{ background: 'linear-gradient(180deg, #0d0d0f 0%, #161618 100%)', boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.03)' }}>
+    <div className="flex gap-1.5 p-1 rounded-lg chrome-switch-shell">
       {options.map((opt) => (
         <button key={opt.value} type="button" onClick={() => onChange(opt.value)}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-md text-sm font-semibold transition-all ${
@@ -131,7 +132,7 @@ function TrajetTypeToggle({ value, options, onChange }: {
 
 function ToggleSwitch({ value, onChange, labelOn, labelOff }: { value: boolean; onChange: (v: boolean) => void; labelOn: string; labelOff: string }) {
   return (
-    <div className="flex gap-1.5 p-1 rounded-lg" style={{ background: 'linear-gradient(180deg, #0d0d0f 0%, #161618 100%)', boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.03)' }}>
+    <div className="flex gap-1.5 p-1 rounded-lg chrome-switch-shell">
       {[{ v: false, label: labelOff }, { v: true, label: labelOn }].map(({ v, label }) => (
         <button key={label} type="button" onClick={() => onChange(v)}
           className={`flex-1 py-2.5 px-3 rounded-md text-sm font-semibold transition-all ${
@@ -372,25 +373,38 @@ export function CalculatorForm({ mode = "reservation" }: CalculatorFormProps) {
     const payload = buildPayload();
     setLoading(true); setError(null); setTarif(null); setTarifResult(null);
     try {
-      const res = await fetch("/api/calculer-tarif", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-      const data = await res.json();
-      if (res.ok && data.tarif != null) { setTarif(data.tarif); setTarifResult(data); }
-      else setError(data?.error || "Impossible de calculer le tarif");
-    } catch (e) { setError((e as Error).message); }
-    finally { setLoading(false); }
+      const result = await postCentralApi<Record<string, unknown>>("calculer-tarif", payload);
+      if (result.ok && result.data && result.data.tarif != null) {
+        setTarif(result.data.tarif as number);
+        setTarifResult(result.data);
+      } else {
+        setError(result.ok ? "Impossible de calculer le tarif" : result.message);
+      }
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
   }, [buildPayload]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitStatus("loading");
     const payload = buildPayload();
-    const apiUrl = isDevis ? "/api/devis" : "/api/reservation";
+    const route = isDevis ? "devis" : "reservation";
     try {
-      const res = await fetch(apiUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-      const data = await res.json();
-      if (res.ok && data.success) { setSubmitStatus("success"); window.location.href = "/remerciements"; }
-      else { setSubmitStatus("error"); setError(data?.message || "Erreur lors de l'envoi"); }
-    } catch (err) { setSubmitStatus("error"); setError((err as Error).message); }
+      const result = await postCentralApi(route, payload);
+      if (result.ok) {
+        setSubmitStatus("success");
+        window.location.href = "/remerciements";
+      } else {
+        setSubmitStatus("error");
+        setError(result.message || "Erreur lors de l'envoi");
+      }
+    } catch (err) {
+      setSubmitStatus("error");
+      setError((err as Error).message);
+    }
   };
 
   const isAR = typeTrajet === "Aller/Retour" || typeTrajet === "A/R + Mise à disposition";
@@ -556,7 +570,7 @@ export function CalculatorForm({ mode = "reservation" }: CalculatorFormProps) {
 
             {/* Switch départ depuis aéroport — Aller Simple uniquement */}
             {!isAeroAR && (
-              <div className="p-4 rounded-xl space-y-3" style={{ background: 'linear-gradient(135deg, rgba(255,133,51,0.04) 0%, rgba(20,20,22,0.8) 100%)', border: '1px solid rgba(255,133,51,0.12)' }}>
+              <div className="p-4 rounded-xl space-y-3 surface-panel-accent-soft">
                 <div className="flex items-center gap-2 mb-1">
                   <svg className="w-4 h-4 text-primary/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
                   <p className="text-[11px] font-bold text-primary/70 uppercase tracking-[0.12em]">Sens du trajet</p>
@@ -572,7 +586,7 @@ export function CalculatorForm({ mode = "reservation" }: CalculatorFormProps) {
 
             {/* ── Mode normal : Chez moi → Aéroport ── */}
             {!departDepuisAeroport && (
-              <div className="rounded-xl p-4 space-y-4" style={{ background: 'linear-gradient(180deg, rgba(20,20,22,0.7) 0%, rgba(15,15,17,0.9) 100%)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)' }}>
+              <div className="rounded-xl p-4 space-y-4 surface-panel-neutral">
                 <p className="text-[11px] font-bold text-primary/70 uppercase tracking-[0.12em] flex items-center gap-2"><IconPlane /> Aller</p>
                 <AddressAutocomplete label="Lieu de prise en charge (votre adresse)" required
                   placeholder="Votre adresse, ville..."
@@ -596,7 +610,7 @@ export function CalculatorForm({ mode = "reservation" }: CalculatorFormProps) {
 
             {/* ── Mode inversé : Aéroport → Chez moi ── */}
             {departDepuisAeroport && !isAeroAR && (
-              <div className="rounded-xl p-4 space-y-4" style={{ background: 'linear-gradient(135deg, rgba(255,133,51,0.06) 0%, rgba(15,15,17,0.9) 100%)', border: '1px solid rgba(255,133,51,0.2)', boxShadow: 'inset 0 0 20px rgba(255,133,51,0.03)' }}>
+              <div className="rounded-xl p-4 space-y-4 surface-panel-accent-strong">
                 <p className="text-[11px] font-bold text-primary/70 uppercase tracking-[0.12em] flex items-center gap-2"><IconPlane /> Départ depuis l&apos;aéroport</p>
                 {renderAeroportSelect("Aéroport de départ", aeroportDepartCode, setAeroportDepartCode)}
                 <div className="grid grid-cols-2 gap-3">
@@ -620,7 +634,7 @@ export function CalculatorForm({ mode = "reservation" }: CalculatorFormProps) {
 
             {/* ── Retour (AR) ── */}
             {isAeroAR && (
-              <div className="rounded-xl p-4 space-y-4" style={{ background: 'linear-gradient(180deg, rgba(20,20,22,0.7) 0%, rgba(15,15,17,0.9) 100%)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)' }}>
+              <div className="rounded-xl p-4 space-y-4 surface-panel-neutral">
                 <p className="text-[11px] font-bold text-primary/70 uppercase tracking-[0.12em] flex items-center gap-2">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>Retour
                 </p>
@@ -695,7 +709,7 @@ export function CalculatorForm({ mode = "reservation" }: CalculatorFormProps) {
             </div>
 
             {/* Aller */}
-            <div className="rounded-xl p-4 space-y-4" style={{ background: 'linear-gradient(180deg, rgba(20,20,22,0.7) 0%, rgba(15,15,17,0.9) 100%)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)' }}>
+            <div className="rounded-xl p-4 space-y-4 surface-panel-neutral">
               <p className="text-[11px] font-bold text-primary/70 uppercase tracking-[0.12em] flex items-center gap-2"><IconPlane /> Aller</p>
               <AddressAutocomplete label="Lieu de départ" required
                 value={getAddr(trajetClassique.TCallerpriseencharge)}
@@ -715,7 +729,7 @@ export function CalculatorForm({ mode = "reservation" }: CalculatorFormProps) {
 
             {/* Retour */}
             {isAR && (
-              <div className="rounded-xl p-4 space-y-4" style={{ background: 'linear-gradient(180deg, rgba(20,20,22,0.7) 0%, rgba(15,15,17,0.9) 100%)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)' }}>
+              <div className="rounded-xl p-4 space-y-4 surface-panel-neutral">
                 <p className="text-[11px] font-bold text-primary/70 uppercase tracking-[0.12em] flex items-center gap-2">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>Retour
                 </p>
@@ -818,7 +832,7 @@ export function CalculatorForm({ mode = "reservation" }: CalculatorFormProps) {
             <div className="odometer-display mt-5 rounded-xl p-6 text-center relative overflow-hidden">
               <div className="stitch-line absolute top-0 left-4 right-4" />
               <p className="text-[10px] text-primary/60 uppercase tracking-[0.2em] font-bold mb-2">Tarif indicatif</p>
-              <p className="text-5xl font-black text-white tabular-nums tracking-tight" style={{ textShadow: '0 0 20px rgba(255,133,51,0.3)' }}>{tarif} <span className="text-primary text-3xl font-bold">€</span></p>
+              <p className="text-5xl font-black text-white tabular-nums tracking-tight price-display-glow">{tarif} <span className="text-primary text-3xl font-bold">€</span></p>
               <div className="stitch-line mt-3 mb-2" />
               <p className="text-gray-500 text-[10px] uppercase tracking-widest">Prix fixe TTC · Bagages inclus · Prise en charge à domicile</p>
             </div>
@@ -847,7 +861,7 @@ export function CalculatorForm({ mode = "reservation" }: CalculatorFormProps) {
 
         {/* Options / Extras */}
         {typeService !== "MAD Evenementiel" && (
-          <div className="mt-5 pt-5" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+          <div className="mt-5 pt-5 border-t-subtle">
             <p className="text-[11px] font-bold text-gray-500 mb-3 uppercase tracking-[0.12em]">Options / Extras</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {EXTRAS_OPTIONS.map((opt) => (
@@ -867,9 +881,9 @@ export function CalculatorForm({ mode = "reservation" }: CalculatorFormProps) {
         )}
 
         {/* Entreprise */}
-        <div className="mt-5 pt-5" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+        <div className="mt-5 pt-5 border-t-subtle">
           <p className="text-[11px] font-bold text-gray-500 mb-3 uppercase tracking-[0.12em] flex items-center gap-2"><IconBuilding /> Professionnel ?</p>
-          <div className="flex gap-1.5 p-1 rounded-lg" style={{ background: 'linear-gradient(180deg, #0d0d0f 0%, #161618 100%)', boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.03)' }}>
+          <div className="flex gap-1.5 p-1 rounded-lg chrome-switch-shell">
             <button type="button" onClick={() => setIsEntreprise(false)}
               className={`flex-1 py-2.5 px-3 rounded-md text-sm font-semibold transition-all ${!isEntreprise ? "bg-primary/15 text-primary border border-primary/30 shadow-glow" : "text-gray-500 hover:text-gray-300 border border-transparent"}`}>
               Particulier
@@ -912,8 +926,7 @@ export function CalculatorForm({ mode = "reservation" }: CalculatorFormProps) {
             <Annotation type="info">Complétez vos coordonnées : {missingCoord.join(", ")}.</Annotation>
           )}
           <button type="submit" disabled={submitStatus === "loading" || !canSubmitDevis}
-            className="w-full py-4 rounded-xl font-bold text-sm uppercase tracking-widest disabled:opacity-40 transition-all active:scale-[0.98] flex items-center justify-center gap-3"
-            style={{ background: 'linear-gradient(135deg, #FF8533 0%, #E07A2E 100%)', color: '#fff', boxShadow: '0 4px 20px rgba(255,133,51,0.3), inset 0 1px 0 rgba(255,255,255,0.2)' }}>
+            className="btn-brand-cta w-full py-4 rounded-xl font-bold text-sm uppercase tracking-widest disabled:opacity-40 transition-all active:scale-[0.98] flex items-center justify-center gap-3">
             {submitStatus === "loading" ? (
               <><svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Envoi en cours…</>
             ) : (
@@ -935,8 +948,7 @@ export function CalculatorForm({ mode = "reservation" }: CalculatorFormProps) {
             <Annotation type="info">Avant de confirmer, veuillez remplir vos coordonnées : {missingCoord.join(", ")}.</Annotation>
           )}
           <button type="submit" disabled={submitStatus === "loading" || !canSubmitReservation}
-            className="w-full py-4 rounded-xl font-bold text-sm uppercase tracking-widest disabled:opacity-40 transition-all active:scale-[0.98] flex items-center justify-center gap-3"
-            style={{ background: 'linear-gradient(135deg, #FF8533 0%, #E07A2E 100%)', color: '#fff', boxShadow: '0 4px 20px rgba(255,133,51,0.3), inset 0 1px 0 rgba(255,255,255,0.2)' }}>
+            className="btn-brand-cta w-full py-4 rounded-xl font-bold text-sm uppercase tracking-widest disabled:opacity-40 transition-all active:scale-[0.98] flex items-center justify-center gap-3">
             {submitStatus === "loading" ? (
               <><svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Envoi en cours…</>
             ) : (

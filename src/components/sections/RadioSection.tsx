@@ -13,7 +13,7 @@ const songs = [
   { file: "FAUT PAS ME CHAUFFER (L'ÉNERVÉ DU BITUME)_.mp3",                    title: "Faut pas me Chauffer" },
   { file: "LA FAUNE DU SIÈGE ARRIÈRE_.mp3",                                     title: "La Faune du Siège Arrière" },
   { file: "LA LÉGENDE DE L'ESPACE (L'ODYSSÉE D'IGREK G)_RP .mp3",              title: "La Légende de l'Espace" },
-  { file: "LA SAGA DE YOHAN (ROOTS & BITUME)_.mp3",                             title: "La Saga de Yoann" },
+  { file: "LA SAGA DE YOHAN (ROOTS & BITUME)_.mp3",                             title: "Roots & Bitume" },
   { file: "L'ASPHALTE ET MOI.mp3",                                               title: "L'Asphalte et Moi" },
   { file: "L'ASPHALTE ET TON OMBRE (CHRISTELLE)_ .mp3",                         title: "L'Asphalte et ton Ombre" },
   { file: "L'AVANCE SUR LE TEMPS (CHUCK YOHAN) RP_.mp3",                        title: "L'Avance sur le Temps" },
@@ -23,10 +23,10 @@ const songs = [
   { file: "LE JACKPOT (C'EST POUR PAPA) RP_.mp3",                               title: "Le Jackpot" },
   { file: "LE MACHISTADOR DU BITUME (Y.G. VTC) RP.mp3",                         title: "Le Machistador" },
   { file: "LE MAÎTRE DU JEU (SCRATCH THE ROAD) (1).mp3",                        title: "Le Maître du Jeu" },
-  { file: "LE NOUVEAU YOHAN (ZEN, SOYONS ZEN)_.mp3",                            title: "Le Nouveau Yoann" },
+  { file: "LE NOUVEAU YOHAN (ZEN, SOYONS ZEN)_.mp3",                            title: "Zen, soyons zen" },
   { file: "LE SMILE AU VOLANT RP.mp3",                                           title: "Le Smile au Volant" },
   { file: "LE TETRIS (MISSION BAGAGES).mp3",                                     title: "Le Tetris" },
-  { file: "L'EFFET YO-HANN (BIENVENUE AU CLUB)_.mp3",                           title: "L'Effet Yoann" },
+  { file: "L'EFFET YO-HANN (BIENVENUE AU CLUB)_.mp3",                           title: "Bienvenue au club" },
   { file: "LES CHEVEUX D'ARGENT (COMME MES PROPRES AÏEUX)_.mp3",                title: "Les Cheveux d'Argent" },
   { file: "L'HOMME DANS LE RÉTRO (MON EMPIRE À 4 ROUES)_RP.mp3",               title: "L'Homme dans le Rétro" },
   { file: "L'INSTINCT SAUVAGE (LE ZOO SUR LA ROUTE)_.mp3",                      title: "L'Instinct Sauvage" },
@@ -313,9 +313,9 @@ export function RadioSection() {
                       ? "linear-gradient(180deg, #2a2a2a, #1a1a1a)"
                       : "linear-gradient(180deg, #222, #151515)",
                     boxShadow: shuffle
-                      ? "inset 0 1px 0 rgba(255,133,51,0.2), 0 1px 3px rgba(0,0,0,0.5)"
+                      ? "inset 0 1px 0 rgba(var(--primary-rgb), 0.2), 0 1px 3px rgba(0,0,0,0.5)"
                       : "inset 0 1px 0 rgba(255,255,255,0.05), 0 1px 3px rgba(0,0,0,0.5)",
-                    border: `1px solid ${shuffle ? "rgba(255,133,51,0.3)" : "rgba(255,255,255,0.06)"}`,
+                    border: shuffle ? "1px solid rgba(var(--primary-rgb), 0.3)" : "1px solid rgba(255,255,255,0.06)",
                   }}
                   title="Aléatoire"
                 >
@@ -345,11 +345,11 @@ export function RadioSection() {
                     onClick={togglePlay}
                     className="w-14 h-14 rounded-full flex items-center justify-center transition-all active:scale-90 relative overflow-hidden"
                     style={{
-                      background: "linear-gradient(180deg, #FF9544, #E07020)",
+                      background: "linear-gradient(180deg, var(--primary-light), var(--primary-dark))",
                       boxShadow: playing
-                        ? "0 0 20px rgba(255,133,51,0.4), inset 0 1px 0 rgba(255,255,255,0.25)"
-                        : "0 0 10px rgba(255,133,51,0.2), inset 0 1px 0 rgba(255,255,255,0.2)",
-                      border: "1px solid rgba(255,180,100,0.3)",
+                        ? "0 0 20px rgba(var(--primary-rgb), 0.4), inset 0 1px 0 rgba(255,255,255,0.25)"
+                        : "0 0 10px rgba(var(--primary-rgb), 0.2), inset 0 1px 0 rgba(255,255,255,0.2)",
+                      border: "1px solid rgba(var(--accent-highlight-rgb), 0.35)",
                     }}
                   >
                     <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent rounded-full" />
@@ -388,9 +388,9 @@ export function RadioSection() {
                       ? "linear-gradient(180deg, #2a2a2a, #1a1a1a)"
                       : "linear-gradient(180deg, #222, #151515)",
                     boxShadow: showList
-                      ? "inset 0 1px 0 rgba(255,133,51,0.2), 0 1px 3px rgba(0,0,0,0.5)"
+                      ? "inset 0 1px 0 rgba(var(--primary-rgb), 0.2), 0 1px 3px rgba(0,0,0,0.5)"
                       : "inset 0 1px 0 rgba(255,255,255,0.05), 0 1px 3px rgba(0,0,0,0.5)",
-                    border: `1px solid ${showList ? "rgba(255,133,51,0.3)" : "rgba(255,255,255,0.06)"}`,
+                    border: showList ? "1px solid rgba(var(--primary-rgb), 0.3)" : "1px solid rgba(255,255,255,0.06)",
                   }}
                   title={`${songs.length} titres`}
                 >

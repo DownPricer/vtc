@@ -1,13 +1,10 @@
 import { NextResponse } from "next/server";
 import { calculerDistances, calculerTarif } from "@/lib/pricing/calculator";
 import { normalizeTypeService } from "@/lib/pricing/utils";
-import { buildDevisPayload } from "@/lib/n8n/payloads";
-import { sendWebhookWithRetry } from "@/lib/n8n/webhook";
+import { buildDevisPayload } from "@/lib/leads/buildLeadRecord";
+import { sendDevisLeadEmails } from "@/lib/notifications/sendLeadEmails";
 
 const API_KEY = process.env.DISTANCE_MATRIX_API_KEY;
-const WEBHOOK_URL =
-  process.env.N8N_WEBHOOK_URL ||
-  "https://ygvtc.app.n8n.cloud/webhook/86ef72ac-6c05-4570-adf0-e1674934a780";
 
 export async function POST(request: Request) {
   if (!API_KEY) {
@@ -55,17 +52,25 @@ export async function POST(request: Request) {
     const distances = await calculerDistances(API_KEY, payload);
     const result = await calculerTarif(typeKey, payload, distances);
 
-    const n8nPayload = buildDevisPayload({
+    const lead = buildDevisPayload({
       payload,
       result,
       distances,
     });
 
-    await sendWebhookWithRetry(WEBHOOK_URL, n8nPayload);
+    const displayName = `${client.prenom} ${client.nom}`.trim();
+    const summaryLines = [
+      `Référence : ${lead.ID}`,
+      `Tarif estimé : ${result.tarif} €`,
+      `Service : ${lead.TypeService || ""}`,
+      `Trajet : ${lead.RésuméTrajet || ""}`,
+    ];
+
+    await sendDevisLeadEmails(lead, client.email, displayName, summaryLines);
 
     return NextResponse.json({
       success: true,
-      devisId: n8nPayload.ID,
+      devisId: lead.ID,
       tarif: result.tarif,
       message: "Devis envoyé avec succès",
     });

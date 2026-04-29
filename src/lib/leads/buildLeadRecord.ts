@@ -6,7 +6,7 @@ import {
   normalizeTypeService,
   normalizeTCtrajet,
 } from "@/lib/pricing/utils";
-import { BASE_ADDRESS } from "@/lib/pricing/config";
+import { BASE_ADDRESS } from "@/config/pricing.config";
 import { buildGcalUrl } from "@/lib/pricing/calculator";
 import type { TarifResult } from "@/lib/pricing/calculator";
 import type { Distances } from "@/lib/pricing/types";

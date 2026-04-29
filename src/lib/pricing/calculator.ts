@@ -6,10 +6,14 @@ import {
   TA_TABLE,
   TC_TABLE,
   MAJ,
-  JOURS_FERIES_2025,
+  PUBLIC_HOLIDAYS,
   APPLY_AR_DISCOUNT,
+  OUT_OF_PRIMARY_SERVICE_ZONE_MULTIPLIER,
+  PRIMARY_SERVICE_ZONE_COMMUNES,
+  MAD_HOURLY_RATES,
+  MAD_EVENT_MINIMUM_TOTAL,
+  CALENDAR_EVENT_TITLE_PREFIX,
 } from "./config";
-import { COMMUNES_76 } from "@/lib/communes76";
 import { getDistancesWithFallback } from "./distance";
 import { calculerCreneaux, isFerie } from "./creneaux";
 import {
@@ -32,13 +36,17 @@ function normalizeString(str: string): string {
     .trim();
 }
 
-export function isDepartement76(adresseDepart: string): boolean {
+/** Indique si l’adresse de départ est dans la zone « tarif préférentiel » (liste configurable). */
+export function isInPrimaryServiceZone(adresseDepart: string): boolean {
   const adresseNormalisee = normalizeString(adresseDepart);
-  for (const commune of Array.from(COMMUNES_76)) {
+  for (const commune of Array.from(PRIMARY_SERVICE_ZONE_COMMUNES)) {
     if (adresseNormalisee.includes(commune)) return true;
   }
   return false;
 }
+
+/** @deprecated utiliser isInPrimaryServiceZone */
+export const isDepartement76 = isInPrimaryServiceZone;
 
 function zoneFromDistance(d: number): number {
   const x = Number(d) || 0;
@@ -80,7 +88,7 @@ function majFrom(
     return { amount: 0, reasons: [] };
   let pct = 0;
   const reasons: string[] = [];
-  const isFerieDt = dt && JOURS_FERIES_2025.includes(dt.toFormat("dd/MM/yyyy"));
+  const isFerieDt = dt && PUBLIC_HOLIDAYS.includes(dt.toFormat("dd/MM/yyyy"));
   const isWeekend = dt && (dt.weekday === 6 || dt.weekday === 7);
   const isNight = dt && (dt.hour >= 22 || dt.hour < 6);
   const isEvening = dt && dt.hour >= 19 && dt.hour < 22;
@@ -133,7 +141,7 @@ export function buildGcalUrl(params: {
     const enc = encodeURIComponent;
     const q = [
       `action=TEMPLATE`,
-      `text=${enc(title || "Course YGvtc")}`,
+      `text=${enc(title || CALENDAR_EVENT_TITLE_PREFIX)}`,
       `dates=${s}/${e}`,
       `details=${enc(details || "")}`,
       `location=${enc(location || "")}`,
@@ -279,7 +287,7 @@ export async function calculerTarif(
     const startEvt = parseDT(e.DateEvenement, e.HeureEvenement);
     const heures = parseFloat(e.HeureMADEvenement) || 0;
 
-    let tarifHoraire = 80;
+    let tarifHoraire: number = MAD_HOURLY_RATES.default;
     if (startEvt?.isValid) {
       const soiree = startEvt.hour >= 19 && startEvt.hour < 22;
       const nuit = startEvt.hour >= 22 || startEvt.hour < 6;
@@ -288,8 +296,8 @@ export async function calculerTarif(
         startEvt.weekday === 7 ||
         isFerie(startEvt)
       )
-        tarifHoraire = 120;
-      else if (nuit || soiree) tarifHoraire = 100;
+        tarifHoraire = MAD_HOURLY_RATES.weekendOrHoliday;
+      else if (nuit || soiree) tarifHoraire = MAD_HOURLY_RATES.eveningOrNight;
     }
     (tarifs.aller as Record<string, number>).approche = 0;
     (tarifs.aller as Record<string, number>).retourBase = 0;
@@ -298,7 +306,7 @@ export async function calculerTarif(
     tarifs.majAller = 0;
     tarifs.majRetour = 0;
     let total = fmt(tarifs.miseADisposition as number);
-    total = Math.max(total, 200);
+    total = Math.max(total, MAD_EVENT_MINIMUM_TOTAL);
     tarifs.total = total;
 
     const creneaux = await calculerCreneaux(payload, distances);
@@ -398,7 +406,7 @@ export async function calculerTarif(
           (tarifs.retour as Record<string, number>).total;
 
         const dtAllerMAD = parseDT(t?.TCallerdate, t?.TCallerheure);
-        let tarifHoraireMAD = 80;
+        let tarifHoraireMAD: number = MAD_HOURLY_RATES.default;
         if (dtAllerMAD?.isValid) {
           const soiree =
             dtAllerMAD.hour >= 19 && dtAllerMAD.hour < 22;
@@ -408,8 +416,8 @@ export async function calculerTarif(
             dtAllerMAD.weekday === 7 ||
             isFerie(dtAllerMAD)
           )
-            tarifHoraireMAD = 120;
-          else if (nuit || soiree) tarifHoraireMAD = 100;
+            tarifHoraireMAD = MAD_HOURLY_RATES.weekendOrHoliday;
+          else if (nuit || soiree) tarifHoraireMAD = MAD_HOURLY_RATES.eveningOrNight;
         }
         tarifs.miseADisposition =
           tarifHoraireMAD * (parseFloat(t.HeureMADClassique) || 0);
@@ -446,7 +454,7 @@ export async function calculerTarif(
     const adresseDepart = getFormattedAddress(
       t?.TCallerpriseencharge || (payload?.AdresseDepart_1 as string) || ""
     );
-    if (!isDepartement76(adresseDepart)) total *= 1.05;
+    if (!isInPrimaryServiceZone(adresseDepart)) total *= OUT_OF_PRIMARY_SERVICE_ZONE_MULTIPLIER;
 
     const zones = isAR ? TC_TABLE.AR.ZONES : TC_TABLE.SIMPLE.ZONES;
     const zoneConfig = zones[zone as keyof typeof zones];

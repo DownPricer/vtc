@@ -1,12 +1,17 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { siteConfig } from "@/config/site.config";
 import { VTCGame } from "./VTCGame";
 
 export const metadata: Metadata = {
-  title: "Mini-Jeu VTC76 — Mission Aéroport Express",
+  title: "Mini-jeu — Mission Aéroport Express",
   description:
-    "Jouez au mini-jeu VTC76 ! Conduisez votre VTC de Normandie jusqu'à l'aéroport en évitant le trafic. Collectez des pourboires et activez le télépéage !",
+    "Mini-jeu arcade : conduisez votre VTC jusqu'à l'aéroport en évitant le trafic. Classement local optionnel.",
 };
 
 export default function JeuPage() {
+  if (!siteConfig.features.miniGame) {
+    notFound();
+  }
   return <VTCGame />;
 }

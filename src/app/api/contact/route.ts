@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
-import { buildContactPayload } from "@/lib/n8n/payloads";
-import { sendWebhookWithRetry } from "@/lib/n8n/webhook";
-
-const WEBHOOK_URL =
-  process.env.N8N_WEBHOOK_URL ||
-  "https://ygvtc.app.n8n.cloud/webhook/86ef72ac-6c05-4570-adf0-e1674934a780";
+import { buildContactPayload } from "@/lib/leads/buildLeadRecord";
+import { sendContactLeadEmail } from "@/lib/notifications/sendLeadEmails";
 
 export async function POST(request: Request) {
   try {
@@ -17,10 +13,10 @@ export async function POST(request: Request) {
       );
     }
     const payload = buildContactPayload({ client, commentaires });
-    await sendWebhookWithRetry(WEBHOOK_URL, payload);
+    await sendContactLeadEmail(payload, client.email);
     return NextResponse.json({
       success: true,
-      reservationId: payload.ID,
+      leadId: payload.ID,
     });
   } catch (e) {
     console.error("[Contact API]", e);

@@ -1,7 +1,14 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
+import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import { siteConfig } from "@/config/site.config";
+import { rgbString } from "@/lib/branding/colorUtils";
+
+const P = siteConfig.branding.colors.primary;
+const HL = siteConfig.branding.colors.accentHighlight;
+const pSoft = (a: number) => rgbString(P, a);
+const hlSoft = (a: number) => rgbString(HL, a);
 
 export function IntroScreen() {
   const [visible, setVisible] = useState(true);
@@ -25,7 +32,7 @@ export function IntroScreen() {
           width: 2px;
           left: ${Math.random() * 100}%;
           top: 0;
-          background: linear-gradient(to bottom, #FF8533, transparent);
+          background: linear-gradient(to bottom, ${P}, transparent);
           border-radius: 2px;
           opacity: 0;
           animation: introParticle ${0.5 + Math.random() * 0.9}s linear infinite;
@@ -116,11 +123,11 @@ export function IntroScreen() {
           {/* Bandes latérales de la route */}
           <div style={{
             position: 'absolute', left: '35%', top: 0, bottom: 0, width: '2px',
-            background: 'rgba(255,133,51,0.15)',
+            background: pSoft(0.15),
           }} />
           <div style={{
             position: 'absolute', right: '35%', top: 0, bottom: 0, width: '2px',
-            background: 'rgba(255,133,51,0.15)',
+            background: pSoft(0.15),
           }} />
           {/* Lignes centrales */}
           {[0, 1, 2, 3, 4].map(i => (
@@ -130,7 +137,7 @@ export function IntroScreen() {
               width: '5px',
               bottom: `${10 + i * 15}%`,
               height: `${28 - i * 3}px`,
-              background: '#FF8533',
+              background: P,
               borderRadius: '2px',
               opacity: 0,
               animation: `introRoadLine 1.1s linear infinite`,
@@ -144,7 +151,7 @@ export function IntroScreen() {
       <div style={{
         position: 'absolute', top: '38%', left: 'calc(50% - 110px)',
         width: '130px', height: '320px',
-        background: 'radial-gradient(ellipse at top, rgba(255,220,120,0.18) 0%, transparent 70%)',
+        background: `radial-gradient(ellipse at top, ${hlSoft(0.18)} 0%, transparent 70%)`,
         transform: 'rotate(-6deg)',
         opacity: 0, animation: 'introHeadlight 1.8s ease 0.6s forwards',
         pointerEvents: 'none', zIndex: 1,
@@ -152,7 +159,7 @@ export function IntroScreen() {
       <div style={{
         position: 'absolute', top: '38%', right: 'calc(50% - 110px)',
         width: '130px', height: '320px',
-        background: 'radial-gradient(ellipse at top, rgba(255,220,120,0.18) 0%, transparent 70%)',
+        background: `radial-gradient(ellipse at top, ${hlSoft(0.18)} 0%, transparent 70%)`,
         transform: 'rotate(6deg)',
         opacity: 0, animation: 'introHeadlight 1.8s ease 0.6s forwards',
         pointerEvents: 'none', zIndex: 1,
@@ -169,7 +176,7 @@ export function IntroScreen() {
           position: 'absolute', top: '50%', left: '50%',
           width: '220px', height: '220px',
           borderRadius: '50%',
-          border: `2px solid ${i === 1 ? '#FFD580' : i === 2 ? 'rgba(255,133,51,0.35)' : '#FF8533'}`,
+          border: `2px solid ${i === 1 ? HL : i === 2 ? pSoft(0.35) : P}`,
           transform: 'translate(-50%, -50%) scale(0)',
           opacity: 0, pointerEvents: 'none', zIndex: 5,
         }} />
@@ -179,7 +186,7 @@ export function IntroScreen() {
       <div id="intro-glow" style={{
         position: 'absolute', top: '50%', left: '50%',
         width: '280px', height: '280px', borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(255,133,51,0.55) 0%, rgba(255,133,51,0.2) 35%, transparent 70%)',
+        background: `radial-gradient(circle, ${pSoft(0.55)} 0%, ${pSoft(0.2)} 35%, transparent 70%)`,
         transform: 'translate(-50%, -50%) scale(0)',
         opacity: 0, pointerEvents: 'none', zIndex: 4,
       }} />
@@ -190,8 +197,8 @@ export function IntroScreen() {
         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px',
       }}>
         <Image
-          src="/images/vtc76.png"
-          alt="VTC76"
+          src={siteConfig.branding.logoSrc}
+          alt={siteConfig.branding.logoAlt}
           width={200}
           height={200}
           priority
@@ -207,7 +214,7 @@ export function IntroScreen() {
         {/* Reflet sol */}
         <div id="intro-reflection" style={{
           width: '130px', height: '28px',
-          background: 'radial-gradient(ellipse, rgba(255,133,51,0.35) 0%, transparent 70%)',
+          background: `radial-gradient(ellipse, ${pSoft(0.35)} 0%, transparent 70%)`,
           borderRadius: '50%',
           filter: 'blur(6px)',
           opacity: 0,
@@ -225,7 +232,7 @@ export function IntroScreen() {
           transform: 'translateY(12px)',
           margin: 0,
         }}>
-          Votre chauffeur VTC en Normandie
+          {siteConfig.commercialName} — {siteConfig.tagline}
         </p>
       </div>
 

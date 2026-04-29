@@ -5,7 +5,15 @@ import Link from "next/link";
 import Image from "next/image";
 import { SoundManager } from "./sounds";
 
-const PRIMARY = "#FF8533", PRIMARY_DARK = "#E07A2E", NEON_BLUE = "#00d2ff", GOLD = "#FFD580";
+import { siteConfig } from "@/config/site.config";
+import { rgbString } from "@/lib/branding/colorUtils";
+
+const PRIMARY = siteConfig.branding.colors.primary;
+const PRIMARY_DARK = siteConfig.branding.colors.primaryDark;
+const NEON_BLUE = siteConfig.branding.colors.gameNeon;
+const GOLD = siteConfig.branding.colors.accentHighlight;
+
+const SCORE_STORAGE_KEY = "vtc-template-scores";
 const CANVAS_W = 400, CANVAS_H = 700;
 const ROAD_LEFT = 70, ROAD_RIGHT = 330, ROAD_W = ROAD_RIGHT - ROAD_LEFT;
 const LANE_COUNT = 3, LANE_W = ROAD_W / LANE_COUNT;
@@ -119,7 +127,7 @@ export function VTCGame() {
   useEffect(() => {
     (async () => {
       try { const r = await fetch("/api/scores"); if (r.ok) { const d = await r.json(); if (Array.isArray(d) && d.length) { setLeaderboard(d); return; } } } catch { /* */ }
-      try { const l = JSON.parse(localStorage.getItem("vtc76-scores") || "[]"); if (l.length) setLeaderboard(l); } catch { /* */ }
+      try { const l = JSON.parse(localStorage.getItem(SCORE_STORAGE_KEY) || "[]"); if (l.length) setLeaderboard(l); } catch { /* */ }
     })();
     isTouchRef.current = "ontouchstart" in window;
   }, []);
@@ -157,11 +165,11 @@ export function VTCGame() {
       if (r.ok) { const d = await r.json(); if (Array.isArray(d)) { setLeaderboard(d); setSubmitted(true); setSubmitting(false); return; } }
       throw new Error();
     } catch {
-      const l: ScoreEntry[] = JSON.parse(localStorage.getItem("vtc76-scores") || "[]");
+      const l: ScoreEntry[] = JSON.parse(localStorage.getItem(SCORE_STORAGE_KEY) || "[]");
       l.push({ pseudo: name.toUpperCase(), score: finalScore, date: Date.now() });
       l.sort((a, b) => b.score - a.score);
       const t5 = l.slice(0, 5);
-      localStorage.setItem("vtc76-scores", JSON.stringify(t5));
+      localStorage.setItem(SCORE_STORAGE_KEY, JSON.stringify(t5));
       setLeaderboard(t5);
     }
     setSubmitted(true); setSubmitting(false);
@@ -343,7 +351,7 @@ export function VTCGame() {
       const g = ctx.createLinearGradient(ROAD_LEFT, 0, ROAD_RIGHT, 0);
       g.addColorStop(0, "#151515"); g.addColorStop(0.5, "#253545"); g.addColorStop(1, "#151515");
       ctx.fillStyle = g; ctx.fillRect(ROAD_LEFT, 0, ROAD_W, CANVAS_H);
-      ctx.strokeStyle = "rgba(255,133,51,0.4)"; ctx.lineWidth = 3;
+      ctx.strokeStyle = rgbString(PRIMARY, 0.4); ctx.lineWidth = 3;
       ctx.beginPath(); ctx.moveTo(ROAD_LEFT, 0); ctx.lineTo(ROAD_LEFT, CANVAS_H); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(ROAD_RIGHT, 0); ctx.lineTo(ROAD_RIGHT, CANVAS_H); ctx.stroke();
       ctx.strokeStyle = "rgba(255,255,255,0.2)"; ctx.setLineDash([35, 45]); ctx.lineDashOffset = -off; ctx.lineWidth = 2;
@@ -433,7 +441,7 @@ export function VTCGame() {
         if (s.boostTimer <= 0) s.boostActive = false;
         if (frameRef.current % 2 === 0) spawnParticle(p.x + p.w / 2 + (Math.random() - 0.5) * 20, p.y + p.h, NEON_BLUE, 1);
       }
-      if (s.speed > 3 && frameRef.current % 3 === 0) spawnParticle(p.x + p.w / 2, p.y + p.h, "rgba(255,133,51,0.6)", 1);
+      if (s.speed > 3 && frameRef.current % 3 === 0) spawnParticle(p.x + p.w / 2, p.y + p.h, rgbString(PRIMARY, 0.6), 1);
 
       s.comboTimer--; if (s.comboTimer <= 0) s.combo = 0;
 
@@ -766,7 +774,7 @@ export function VTCGame() {
 
       if (s.speed > 6) {
         const a = Math.min((s.speed - 6) / 16, 0.25);
-        ctx.strokeStyle = `rgba(255,133,51,${a})`; ctx.lineWidth = 1.5;
+        ctx.strokeStyle = rgbString(PRIMARY, a); ctx.lineWidth = 1.5;
         for (let i = 0; i < 5; i++) { const lx = ROAD_LEFT + 5 + Math.random() * (ROAD_W - 10); const ly = Math.random() * CANVAS_H; ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx, ly + 20 + s.speed * 3); ctx.stroke(); }
       }
 
@@ -937,9 +945,9 @@ export function VTCGame() {
       ctx.fillStyle = "#fff"; ctx.shadowBlur = 8; ctx.shadowColor = "#fff"; ctx.fillRect(-hw + 3, -hh + 2, 10, 4); ctx.fillRect(hw - 13, -hh + 2, 10, 4); ctx.shadowBlur = 0;
       ctx.fillStyle = s.braking ? "#ff3333" : "#e74c3c"; if (s.braking) { ctx.shadowBlur = 12; ctx.shadowColor = "#ff0000"; }
       ctx.fillRect(-hw + 5, hh - 6, 8, 4); ctx.fillRect(hw - 13, hh - 6, 8, 4); ctx.shadowBlur = 0;
-      ctx.fillStyle = PRIMARY; ctx.font = "bold 7px sans-serif"; ctx.textAlign = "center"; ctx.fillText("VTC76", 0, hh - 12);
+      ctx.fillStyle = PRIMARY; ctx.font = "bold 7px sans-serif"; ctx.textAlign = "center"; ctx.fillText(siteConfig.commercialName.slice(0, 8), 0, hh - 12);
       if (s.speed > 2) {
-        ctx.strokeStyle = `rgba(255,133,51,${Math.min(s.speed / 15, 0.4)})`; ctx.lineWidth = 2;
+        ctx.strokeStyle = rgbString(PRIMARY, Math.min(s.speed / 15, 0.4)); ctx.lineWidth = 2;
         for (let i = 0; i < 3; i++) { const tx = -hw + 5 + i * (hw - 5); ctx.beginPath(); ctx.moveTo(tx, hh); ctx.lineTo(tx + (Math.random() - 0.5) * 4, hh + 15 + s.speed * 2); ctx.stroke(); }
       }
       if (psg.state === "aboard") {
@@ -1056,7 +1064,7 @@ export function VTCGame() {
         ctx.globalAlpha = 0.55;
         ctx.fillStyle = "rgba(255,255,255,0.07)";
         ctx.beginPath(); ctx.arc(jBX, jBY, jR, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = ts2.joyActive ? "rgba(255,133,51,0.7)" : "rgba(255,255,255,0.2)"; ctx.lineWidth = 2;
+        ctx.strokeStyle = ts2.joyActive ? rgbString(PRIMARY, 0.7) : "rgba(255,255,255,0.2)"; ctx.lineWidth = 2;
         ctx.beginPath(); ctx.arc(jBX, jBY, jR, 0, Math.PI * 2); ctx.stroke();
         // Inner ring
         ctx.strokeStyle = "rgba(255,255,255,0.1)"; ctx.lineWidth = 1;
@@ -1070,7 +1078,7 @@ export function VTCGame() {
           ctx.fillText("◀", jBX - jR * 0.55 + 2, jBY + 5);
           ctx.fillText("▶", jBX + jR * 0.55 - 2, jBY + 5);
           ctx.globalAlpha = 0.3;
-          ctx.fillStyle = "rgba(255,133,51,0.7)"; ctx.font = "bold 8px sans-serif";
+          ctx.fillStyle = rgbString(PRIMARY, 0.7); ctx.font = "bold 8px sans-serif";
           ctx.fillText("CONDUITE", jBX, jBY + jR + 13);
         }
         ctx.globalAlpha = 1;
@@ -1078,7 +1086,7 @@ export function VTCGame() {
         // Joystick thumb
         const thumbX = ts2.joyActive ? ts2.joyThumbX : jBX;
         const thumbY = ts2.joyActive ? ts2.joyThumbY : jBY;
-        ctx.fillStyle = ts2.joyActive ? "rgba(255,133,51,0.9)" : "rgba(200,200,200,0.45)";
+        ctx.fillStyle = ts2.joyActive ? rgbString(PRIMARY, 0.9) : "rgba(200,200,200,0.45)";
         ctx.shadowBlur = ts2.joyActive ? 12 : 0; ctx.shadowColor = PRIMARY;
         ctx.beginPath(); ctx.arc(thumbX, thumbY, 22, 0, Math.PI * 2); ctx.fill();
         ctx.shadowBlur = 0;
@@ -1159,11 +1167,11 @@ export function VTCGame() {
             <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/90 to-black/95" style={{ borderRadius: 16 }} />
             <div className="relative z-10 w-full max-w-xs flex flex-col items-center gap-4 px-4 py-6">
               <div className="relative w-full flex items-end justify-center" style={{ height: 180 }}>
-                <div className="relative w-36 h-44 -mb-2"><Image src="/images/chauffeur.png" alt="Chauffeur VTC76" fill className="object-contain drop-shadow-2xl" sizes="144px" priority /></div>
-                <div className="absolute top-2 right-2 w-10 h-10 opacity-80"><Image src="/images/vtc76.png" alt="VTC76" fill className="object-contain" sizes="40px" /></div>
+                <div className="relative w-36 h-44 -mb-2"><Image src="/images/chauffeur.png" alt="Chauffeur VTC" fill className="object-contain drop-shadow-2xl" sizes="144px" priority /></div>
+                <div className="absolute top-2 right-2 w-10 h-10 opacity-80"><Image src={siteConfig.branding.logoSrc} alt={siteConfig.branding.logoAlt} fill className="object-contain" sizes="40px" /></div>
               </div>
               <div className="text-center -mt-1">
-                <p className="text-[10px] uppercase tracking-[0.3em] text-gray-500 mb-1">VTC76 Presents</p>
+                <p className="text-[10px] uppercase tracking-[0.3em] text-gray-500 mb-1">{siteConfig.commercialName}</p>
                 <h1 className="text-2xl font-extrabold tracking-tight" style={{ background: `linear-gradient(135deg, ${PRIMARY}, ${GOLD})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>MISSION AÉROPORT</h1>
                 <p className="text-gray-500 text-[10px] mt-1">Normandie → Autoroute A13 → Paris CDG</p>
               </div>
@@ -1185,9 +1193,9 @@ export function VTCGame() {
                   <LeaderboardTable scores={leaderboard} />
                 </div>
               )}
-              <button onClick={startGame} className="w-full py-4 rounded-xl font-bold text-white text-base transition-all hover:scale-[1.03] active:scale-95" style={{ background: `linear-gradient(135deg, ${PRIMARY}, ${PRIMARY_DARK})`, boxShadow: "0 0 40px rgba(255,133,51,0.3), inset 0 1px 0 rgba(255,255,255,0.15)" }}>DÉMARRER LA COURSE</button>
+              <button onClick={startGame} className="btn-brand-cta w-full py-4 rounded-xl font-bold text-base transition-all hover:scale-[1.03] active:scale-95">DÉMARRER LA COURSE</button>
               <p className="text-gray-600 text-[9px] text-center leading-relaxed">Clavier : Flèches + Espace (frein)<br />Mobile : Joystick gauche + Frein droit</p>
-              <Link href="/" className="text-gray-600 text-[11px] hover:text-gray-400 transition-colors pb-4">← Retour au site vtc76.fr</Link>
+              <Link href="/" className="text-gray-600 text-[11px] hover:text-gray-400 transition-colors pb-4">← Retour au site</Link>
             </div>
           </div>
         )}
@@ -1254,7 +1262,7 @@ export function VTCGame() {
                 </div>
               )}
               <div className="flex flex-col gap-2 w-full mt-2">
-                <button onClick={startGame} className="w-full py-3 rounded-xl font-bold text-sm text-white transition-all hover:scale-[1.03] active:scale-95" style={{ background: `linear-gradient(135deg, ${PRIMARY}, ${PRIMARY_DARK})`, boxShadow: "0 0 20px rgba(255,133,51,0.2)" }}>REJOUER</button>
+                <button onClick={startGame} className="btn-brand-cta w-full py-3 rounded-xl font-bold text-sm transition-all hover:scale-[1.03] active:scale-95">REJOUER</button>
                 <Link href="/calculateur" className="w-full py-2.5 rounded-xl font-semibold text-sm text-center transition-all hover:scale-[1.03] border" style={{ borderColor: `${PRIMARY}40`, color: PRIMARY }}>Réserver un VTC</Link>
                 <Link href="/" className="text-center text-xs text-gray-500 hover:text-gray-300 transition-colors mt-1 pb-4">← Retour à l&apos;accueil</Link>
               </div>

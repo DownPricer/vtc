@@ -1,12 +1,14 @@
 import Link from "next/link";
 import Image from "next/image";
+import { siteConfig } from "@/config/site.config";
+import { seoConfig } from "@/config/seo.config";
+import { getPublicSiteUrl } from "@/lib/siteUrl";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://vtc76.fr";
+const SITE_URL = getPublicSiteUrl();
 
 export const metadata = {
-  title: "Services VTC Le Havre, Fécamp — Transfert Aéroport, Chauffeur Privé, Mise à Disposition",
-  description:
-    "Découvrez nos services VTC en Seine-Maritime : transferts aéroport Orly, CDG, Beauvais depuis Le Havre et Fécamp, mise à disposition pour mariages et séminaires, chauffeur privé longue distance. Renault Espace Initiale, confort premium.",
+  title: `Services VTC — ${siteConfig.commercialName}`,
+  description: `Transferts aéroport, mise à disposition et chauffeur privé. ${seoConfig.defaultDescription}`,
   alternates: {
     canonical: `${SITE_URL}/services`,
   },
@@ -42,10 +44,10 @@ const services = [
   {
     num: "03",
     title: "Chauffeur Privé",
-    desc: "Trajets locaux et longue distance en Seine-Maritime. Confort premium à bord de la Renault Espace 5 Initiale. Flexibilité totale, tarifs fixes.",
+    desc: `Trajets locaux et longue distance. ${siteConfig.about.vehicleLabel} — flexibilité et tarifs annoncés clairement.`,
     href: "/devis",
     cta: "Devis gratuit",
-    tags: ["Le Havre", "Fécamp", "Yvetot", "Normandie"],
+    tags: siteConfig.serviceAreas.cities.slice(0, 4),
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 17a2 2 0 104 0m-4 0a2 2 0 014 0m0 0h2m-6 0H6m12 0a2 2 0 104 0m-4 0a2 2 0 014 0M4 17H2M3 7l2-2h10l3 4H3V7zm0 4v4" />
@@ -60,26 +62,25 @@ const servicesSchema = {
   serviceType: "Chauffeur privé VTC",
   provider: {
     "@type": "LocalBusiness",
-    name: "YGvtc VTC76",
+    name: siteConfig.commercialName,
     url: SITE_URL,
   },
-  areaServed: [
-    { "@type": "City", name: "Le Havre" },
-    { "@type": "City", name: "Fécamp" },
-    { "@type": "AdministrativeArea", name: "Seine-Maritime" },
-  ],
+  areaServed: siteConfig.serviceAreas.cities.map((name) => ({
+    "@type": "City",
+    name,
+  })),
   hasOfferCatalog: {
     "@type": "OfferCatalog",
-    name: "Services VTC Normandie",
+    name: `Services VTC — ${siteConfig.commercialName}`,
     itemListElement: [
       {
         "@type": "OfferCatalog",
         name: "Transferts Aéroports",
         itemListElement: [
-          { "@type": "Offer", itemOffered: { "@type": "Service", name: "VTC Le Havre — Orly" } },
-          { "@type": "Offer", itemOffered: { "@type": "Service", name: "VTC Fécamp — Roissy CDG" } },
-          { "@type": "Offer", itemOffered: { "@type": "Service", name: "VTC Normandie — Beauvais" } },
-          { "@type": "Offer", itemOffered: { "@type": "Service", name: "VTC Normandie — Caen" } },
+          { "@type": "Offer", itemOffered: { "@type": "Service", name: "Transfert vers Orly" } },
+          { "@type": "Offer", itemOffered: { "@type": "Service", name: "Transfert vers Roissy CDG" } },
+          { "@type": "Offer", itemOffered: { "@type": "Service", name: "Transfert vers Beauvais" } },
+          { "@type": "Offer", itemOffered: { "@type": "Service", name: "Transfert vers Caen" } },
         ],
       },
       {
@@ -95,7 +96,7 @@ const servicesSchema = {
         itemOffered: {
           "@type": "Service",
           name: "Chauffeur Privé",
-          description: "Trajets locaux et longue distance en Seine-Maritime, confort premium",
+          description: siteConfig.serviceAreas.description,
         },
       },
     ],

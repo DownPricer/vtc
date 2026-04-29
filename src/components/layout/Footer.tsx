@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { siteConfig } from "@/config/site.config";
+import { businessConfig } from "@/config/business.config";
 
-const footerLinks = {
+const footerLinksBase = {
   services: [
     { href: "/calculateur", label: "Réservation en ligne" },
     { href: "/devis", label: "Devis gratuit" },
@@ -11,7 +13,6 @@ const footerLinks = {
     { href: "/a-propos", label: "À propos" },
     { href: "/faq", label: "FAQ" },
     { href: "/contact", label: "Contact" },
-    { href: "/jeu", label: "Mini-Jeu VTC76" },
   ],
   legal: [
     { href: "/mentions-legales", label: "Mentions légales" },
@@ -21,26 +22,29 @@ const footerLinks = {
 };
 
 export function Footer() {
+  const infos = [
+    ...footerLinksBase.infos,
+    ...(siteConfig.features.miniGame ? [{ href: "/jeu" as const, label: "Mini-jeu" }] : []),
+  ];
+
+  const hq = businessConfig.headquarters;
+  const addressLine = `${hq.street}, ${hq.postalCode} ${hq.city}`;
+
   return (
     <footer className="bg-dark-medium border-t border-surface">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
-            <h3 className="text-lg font-bold text-white mb-4">YGvtc - VTC76</h3>
+            <h3 className="text-lg font-bold text-white mb-4">{siteConfig.commercialName}</h3>
             <p className="text-gray-light text-sm leading-relaxed">
-              VTC professionnel en Normandie. Transferts vers Orly, CDG, Beauvais. 
-              Service premium, ponctualité garantie.
+              {siteConfig.serviceAreas.description}
             </p>
-            <p className="mt-4 text-gray-light text-sm">
-              30 rue Jean Prévost, 76110 Goderville
-            </p>
+            <p className="mt-4 text-gray-light text-sm">{addressLine}</p>
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">
-              Services
-            </h3>
+            <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Services</h3>
             <ul className="space-y-2">
-              {footerLinks.services.map((link) => (
+              {footerLinksBase.services.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
@@ -53,11 +57,9 @@ export function Footer() {
             </ul>
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">
-              Informations
-            </h3>
+            <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Informations</h3>
             <ul className="space-y-2">
-              {footerLinks.infos.map((link) => (
+              {infos.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
@@ -72,7 +74,7 @@ export function Footer() {
         </div>
         <div className="mt-12 pt-8 border-t border-surface flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex flex-wrap gap-6">
-            {footerLinks.legal.map((link) => (
+            {footerLinksBase.legal.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -83,7 +85,7 @@ export function Footer() {
             ))}
           </div>
           <p className="text-gray-medium text-xs">
-            © {new Date().getFullYear()} YGvtc - VTC76. Tous droits réservés.
+            © {new Date().getFullYear()} {siteConfig.legalName}. Tous droits réservés.
           </p>
         </div>
       </div>

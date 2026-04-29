@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { postCentralApi } from "@/lib/centralApi";
 
 export function ContactForm() {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -21,18 +22,13 @@ export function ContactForm() {
     };
     setStatus("loading");
     try {
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
+      const result = await postCentralApi("contact", payload);
+      if (result.ok) {
         setStatus("success");
         form.reset();
       } else {
         setStatus("error");
-        setMessage(data?.message || "Erreur lors de l'envoi");
+        setMessage(result.message || "Erreur lors de l'envoi");
       }
     } catch {
       setStatus("error");

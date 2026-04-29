@@ -1,5 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
+import { siteConfig } from "@/config/site.config";
+
+const zoneDesc =
+  siteConfig.serviceAreas.cities.slice(0, 5).join(", ") +
+  (siteConfig.serviceAreas.cities.length > 5 ? "…" : "");
 
 const services = [
   {
@@ -24,8 +29,8 @@ const services = [
   },
   {
     num: "03",
-    title: "Toute la Normandie",
-    desc: "Le Havre, Fécamp, Yvetot, Étretat, Goderville et toute la Seine-Maritime.",
+    title: siteConfig.serviceAreas.headline,
+    desc: zoneDesc || siteConfig.serviceAreas.description,
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -36,7 +41,7 @@ const services = [
   {
     num: "04",
     title: "7j / 7 · 24h / 24",
-    desc: "Disponible pour vos vols matinaux et retours tardifs. Je m'adapte à votre programme.",
+    desc: "Disponible pour vos vols matinaux et retours tardifs. Nous adaptons nos créneaux à votre programme.",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -73,7 +78,7 @@ export function ServicesSection() {
               Nos engagements
             </span>
             <h2 className="text-2xl sm:text-3xl font-black text-white mb-2 leading-tight">
-              Pourquoi choisir <span className="text-gradient">YGvtc</span> ?
+              Pourquoi choisir <span className="text-gradient">{siteConfig.commercialName}</span> ?
             </h2>
             <p className="text-gray-500 text-sm leading-relaxed mb-5">
               Un service premium, du départ à l&apos;arrivée.

@@ -1,12 +1,12 @@
 import { DateTime } from "luxon";
-import { TIMEZONE, AIRPORT_BUFFERS, JOURS_FERIES_2025 } from "./config";
+import { TIMEZONE, AIRPORT_BUFFERS, PUBLIC_HOLIDAYS } from "./config";
 import { normalizeTypeService, normalizeTCtrajet, airportCodeFromAddress } from "./utils";
 import type { Distances } from "./types";
 
 const AR_MAD_CANON = "A/R + Mise à disposition";
 
 export function isFerie(dt: DateTime): boolean {
-  return JOURS_FERIES_2025.includes(dt.toFormat("dd/MM/yyyy"));
+  return PUBLIC_HOLIDAYS.includes(dt.toFormat("dd/MM/yyyy"));
 }
 
 export function getAirportBuffers(code: string) {

@@ -1,8 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
 
-const PHONE = "0769989523";
-const PHONE_DISPLAY = "07 69 98 95 23";
+import { siteConfig } from "@/config/site.config";
+
+const phoneTel = siteConfig.contact.phoneE164.replace(/\s/g, "");
+const phoneDisplay = siteConfig.contact.phoneDisplay;
 
 const garanties = [
   "Tarif fixe garanti",
@@ -21,7 +23,7 @@ export function CTASection() {
       <div className="absolute inset-0 z-0">
         <Image
           src="/images/s2/s2-7.webp"
-          alt="YGvtc — Chauffeur privé Normandie"
+          alt={`${siteConfig.commercialName} — Chauffeur privé VTC`}
           fill
           className="object-cover object-center"
           sizes="100vw"
@@ -55,7 +57,7 @@ export function CTASection() {
 
         {/* Téléphone */}
         <a
-          href={`tel:${PHONE}`}
+          href={`tel:${phoneTel}`}
           className="inline-flex items-center gap-3 px-6 py-3 glass rounded-2xl text-white hover:border-primary/50 transition-all mb-10 group"
         >
           <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -65,7 +67,7 @@ export function CTASection() {
           </div>
           <div className="text-left">
             <p className="text-[10px] text-gray-400 uppercase tracking-wider">Réservation directe</p>
-            <p className="text-white font-black text-lg tracking-wide">{PHONE_DISPLAY}</p>
+            <p className="text-white font-black text-lg tracking-wide">{phoneDisplay}</p>
           </div>
         </a>
 
