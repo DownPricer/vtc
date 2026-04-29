@@ -898,9 +898,11 @@ export function CalculatorForm({ mode = "reservation" }: CalculatorFormProps) {
               <div><FieldLabel required>Nom de la société</FieldLabel>
                 <StyledInput icon={<IconBuilding />} required value={client.nomSociete} name="nomSociete" autoComplete="organization"
                   onChange={(e) => setClient(c => ({ ...c, nomSociete: e.target.value }))} placeholder="ACME SAS" /></div>
-              <div><FieldLabel>Adresse de la société</FieldLabel>
-                <StyledInput icon={<IconPin />} value={client.adresseSociete} name="adresseSociete" autoComplete="street-address"
-                  onChange={(e) => setClient(c => ({ ...c, adresseSociete: e.target.value }))} placeholder="1 rue de la Paix, 75001 Paris" /></div>
+              <AddressAutocomplete label="Adresse de la société"
+                name="adresseSociete"
+                value={client.adresseSociete}
+                placeholder="1 rue de la Paix, 75001 Paris"
+                onChange={(v) => setClient(c => ({ ...c, adresseSociete: typeof v === "object" ? v.formatted : v }))} />
             </div>
           )}
         </div>
