@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ProGuard } from "@/components/pro/ProGuard";
 import { ProNav } from "@/components/pro/ProNav";
 import { EmptyState, ProPanel, ProSectionHeader, ProShell } from "@/components/pro/ProUi";
-import { formatDateTime, getDisplayName, getJourneySummary, labelStatus, mapApiErrorToFr, statusBadgeClass } from "@/components/pro/proHelpers";
+import { formatDateFr, getDisplayName, getJourneySummary, labelStatus, mapApiErrorToFr, statusBadgeClass } from "@/components/pro/proDisplay";
 import { proApi } from "@/lib/proApi";
 
 type CalendarItem = {
@@ -174,7 +174,7 @@ export default function ProCalendrierPage() {
                             <p className="text-sm font-semibold text-[var(--pro-text)]">
                               {toTimeLabel(item.scheduledStart) || "--:--"} - {getDisplayName(item.clientName)}
                             </p>
-                            <p className="mt-0.5 text-xs text-[var(--pro-text-muted)]">{formatDateTime(item.scheduledStart)}</p>
+                            <p className="mt-0.5 text-xs text-[var(--pro-text-muted)]">{formatDateFr(item.scheduledStart)}</p>
                             {getJourneySummary(item.flatPayload) ? (
                               <p className="mt-1 text-xs text-[var(--pro-text-soft)]">{getJourneySummary(item.flatPayload)}</p>
                             ) : null}

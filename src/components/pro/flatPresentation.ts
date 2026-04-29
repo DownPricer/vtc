@@ -1,4 +1,4 @@
-import { isUsefulValue, translatePayField, translatePaymentMethod } from "./proHelpers";
+import { isUsefulValue, translatePayField, translatePaymentMethod } from "./proDisplay";
 
 const LABELS: Record<string, string> = {
   TypeService: "Type de service",

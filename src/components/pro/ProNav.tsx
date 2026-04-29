@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { logoutPro, proApi } from "@/lib/proApi";
 import { useProTheme } from "./ProTheme";
-import { actionLabels } from "./proHelpers";
+import { translateAction } from "./proDisplay";
 
 const links = [
   { href: "/pro/dashboard", label: "Tableau de bord" },
@@ -57,7 +57,7 @@ export function ProNav() {
             }}
             className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-2 text-sm font-medium text-[var(--pro-text-soft)] transition hover:bg-[var(--pro-accent-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--pro-accent)]"
           >
-            {actionLabels.logout}
+            {translateAction("logout")}
           </button>
         </div>
       </div>

@@ -24,7 +24,7 @@ import {
   translatePayment,
   translateStatus,
   type PatchStatusResponseMeta,
-} from "@/components/pro/proHelpers";
+} from "@/components/pro/proDisplay";
 import { proApi } from "@/lib/proApi";
 
 type LeadStatus =

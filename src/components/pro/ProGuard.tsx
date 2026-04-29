@@ -32,7 +32,7 @@ export function ProGuard({ children }: ProGuardProps) {
   if (!ready) {
     return (
       <div className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel)] px-5 py-10 text-center shadow-sm">
-        <p className="text-sm text-[var(--pro-text-muted)]">Verification de la session en cours...</p>
+        <p className="text-sm text-[var(--pro-text-muted)]">Vérification de la session en cours...</p>
       </div>
     );
   }

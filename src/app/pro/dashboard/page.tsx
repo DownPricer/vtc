@@ -15,7 +15,7 @@ import {
   labelStatus,
   mapApiErrorToFr,
   statusBadgeClass,
-} from "@/components/pro/proHelpers";
+} from "@/components/pro/proDisplay";
 import { proApi } from "@/lib/proApi";
 
 type LeadRow = {
