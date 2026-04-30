@@ -1,8 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import { siteConfig } from "@/config/site.config";
+import { getTenantSettings } from "@/config/getTenantSettings";
 
-const hero = siteConfig.hero;
+const t = getTenantSettings();
+const hero = t.home.hero;
 
 export function HeroSection() {
   return (
@@ -11,7 +13,7 @@ export function HeroSection() {
       {/* ── Image de fond ── */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/images/hero2.png"
+          src={hero.backgroundImageSrc}
           alt={hero.imageAlt}
           fill
           priority
@@ -36,7 +38,7 @@ export function HeroSection() {
           <div className="animate-fade-down inline-flex items-center gap-2 mb-5 md:mb-6">
             <span className="w-6 h-px bg-primary flex-shrink-0" />
             <span className="text-primary text-[11px] font-bold tracking-[0.2em] uppercase whitespace-nowrap">
-              {hero.badge} · {siteConfig.seo.regionLabel}
+              {hero.badgeText} · {siteConfig.seo.regionLabel}
             </span>
           </div>
 
@@ -57,22 +59,22 @@ export function HeroSection() {
           {/* CTA buttons */}
           <div className="animate-fade-up delay-200 flex flex-col sm:flex-row gap-3 mb-8 md:mb-10">
             <Link
-              href="/calculateur"
+              href={hero.ctas[0]?.href ?? "/calculateur"}
               className="animate-glow-pulse flex items-center justify-center gap-2.5 px-7 py-4 rounded-xl bg-primary hover:bg-primary-dark text-white font-bold text-sm shadow-glow-lg transition-all duration-300 active:scale-95"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
-              Calculateur de prix
+              {hero.ctas[0]?.label ?? "Calculateur de prix"}
             </Link>
             <Link
-              href="/devis"
+              href={hero.ctas[1]?.href ?? "/devis"}
               className="flex items-center justify-center gap-2.5 px-7 py-4 rounded-xl border border-white/20 text-white hover:border-primary/50 hover:bg-white/5 font-medium text-sm transition-all duration-300 active:scale-95"
             >
               <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              Devis personnalisé
+              {hero.ctas[1]?.label ?? "Devis personnalisé"}
             </Link>
           </div>
 

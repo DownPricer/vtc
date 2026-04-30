@@ -1,12 +1,17 @@
 import { siteConfig } from "@/config/site.config";
+import { getTenantSettings } from "@/config/getTenantSettings";
 
-const avis = siteConfig.testimonials.map((t) => ({
-  text: t.text,
-  auteur: t.author,
-  trajet: t.trajet || "—",
-  note: t.rating,
-  date: t.date || "—",
-}));
+const tenant = getTenantSettings();
+
+const avis = tenant.testimonials.items
+  .filter((t) => t.enabled)
+  .map((t) => ({
+    text: t.text,
+    auteur: t.author,
+    trajet: t.trajet || "—",
+    note: t.rating,
+    date: t.date || "—",
+  }));
 
 function Stars({ n }: { n: number }) {
   return (
@@ -55,7 +60,7 @@ function TestimonialCard({ a }: { a: (typeof avis)[0] }) {
 }
 
 export function TestimonialsSection() {
-  const reviewsUrl = siteConfig.urls.reviewsUrl;
+  const reviewsUrl = tenant.testimonials.reviewsUrl ?? siteConfig.urls.reviewsUrl;
   const firstRow = avis.slice(0, 3);
   const secondRow = avis.slice(3);
 
@@ -68,10 +73,11 @@ export function TestimonialsSection() {
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-12 px-5">
           <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold tracking-widest uppercase mb-5">
-            Témoignages
+            {tenant.testimonials.eyebrow}
           </span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 leading-tight">
-            Ils nous font <span className="text-gradient">confiance</span>
+            {tenant.testimonials.title}{" "}
+            <span className="text-gradient">{tenant.testimonials.titleHighlight}</span>
           </h2>
           <div className="inline-flex items-center gap-3 px-5 py-3 glass rounded-2xl">
             <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 24 24">
@@ -79,10 +85,10 @@ export function TestimonialsSection() {
             </svg>
             <div className="flex items-center gap-1.5">
               <Stars n={5} />
-              <span className="text-white font-black text-sm">5,0</span>
+              <span className="text-white font-black text-sm">{tenant.testimonials.ratingValueText}</span>
             </div>
             <span className="text-gray-400 text-xs">·</span>
-            <span className="text-gray-400 text-xs">Avis clients</span>
+            <span className="text-gray-400 text-xs">{tenant.testimonials.ratingCountLabel}</span>
           </div>
         </div>
 

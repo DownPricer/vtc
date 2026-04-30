@@ -4,10 +4,12 @@ import { siteConfig } from "@/config/site.config";
 import { businessConfig } from "@/config/business.config";
 import { seoConfig } from "@/config/seo.config";
 import { getPublicSiteUrl } from "@/lib/siteUrl";
+import { getTenantSettings } from "@/config/getTenantSettings";
 
 const SITE_URL = getPublicSiteUrl();
 const about = siteConfig.about;
 const hq = businessConfig.headquarters;
+const tenant = getTenantSettings();
 
 export const metadata = {
   title: `À propos — ${siteConfig.commercialName}`,
@@ -17,44 +19,28 @@ export const metadata = {
   },
 };
 
-const valeurs = [
-  {
-    label: "Ponctualité",
-    desc: "Respect des horaires et suivi des trajets.",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-  },
-  {
-    label: "Confort premium",
-    desc: about.vehicleLabel,
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-      </svg>
-    ),
-  },
-  {
-    label: "Service 7j/7",
-    desc: "Disponibilité étendue selon planning — nous contacter pour confirmation.",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-      </svg>
-    ),
-  },
-  {
-    label: "Tarifs transparents",
-    desc: "Calculateur en ligne et devis sur demande.",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-      </svg>
-    ),
-  },
-];
+const icons = {
+  clock: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  ),
+  sparkle: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+    </svg>
+  ),
+  calendar: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    </svg>
+  ),
+  shield_check: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+    </svg>
+  ),
+} as const;
 
 const organizationSchema = {
   "@context": "https://schema.org",
@@ -91,8 +77,8 @@ export default function AProposPage() {
       <div className="relative overflow-hidden min-h-[50vh] md:min-h-[60vh] flex items-end md:items-center">
         <div className="absolute inset-0 z-0">
           <Image
-            src="/images/prensation.jpg"
-            alt={about.portraitAlt}
+            src={tenant.aboutPage.heroImageSrc}
+            alt={tenant.aboutPage.heroImageAlt}
             fill
             priority
             className="object-cover object-[75%_30%] md:object-[center_20%]"
@@ -135,9 +121,9 @@ export default function AProposPage() {
 
       <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8 py-12 md:py-16">
         <div className="space-y-4 text-gray-400 leading-relaxed text-base mb-12">
-          <p>{about.storyLead}</p>
-          <p>{about.secondaryParagraph}</p>
-          <p className="text-white font-semibold text-base md:text-lg">{about.storyClosing}</p>
+          <p>{tenant.aboutPage.storyLead}</p>
+          <p>{tenant.aboutPage.storySecondary}</p>
+          <p className="text-white font-semibold text-base md:text-lg">{tenant.aboutPage.storyClosing}</p>
         </div>
 
         <div className="flex items-center gap-4 mb-8">
@@ -149,13 +135,13 @@ export default function AProposPage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-12">
-          {valeurs.map((v) => (
+          {tenant.aboutPage.values.filter((v) => v.enabled).map((v) => (
             <div
               key={v.label}
               className="flex items-start gap-3 p-4 rounded-xl border border-white/[0.07] bg-white/[0.02] hover:border-primary/30 hover:bg-white/[0.04] transition-all duration-200 group"
             >
               <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary flex-shrink-0 group-hover:scale-105 transition-transform">
-                {v.icon}
+                {icons[v.iconKey as keyof typeof icons]}
               </div>
               <div>
                 <h3 className="text-white font-bold text-sm mb-1">{v.label}</h3>
@@ -183,9 +169,9 @@ export default function AProposPage() {
             </div>
             <div>
               <p className="text-white font-bold text-base mb-1">{about.vehicleLabel}</p>
-              <p className="text-gray-500 text-sm mb-2">À personnaliser selon votre flotte réelle.</p>
+              <p className="text-gray-500 text-sm mb-2">{tenant.aboutPage.vehicleBlock.helperText}</p>
               <div className="flex flex-wrap gap-2">
-                {["CB", "Virement", "Espèces", "Chèque"].map((m) => (
+                {tenant.vehicles.featured.paymentChips.map((m) => (
                   <span
                     key={m}
                     className="text-[10px] px-2.5 py-1 rounded-full border border-white/[0.08] bg-white/[0.03] text-gray-400 font-medium"
@@ -200,16 +186,16 @@ export default function AProposPage() {
 
         <div className="flex flex-col sm:flex-row gap-3">
           <Link
-            href="/calculateur"
+            href={tenant.aboutPage.ctas[0]?.href ?? "/calculateur"}
             className="flex-1 flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-primary hover:bg-primary-dark text-white font-bold text-sm shadow-glow-lg transition-all duration-300 hover:scale-[1.02] active:scale-95"
           >
-            Réserver maintenant
+            {tenant.aboutPage.ctas[0]?.label ?? "Réserver maintenant"}
           </Link>
           <Link
-            href="/contact"
+            href={tenant.aboutPage.ctas[1]?.href ?? "/contact"}
             className="flex-1 flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl border border-white/[0.1] text-gray-300 hover:text-white hover:border-white/25 font-semibold text-sm transition-all"
           >
-            Nous contacter
+            {tenant.aboutPage.ctas[1]?.label ?? "Nous contacter"}
           </Link>
         </div>
       </div>

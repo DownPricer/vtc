@@ -1,61 +1,57 @@
 import Link from "next/link";
 import Image from "next/image";
 import { siteConfig } from "@/config/site.config";
+import { getTenantSettings } from "@/config/getTenantSettings";
 
 const about = siteConfig.about;
 
-const atouts = [
-  {
-    label: "Carte professionnelle VTC",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c0 1.306.835 2.418 2 2.83" />
-      </svg>
-    ),
-  },
-  {
-    label: about.vehicleLabel,
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 17a2 2 0 104 0m-4 0a2 2 0 014 0m0 0h2m-6 0H6m12 0a2 2 0 104 0m-4 0a2 2 0 014 0M4 17H2M3 7l2-2h10l3 4H3V7zm0 4v4" />
-      </svg>
-    ),
-  },
-  {
-    label: "Paiement accepté à bord",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-      </svg>
-    ),
-  },
-  {
-    label: "Suivi de vol en temps réel",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-  },
-  {
-    label: "Disponible 7j / 7 · 24h / 24",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-  },
-  {
-    label: "Bagages inclus · Aucun supplément",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-      </svg>
-    ),
-  },
-];
+const icons = {
+  id_card: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c0 1.306.835 2.418 2 2.83" />
+    </svg>
+  ),
+  car: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 17a2 2 0 104 0m-4 0a2 2 0 014 0m0 0h2m-6 0H6m12 0a2 2 0 104 0m-4 0a2 2 0 014 0M4 17H2M3 7l2-2h10l3 4H3V7zm0 4v4" />
+    </svg>
+  ),
+  credit_card: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+    </svg>
+  ),
+  globe: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  ),
+  clock: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  ),
+  luggage_check: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+    </svg>
+  ),
+} as const;
 
 export function AboutSection() {
+  const t = getTenantSettings();
+  const lib = new Map(t.badges.library.filter((b) => b.enabled).map((b) => [b.id, b] as const));
+  const atouts = t.badges.placements.home_about_atouts
+    .map((p) => {
+      const badge = lib.get(p.badgeId);
+      if (!badge) return null;
+      return {
+        label: p.textOverride ?? badge.text,
+        icon: icons[badge.iconKey as keyof typeof icons],
+      };
+    })
+    .filter(Boolean);
+
   return (
     <section className="py-20 md:py-32 bg-dark-medium overflow-hidden relative">
 
@@ -127,13 +123,13 @@ export function AboutSection() {
             <div className="grid grid-cols-2 gap-2 pt-2">
               {atouts.map((item) => (
                 <div
-                  key={item.label}
+                  key={item!.label}
                   className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:border-primary/25 hover:bg-white/[0.04] transition-all duration-200 group"
                 >
                   <span className="text-primary flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
-                    {item.icon}
+                    {item!.icon}
                   </span>
-                  <span className="text-gray-400 text-[11px] font-medium leading-tight">{item.label}</span>
+                  <span className="text-gray-400 text-[11px] font-medium leading-tight">{item!.label}</span>
                 </div>
               ))}
             </div>

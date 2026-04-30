@@ -3,9 +3,12 @@ import Image from "next/image";
 import { siteConfig } from "@/config/site.config";
 import { seoConfig } from "@/config/seo.config";
 import { getPublicSiteUrl } from "@/lib/siteUrl";
+import { getTenantSettings } from "@/config/getTenantSettings";
 
 const SITE_URL = getPublicSiteUrl();
 const exCity = siteConfig.serviceAreas.cities[0] || "Ville";
+const tenant = getTenantSettings();
+const pricing = tenant.pricingDisplay.tarifsPage;
 
 export const metadata = {
   title: `Tarifs VTC — ${siteConfig.commercialName}`,
@@ -15,84 +18,30 @@ export const metadata = {
   },
 };
 
-const tarifs = [
-  {
-    depart: "Zone centre",
-    destination: "Orly",
-    code: "ORY",
-    prixAller: "260",
-    prixAR: "480",
-    duree: "~2h30",
-    km: "~220 km",
-    featured: false,
-  },
-  {
-    depart: "Ville côte",
-    destination: "Roissy CDG",
-    code: "CDG",
-    prixAller: "270",
-    prixAR: "490",
-    duree: "~2h45",
-    km: "~230 km",
-    featured: true,
-  },
-  {
-    depart: "Ville est",
-    destination: "Roissy CDG",
-    code: "CDG",
-    prixAller: "260",
-    prixAR: "480",
-    duree: "~2h30",
-    km: "~210 km",
-    featured: false,
-  },
-  {
-    depart: "Site touristique",
-    destination: "Orly",
-    code: "ORY",
-    prixAller: "260",
-    prixAR: "480",
-    duree: "~2h20",
-    km: "~205 km",
-    featured: false,
-  },
-  {
-    depart: exCity,
-    destination: "Caen",
-    code: "CFR",
-    prixAller: "165",
-    prixAR: "330",
-    duree: "~1h45",
-    km: "~135 km",
-    featured: false,
-  },
-  {
-    depart: "Ville voisine",
-    destination: "Beauvais",
-    code: "BVA",
-    prixAller: "215",
-    prixAR: "400",
-    duree: "~2h15",
-    km: "~185 km",
-    featured: false,
-  },
-];
+const tarifs = pricing.transfers
+  .filter((x) => x.enabled)
+  .map((x) => (x.depart === tenant.general.serviceAreas.cities[0] ? { ...x, depart: exCity } : x));
 
-const codeColors: Record<string, { bg: string; text: string; dot: string }> = {
-  ORY: { bg: "bg-blue-500/10",    text: "text-blue-300",   dot: "bg-blue-400" },
-  CDG: { bg: "bg-violet-500/10",  text: "text-violet-300", dot: "bg-violet-400" },
-  BVA: { bg: "bg-emerald-500/10", text: "text-emerald-300",dot: "bg-emerald-400" },
-  CFR: { bg: "bg-amber-500/10",   text: "text-amber-300",  dot: "bg-amber-400" },
+const codeColors = tenant.pricingDisplay.codeColors;
+
+const badgeLib = new Map(tenant.badges.library.filter((b) => b.enabled).map((b) => [b.id, b] as const));
+type Garantie = { label: string; icon: string };
+
+const guaranteeIconByBadgeId: Partial<Record<string, string>> = {
+  fixed_price: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z",
+  luggage_included: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4",
+  home_pickup: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6",
+  flight_tracking: "M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
+  availability_24_7: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
+  no_surcharge: "M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636",
 };
 
-const garanties = [
-  { label: "Prix fixe TTC",             icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" },
-  { label: "Bagages inclus",            icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" },
-  { label: "Prise en charge domicile",  icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
-  { label: "Suivi de vol",              icon: "M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
-  { label: "7j/7 · 24h/24",            icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" },
-  { label: "Zéro supplément",           icon: "M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" },
-];
+const garanties: Garantie[] = tenant.badges.placements.pricing_page_guarantees.flatMap((p) => {
+  const b = badgeLib.get(p.badgeId);
+  const icon = guaranteeIconByBadgeId[p.badgeId];
+  if (!b || !icon) return [];
+  return [{ label: p.textOverride ?? b.text, icon }];
+});
 
 const tarifsSchema = {
   "@context": "https://schema.org",
@@ -182,8 +131,8 @@ export default function TarifsPage() {
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image
-            src="/images/s2/s2-2.jpg"
-            alt="Transferts aéroport Normandie"
+            src={pricing.heroImageSrc}
+            alt={pricing.heroImageAlt}
             fill
             priority
             className="object-cover object-center"
@@ -205,15 +154,15 @@ export default function TarifsPage() {
               <svg className="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
-              <span className="text-primary text-[11px] font-bold tracking-widest uppercase">Grille tarifaire</span>
+              <span className="text-primary text-[11px] font-bold tracking-widest uppercase">{pricing.heroBadge}</span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 leading-tight tracking-tight [text-shadow:0_2px_4px_rgba(0,0,0,0.85),0_8px_32px_rgba(0,0,0,0.55)]">
-              Tarifs fixes &amp;<br />
-              <span className="text-gradient drop-shadow-[0_2px_12px_rgba(0,0,0,0.75)]">transparents</span>
+              {pricing.heroTitle}&amp;<br />
+              <span className="text-gradient drop-shadow-[0_2px_12px_rgba(0,0,0,0.75)]">{pricing.heroTitleHighlight}</span>
             </h1>
             <p className="text-gray-200/95 text-base md:text-lg max-w-lg leading-relaxed mb-8 [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">
-              Le prix annoncé est le prix payé. Aucun supplément bagage, embouteillage ou heure tardive.
+              {pricing.heroIntro}
             </p>
 
             {/* Garanties inline */}
@@ -327,7 +276,7 @@ export default function TarifsPage() {
         {/* Séparateur */}
         <div className="flex items-center gap-4 mb-8">
           <div className="flex-1 h-px bg-white/[0.06]" />
-          <span className="text-gray-500 text-[11px] font-bold tracking-widest uppercase whitespace-nowrap">Services spéciaux</span>
+          <span className="text-gray-500 text-[11px] font-bold tracking-widest uppercase whitespace-nowrap">{pricing.servicesSpecialEyebrow}</span>
           <div className="flex-1 h-px bg-white/[0.06]" />
         </div>
 
@@ -343,13 +292,13 @@ export default function TarifsPage() {
               </div>
               <div>
                 <p className="text-white font-black text-lg mb-1">Mise à Disposition</p>
-                <p className="text-gray-400 text-sm mb-1">Mariage · Soirée · Séminaire · Événement professionnel</p>
-                <p className="text-gray-600 text-xs">Durée libre · {siteConfig.about.vehicleLabel}</p>
+                <p className="text-gray-400 text-sm mb-1">{pricing.madSubtitle}</p>
+                <p className="text-gray-600 text-xs">Durée libre · {pricing.madVehicleHint}</p>
               </div>
             </div>
             <div className="flex-shrink-0 text-right">
               <div className="flex items-baseline gap-1.5 justify-end">
-                <span className="text-4xl font-black text-white">80</span>
+                <span className="text-4xl font-black text-white">{pricing.madHourlyFrom}</span>
                 <span className="text-primary text-xl font-bold">€</span>
                 <span className="text-gray-500 text-sm">/heure</span>
               </div>
@@ -367,7 +316,7 @@ export default function TarifsPage() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
-            Calculer mon tarif personnalisé
+            {pricing.ctaPrimaryLabel}
           </Link>
           <Link
             href="/devis"
@@ -376,7 +325,7 @@ export default function TarifsPage() {
             <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            Demander un devis gratuit
+            {pricing.ctaSecondaryLabel}
           </Link>
         </div>
 

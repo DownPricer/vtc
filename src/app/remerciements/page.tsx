@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTenantSettings } from "@/config/getTenantSettings";
 
 export const metadata = {
   title: "Merci — Votre Demande a Bien Été Envoyée",
@@ -10,6 +11,7 @@ export const metadata = {
 };
 
 export default function RemerciementsPage() {
+  const t = getTenantSettings();
   return (
     <div className="min-h-[80vh] bg-dark flex items-center justify-center px-5">
       <div className="max-w-md w-full text-center">
@@ -38,8 +40,8 @@ export default function RemerciementsPage() {
           style={{ background: "linear-gradient(145deg, #1a1a1a, #111)" }}
         >
           {[
-            { label: "Réponse sous", value: "2h en général" },
-            { label: "Téléphone", value: "07 69 98 95 23" },
+            { label: t.thanksPage.infoResponseLabel, value: t.thanksPage.infoResponseValue },
+            { label: t.thanksPage.infoPhoneLabel, value: t.contact.phoneDisplay },
           ].map((item) => (
             <div key={item.label} className="flex items-center justify-between">
               <span className="text-gray-600 text-xs uppercase tracking-wider">{item.label}</span>

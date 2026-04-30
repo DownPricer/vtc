@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { siteConfig } from "@/config/site.config";
+import { getTenantSettings } from "@/config/getTenantSettings";
 
 export function MobileCtaBar() {
   const phoneTel = siteConfig.contact.phoneE164.replace(/\s/g, "");
   const wa = siteConfig.contact.whatsappDigits;
+  const waPrefill = getTenantSettings().contact.whatsappPrefillText;
 
   return (
     <div className="md:hidden fixed bottom-0 inset-x-0 z-50 pb-safe">
@@ -23,7 +25,7 @@ export function MobileCtaBar() {
 
           {wa ? (
             <a
-              href={`https://wa.me/${wa}?text=${encodeURIComponent("Bonjour, je souhaite réserver un trajet.")}`}
+              href={`https://wa.me/${wa}?text=${encodeURIComponent(waPrefill)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex flex-col items-center justify-center gap-0.5 w-14 rounded-xl bg-[#25D366]/10 border border-[#25D366]/30 text-[#25D366] active:scale-95 transition-transform"

@@ -1,14 +1,12 @@
 import Link from "next/link";
 import Image from "next/image";
-
-const tarifs = [
-  { depart: "Le Havre",  destination: "Orly",      code: "ORY", prix: "480", prixAller: "260", duree: "~2h30", featured: false },
-  { depart: "Fécamp",    destination: "Roissy CDG", code: "CDG", prix: "490", prixAller: "270", duree: "~2h45", featured: true },
-  { depart: "Bolbec",    destination: "Roissy CDG", code: "CDG", prix: "480", prixAller: "260", duree: "~2h30", featured: false },
-  { depart: "Étretat",   destination: "Orly",      code: "ORY", prix: "480", prixAller: "260", duree: "~2h20", featured: false },
-];
+import { getTenantSettings } from "@/config/getTenantSettings";
 
 export function TarifsHighlightSection() {
+  const t = getTenantSettings();
+  const highlights = t.pricingDisplay.highlights;
+  const tarifs = highlights.popularTransfers.filter((x) => x.enabled);
+
   return (
     <section className="relative py-14 md:py-20 overflow-hidden">
 
@@ -87,7 +85,7 @@ export function TarifsHighlightSection() {
                   </div>
                   <div className="flex items-baseline justify-between">
                     <span className="text-[9px] text-gray-600 uppercase">A/R</span>
-                    <span className="text-xl font-black text-primary">{t.prix} €</span>
+                    <span className="text-xl font-black text-primary">{t.prixAR} €</span>
                   </div>
                 </div>
               </div>
@@ -105,11 +103,11 @@ export function TarifsHighlightSection() {
             </div>
             <div>
               <p className="text-white font-bold text-sm">Mise à Disposition</p>
-              <p className="text-gray-500 text-[11px]">Mariage · Soirée · Événement</p>
+              <p className="text-gray-500 text-[11px]">{highlights.madSubtitle}</p>
             </div>
           </div>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl font-black text-white">80</span>
+            <span className="text-2xl font-black text-white">{highlights.madHourlyFrom}</span>
             <span className="text-primary text-sm font-bold">€/h</span>
           </div>
         </div>

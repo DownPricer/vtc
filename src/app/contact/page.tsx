@@ -3,12 +3,14 @@ import { siteConfig } from "@/config/site.config";
 import { businessConfig } from "@/config/business.config";
 import { seoConfig } from "@/config/seo.config";
 import { getPublicSiteUrl } from "@/lib/siteUrl";
+import { getTenantSettings } from "@/config/getTenantSettings";
 
 const SITE_URL = getPublicSiteUrl();
 const hq = businessConfig.headquarters;
 const phoneTel = siteConfig.contact.phoneE164.replace(/\s/g, "");
 const phoneDisplay = siteConfig.contact.phoneDisplay;
 const wa = siteConfig.contact.whatsappDigits;
+const tenant = getTenantSettings();
 
 export const metadata = {
   title: `Contact — ${siteConfig.commercialName}`,
@@ -76,14 +78,14 @@ export default function ContactPage() {
             <svg className="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
-            <span className="text-primary text-[11px] font-bold tracking-widest uppercase">Contact</span>
+            <span className="text-primary text-[11px] font-bold tracking-widest uppercase">{tenant.contactPage.eyebrow}</span>
           </div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 leading-tight tracking-tight">
-            On reste<br />
-            <span className="text-gradient">en contact</span>
+            {tenant.contactPage.title}<br />
+            <span className="text-gradient">{tenant.contactPage.titleHighlight}</span>
           </h1>
           <p className="text-gray-400 text-base md:text-lg leading-relaxed max-w-lg">
-            Une question ou une demande particulière ? Nous revenons vers vous rapidement.
+            {tenant.contactPage.intro}
           </p>
         </div>
       </div>
@@ -91,12 +93,12 @@ export default function ContactPage() {
       <div className="max-w-5xl mx-auto px-5 sm:px-6 lg:px-8 py-10 md:py-14">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
           <div className="lg:col-span-3">
-            <p className="text-gray-500 text-[11px] font-bold tracking-widest uppercase mb-5">Envoyer un message</p>
+            <p className="text-gray-500 text-[11px] font-bold tracking-widest uppercase mb-5">{tenant.contactPage.formTitle}</p>
             <ContactForm />
           </div>
 
           <div className="lg:col-span-2 space-y-3">
-            <p className="text-gray-500 text-[11px] font-bold tracking-widest uppercase mb-5">Coordonnées directes</p>
+            <p className="text-gray-500 text-[11px] font-bold tracking-widest uppercase mb-5">{tenant.contactPage.directTitle}</p>
 
             <a
               href={`tel:${phoneTel}`}
