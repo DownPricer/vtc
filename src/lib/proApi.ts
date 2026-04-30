@@ -83,11 +83,20 @@ async function tryRefresh(): Promise<boolean> {
   return true;
 }
 
-export async function proApi(path: string, init?: RequestInit): Promise<Record<string, unknown>> {
+/**
+ * Même transport que `proApi` (Bearer, X-Tenant-ID, cookies refresh) sans parser la réponse.
+ * Utile pour GET/PUT bruts (ex. paramètres tenant) avec gestion fine des codes HTTP.
+ */
+export async function proAuthenticatedFetch(path: string, init?: RequestInit): Promise<Response> {
   let res = await authFetch(path, init, true);
   if (res.status === 401 && (await tryRefresh())) {
     res = await authFetch(path, init, true);
   }
+  return res;
+}
+
+export async function proApi(path: string, init?: RequestInit): Promise<Record<string, unknown>> {
+  const res = await proAuthenticatedFetch(path, init);
   const json = await parseJson(res);
   if (!res.ok) {
     const msg =

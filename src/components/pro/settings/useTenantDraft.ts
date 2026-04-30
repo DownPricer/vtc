@@ -21,6 +21,14 @@ export function useTenantDraft(initial: TenantSettingsV1) {
     setEditing(false);
   }, []);
 
+  /** Après chargement API ou sauvegarde réussie : aligne brouillon + baseline et quitte le mode édition. */
+  const syncFromServer = useCallback((merged: TenantSettingsV1) => {
+    const c = cloneTenant(merged);
+    baselineRef.current = c;
+    setDraft(c);
+    setEditing(false);
+  }, []);
+
   return {
     draft,
     setDraft,
@@ -28,5 +36,6 @@ export function useTenantDraft(initial: TenantSettingsV1) {
     isDirty,
     enterEdit,
     cancelEdit,
+    syncFromServer,
   };
 }
