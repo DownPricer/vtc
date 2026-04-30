@@ -1,17 +1,23 @@
 import Link from "next/link";
-import { getTenantSettings } from "@/config/getTenantSettings";
+import type { Metadata } from "next";
+import { getPublicTenantSettings } from "@/lib/publicTenantSettingsClient";
 
-export const metadata = {
-  title: "Merci — Votre Demande a Bien Été Envoyée",
-  description: "Votre demande de réservation VTC a bien été reçue. Nous vous recontactons dans les plus brefs délais.",
-  robots: {
-    index: false,
-    follow: false,
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getPublicTenantSettings();
+  return {
+    title: t.thanksPage.title,
+    description: t.thanksPage.description,
+    robots: {
+      index: false,
+      follow: false,
+    },
+  };
+}
 
-export default function RemerciementsPage() {
-  const t = getTenantSettings();
+export default async function RemerciementsPage() {
+  const t = await getPublicTenantSettings();
+  const thanks = t.thanksPage;
+
   return (
     <div className="min-h-[80vh] bg-dark flex items-center justify-center px-5">
       <div className="max-w-md w-full text-center">
@@ -27,11 +33,11 @@ export default function RemerciementsPage() {
         </div>
 
         <h1 className="text-2xl md:text-3xl font-black text-white mb-3 tracking-tight">
-          Message envoyé !
+          {thanks.heading}
         </h1>
-        <p className="text-gradient font-bold text-lg mb-2">Merci pour votre confiance.</p>
+        <p className="text-gradient font-bold text-lg mb-2">{thanks.highlight}</p>
         <p className="text-gray-500 text-sm leading-relaxed mb-8 max-w-sm mx-auto">
-          Votre demande a bien été reçue. Je vous recontacterai dans les plus brefs délais pour confirmer votre réservation.
+          {thanks.body}
         </p>
 
         {/* Infos rapides */}
@@ -40,8 +46,8 @@ export default function RemerciementsPage() {
           style={{ background: "linear-gradient(145deg, #1a1a1a, #111)" }}
         >
           {[
-            { label: t.thanksPage.infoResponseLabel, value: t.thanksPage.infoResponseValue },
-            { label: t.thanksPage.infoPhoneLabel, value: t.contact.phoneDisplay },
+            { label: thanks.infoResponseLabel, value: thanks.infoResponseValue },
+            { label: thanks.infoPhoneLabel, value: t.contact.phoneDisplay },
           ].map((item) => (
             <div key={item.label} className="flex items-center justify-between">
               <span className="text-gray-600 text-xs uppercase tracking-wider">{item.label}</span>

@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { siteConfig } from "@/config/site.config";
-import { businessConfig } from "@/config/business.config";
+import { siteConfig, type SiteConfig } from "@/config/site.config";
+import { businessConfig, type BusinessConfig } from "@/config/business.config";
 
 const footerLinksBase = {
   services: [
@@ -21,13 +21,21 @@ const footerLinksBase = {
   ],
 };
 
-export function Footer() {
+type FooterProps = {
+  runtimeSite?: SiteConfig;
+  runtimeBusiness?: BusinessConfig;
+};
+
+export function Footer({ runtimeSite, runtimeBusiness }: FooterProps) {
+  const site = runtimeSite ?? siteConfig;
+  const biz = runtimeBusiness ?? businessConfig;
+
   const infos = [
     ...footerLinksBase.infos,
-    ...(siteConfig.features.miniGame ? [{ href: "/jeu" as const, label: "Mini-jeu" }] : []),
+    ...(site.features.miniGame ? [{ href: "/jeu" as const, label: "Mini-jeu" }] : []),
   ];
 
-  const hq = businessConfig.headquarters;
+  const hq = biz.headquarters;
   const addressLine = `${hq.street}, ${hq.postalCode} ${hq.city}`;
 
   return (
@@ -35,9 +43,9 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
-            <h3 className="text-lg font-bold text-white mb-4">{siteConfig.commercialName}</h3>
+            <h3 className="text-lg font-bold text-white mb-4">{site.commercialName}</h3>
             <p className="text-gray-light text-sm leading-relaxed">
-              {siteConfig.serviceAreas.description}
+              {site.serviceAreas.description}
             </p>
             <p className="mt-4 text-gray-light text-sm">{addressLine}</p>
           </div>
@@ -85,7 +93,7 @@ export function Footer() {
             ))}
           </div>
           <p className="text-gray-medium text-xs">
-            © {new Date().getFullYear()} {siteConfig.legalName}. Tous droits réservés.
+            © {new Date().getFullYear()} {site.legalName}. Tous droits réservés.
           </p>
         </div>
       </div>

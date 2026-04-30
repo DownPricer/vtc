@@ -1,20 +1,24 @@
 import Link from "next/link";
 import Image from "next/image";
-import { siteConfig } from "@/config/site.config";
+import type { Metadata } from "next";
+import { buildSiteConfigFromTenant } from "@/config/siteConfigFromTenant";
 import { seoConfig } from "@/config/seo.config";
 import { getPublicSiteUrl } from "@/lib/siteUrl";
-import { getTenantSettings } from "@/config/getTenantSettings";
+import { getPublicTenantSettings } from "@/lib/publicTenantSettingsClient";
 
 const SITE_URL = getPublicSiteUrl();
-const tenant = getTenantSettings();
 
-export const metadata = {
-  title: `Services VTC — ${siteConfig.commercialName}`,
-  description: `Transferts aéroport, mise à disposition et chauffeur privé. ${seoConfig.defaultDescription}`,
-  alternates: {
-    canonical: `${SITE_URL}/services`,
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const tenant = await getPublicTenantSettings();
+  const site = buildSiteConfigFromTenant(tenant);
+  return {
+    title: `Services VTC — ${site.commercialName}`,
+    description: `Transferts aéroport, mise à disposition et chauffeur privé. ${seoConfig.defaultDescription}`,
+    alternates: {
+      canonical: `${SITE_URL}/services`,
+    },
+  };
+}
 
 const icons = {
   plane: (
@@ -34,53 +38,6 @@ const icons = {
   ),
 } as const;
 
-const servicesSchema = {
-  "@context": "https://schema.org",
-  "@type": "Service",
-  serviceType: "Chauffeur privé VTC",
-  provider: {
-    "@type": "LocalBusiness",
-    name: siteConfig.commercialName,
-    url: SITE_URL,
-  },
-  areaServed: siteConfig.serviceAreas.cities.map((name) => ({
-    "@type": "City",
-    name,
-  })),
-  hasOfferCatalog: {
-    "@type": "OfferCatalog",
-    name: `Services VTC — ${siteConfig.commercialName}`,
-    itemListElement: [
-      {
-        "@type": "OfferCatalog",
-        name: "Transferts Aéroports",
-        itemListElement: [
-          { "@type": "Offer", itemOffered: { "@type": "Service", name: "Transfert vers Orly" } },
-          { "@type": "Offer", itemOffered: { "@type": "Service", name: "Transfert vers Roissy CDG" } },
-          { "@type": "Offer", itemOffered: { "@type": "Service", name: "Transfert vers Beauvais" } },
-          { "@type": "Offer", itemOffered: { "@type": "Service", name: "Transfert vers Caen" } },
-        ],
-      },
-      {
-        "@type": "Offer",
-        itemOffered: {
-          "@type": "Service",
-          name: "Mise à Disposition",
-          description: "Chauffeur privé à l'heure pour mariages, séminaires, événements professionnels",
-        },
-      },
-      {
-        "@type": "Offer",
-        itemOffered: {
-          "@type": "Service",
-          name: "Chauffeur Privé",
-          description: siteConfig.serviceAreas.description,
-        },
-      },
-    ],
-  },
-};
-
 const breadcrumbSchema = {
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
@@ -90,7 +47,57 @@ const breadcrumbSchema = {
   ],
 };
 
-export default function ServicesPage() {
+export default async function ServicesPage() {
+  const tenant = await getPublicTenantSettings();
+  const site = buildSiteConfigFromTenant(tenant);
+
+  const servicesSchema = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    serviceType: "Chauffeur privé VTC",
+    provider: {
+      "@type": "LocalBusiness",
+      name: site.commercialName,
+      url: SITE_URL,
+    },
+    areaServed: site.serviceAreas.cities.map((name) => ({
+      "@type": "City",
+      name,
+    })),
+    hasOfferCatalog: {
+      "@type": "OfferCatalog",
+      name: `Services VTC — ${site.commercialName}`,
+      itemListElement: [
+        {
+          "@type": "OfferCatalog",
+          name: "Transferts Aéroports",
+          itemListElement: [
+            { "@type": "Offer", itemOffered: { "@type": "Service", name: "Transfert vers Orly" } },
+            { "@type": "Offer", itemOffered: { "@type": "Service", name: "Transfert vers Roissy CDG" } },
+            { "@type": "Offer", itemOffered: { "@type": "Service", name: "Transfert vers Beauvais" } },
+            { "@type": "Offer", itemOffered: { "@type": "Service", name: "Transfert vers Caen" } },
+          ],
+        },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "Mise à Disposition",
+            description: "Chauffeur privé à l'heure pour mariages, séminaires, événements professionnels",
+          },
+        },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "Chauffeur Privé",
+            description: site.serviceAreas.description,
+          },
+        },
+      ],
+    },
+  };
+
   const services = tenant.services.items.filter((s) => s.enabled);
   const hero = tenant.services.pageHero;
   const comfort = tenant.services.comfortBlock;

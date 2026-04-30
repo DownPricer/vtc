@@ -1,14 +1,17 @@
 import Link from "next/link";
 import Image from "next/image";
 
-import { siteConfig } from "@/config/site.config";
-import { getTenantSettings } from "@/config/getTenantSettings";
+import { buildSiteConfigFromTenant } from "@/config/siteConfigFromTenant";
+import { defaultTenantSettings } from "@/config/defaultTenantSettings";
+import type { TenantSettingsV1 } from "@/config/tenant-settings.types";
 
-const phoneTel = siteConfig.contact.phoneE164.replace(/\s/g, "");
-const phoneDisplay = siteConfig.contact.phoneDisplay;
+type Props = { tenantSettings?: TenantSettingsV1 };
 
-export function CTASection() {
-  const t = getTenantSettings();
+export function CTASection({ tenantSettings = defaultTenantSettings }: Props) {
+  const t = tenantSettings;
+  const site = buildSiteConfigFromTenant(t);
+  const phoneTel = site.contact.phoneE164.replace(/\s/g, "");
+  const phoneDisplay = site.contact.phoneDisplay;
   const cta = t.home.ctaFinal;
   const lib = new Map(t.badges.library.filter((b) => b.enabled).map((b) => [b.id, b] as const));
   const garanties = t.badges.placements.home_cta_guarantees
@@ -26,7 +29,7 @@ export function CTASection() {
       <div className="absolute inset-0 z-0">
         <Image
           src={cta.backgroundImageSrc}
-          alt={`${siteConfig.commercialName} — Chauffeur privé VTC`}
+          alt={`${site.commercialName} — Chauffeur privé VTC`}
           fill
           className="object-cover object-center"
           sizes="100vw"

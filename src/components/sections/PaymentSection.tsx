@@ -1,4 +1,5 @@
-import { getTenantSettings } from "@/config/getTenantSettings";
+import { defaultTenantSettings } from "@/config/defaultTenantSettings";
+import type { TenantSettingsV1 } from "@/config/tenant-settings.types";
 
 const icons = {
   credit_card: (
@@ -43,8 +44,10 @@ const icons = {
   ),
 } as const;
 
-export function PaymentSection() {
-  const t = getTenantSettings();
+type Props = { tenantSettings?: TenantSettingsV1 };
+
+export function PaymentSection({ tenantSettings = defaultTenantSettings }: Props) {
+  const t = tenantSettings;
   const section = t.home.paymentMethods;
   const moyens = section.items.filter((m) => m.enabled);
 

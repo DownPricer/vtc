@@ -1,9 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
-import { siteConfig } from "@/config/site.config";
-import { getTenantSettings } from "@/config/getTenantSettings";
-
-const about = siteConfig.about;
+import { buildSiteConfigFromTenant } from "@/config/siteConfigFromTenant";
+import { defaultTenantSettings } from "@/config/defaultTenantSettings";
+import type { TenantSettingsV1 } from "@/config/tenant-settings.types";
 
 const icons = {
   id_card: (
@@ -38,8 +37,11 @@ const icons = {
   ),
 } as const;
 
-export function AboutSection() {
-  const t = getTenantSettings();
+type Props = { tenantSettings?: TenantSettingsV1 };
+
+export function AboutSection({ tenantSettings = defaultTenantSettings }: Props) {
+  const t = tenantSettings;
+  const about = buildSiteConfigFromTenant(t).about;
   const lib = new Map(t.badges.library.filter((b) => b.enabled).map((b) => [b.id, b] as const));
   const atouts = t.badges.placements.home_about_atouts
     .map((p) => {

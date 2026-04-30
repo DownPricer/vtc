@@ -3,19 +3,8 @@
  */
 
 import { getTenantSettings } from "./getTenantSettings";
+import { buildBusinessConfigFromTenant } from "./businessConfigFromTenant";
 
-export const businessConfig = (() => {
-  const t = getTenantSettings();
-  return {
-    legalName: t.general.legalName,
-    displayName: t.legal.displayName,
-    legalRepresentative: t.legal.legalRepresentative,
-    siret: t.legal.siret,
-    vtcLicenseNumber: t.legal.vtcLicenseNumber,
-    headquarters: {
-      ...t.contact.address,
-    },
-    hosting: { ...t.legal.hosting },
-    privacySummary: t.legal.privacySummary,
-  } as const;
-})();
+export const businessConfig = buildBusinessConfigFromTenant(getTenantSettings());
+
+export type BusinessConfig = typeof businessConfig;

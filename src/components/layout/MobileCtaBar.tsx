@@ -1,13 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { siteConfig } from "@/config/site.config";
-import { getTenantSettings } from "@/config/getTenantSettings";
+import { siteConfig, type SiteConfig } from "@/config/site.config";
+import { defaultTenantSettings } from "@/config/defaultTenantSettings";
+import type { TenantSettingsV1 } from "@/config/tenant-settings.types";
 
-export function MobileCtaBar() {
-  const phoneTel = siteConfig.contact.phoneE164.replace(/\s/g, "");
-  const wa = siteConfig.contact.whatsappDigits;
-  const waPrefill = getTenantSettings().contact.whatsappPrefillText;
+type Props = {
+  runtimeSite?: SiteConfig;
+  tenantSettings?: TenantSettingsV1;
+};
+
+export function MobileCtaBar({ runtimeSite, tenantSettings = defaultTenantSettings }: Props) {
+  const site = runtimeSite ?? siteConfig;
+  const phoneTel = site.contact.phoneE164.replace(/\s/g, "");
+  const wa = site.contact.whatsappDigits;
+  const waPrefill = tenantSettings.contact.whatsappPrefillText;
 
   return (
     <div className="md:hidden fixed bottom-0 inset-x-0 z-50 pb-safe">

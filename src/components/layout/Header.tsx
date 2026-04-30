@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useMemo } from "react";
 import { usePathname } from "next/navigation";
-import { siteConfig } from "@/config/site.config";
+import { siteConfig, type SiteConfig } from "@/config/site.config";
 
 const iconHome = (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -50,7 +50,10 @@ const iconRadio = (
 
 type NavItem = { href: string; label: string; icon: ReactNode };
 
-export function Header() {
+type HeaderProps = { runtimeSite?: SiteConfig };
+
+export function Header({ runtimeSite }: HeaderProps) {
+  const site = runtimeSite ?? siteConfig;
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
 
@@ -63,16 +66,16 @@ export function Header() {
       { href: "/faq", label: "FAQ", icon: iconFaq },
       { href: "/contact", label: "Contact", icon: iconContact },
     ];
-    if (siteConfig.features.miniGame) {
+    if (site.features.miniGame) {
       base.push({ href: "/jeu", label: "Mini-jeu", icon: iconBolt });
     }
-    if (siteConfig.features.radioHomeSection) {
+    if (site.features.radioHomeSection) {
       base.push({ href: "/#radio", label: "Radio", icon: iconRadio });
-    } else if (siteConfig.features.radioPage) {
+    } else if (site.features.radioPage) {
       base.push({ href: "/radio", label: "Radio", icon: iconRadio });
     }
     return base;
-  }, []);
+  }, [site.features.miniGame, site.features.radioHomeSection, site.features.radioPage]);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -89,8 +92,8 @@ export function Header() {
     };
   }, [mobileOpen]);
 
-  const phoneDisplay = siteConfig.contact.phoneDisplay;
-  const phoneTel = siteConfig.contact.phoneE164;
+  const phoneDisplay = site.contact.phoneDisplay;
+  const phoneTel = site.contact.phoneE164;
 
   return (
     <>
@@ -100,16 +103,16 @@ export function Header() {
             <Link href="/" className="flex items-center gap-2.5 shrink-0">
               <div className="relative w-9 h-9">
                 <Image
-                  src={siteConfig.branding.logoSrc}
-                  alt={siteConfig.branding.logoAlt}
+                  src={site.branding.logoSrc}
+                  alt={site.branding.logoAlt}
                   fill
                   className="object-contain"
                   sizes="36px"
                 />
               </div>
               <div className="flex flex-col leading-none">
-                <span className="text-white font-bold text-base">{siteConfig.commercialName}</span>
-                <span className="text-primary text-[10px] font-semibold tracking-wider">{siteConfig.tagline}</span>
+                <span className="text-white font-bold text-base">{site.commercialName}</span>
+                <span className="text-primary text-[10px] font-semibold tracking-wider">{site.tagline}</span>
               </div>
             </Link>
 

@@ -1,8 +1,9 @@
 "use client";
 import { useState, useRef } from "react";
 import Image from "next/image";
-import { siteConfig } from "@/config/site.config";
-import { getTenantSettings } from "@/config/getTenantSettings";
+import { buildSiteConfigFromTenant } from "@/config/siteConfigFromTenant";
+import { defaultTenantSettings } from "@/config/defaultTenantSettings";
+import type { TenantSettingsV1 } from "@/config/tenant-settings.types";
 
 const icons = {
   shield_check: (
@@ -23,10 +24,13 @@ const icons = {
   ),
 } as const;
 
-export function VideoSection() {
+type Props = { tenantSettings?: TenantSettingsV1 };
+
+export function VideoSection({ tenantSettings = defaultTenantSettings }: Props) {
   const [playing, setPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const t = getTenantSettings();
+  const t = tenantSettings;
+  const site = buildSiteConfigFromTenant(t);
   const video = t.home.video;
   const markers = video.markers.filter((m) => m.enabled);
 
@@ -54,7 +58,7 @@ export function VideoSection() {
             {video.eyebrow}
           </span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4">
-            {video.titlePrefix} <span className="text-gradient">{siteConfig.commercialName}</span>
+            {video.titlePrefix} <span className="text-gradient">{site.commercialName}</span>
           </h2>
           <p className="text-gray-400 text-base max-w-md mx-auto">
             {video.description}
@@ -68,7 +72,7 @@ export function VideoSection() {
             <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/30 cursor-pointer" onClick={handlePlay}>
               <Image
                 src={video.posterSrc}
-                alt={`Vidéo ${siteConfig.commercialName}`}
+                alt={`Vidéo ${site.commercialName}`}
                 fill
                 className="object-cover opacity-60"
                 sizes="100vw"

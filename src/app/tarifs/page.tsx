@@ -1,110 +1,24 @@
 import Link from "next/link";
 import Image from "next/image";
-import { siteConfig } from "@/config/site.config";
+import type { Metadata } from "next";
+import { buildSiteConfigFromTenant } from "@/config/siteConfigFromTenant";
 import { seoConfig } from "@/config/seo.config";
 import { getPublicSiteUrl } from "@/lib/siteUrl";
-import { getTenantSettings } from "@/config/getTenantSettings";
+import { getPublicTenantSettings } from "@/lib/publicTenantSettingsClient";
 
 const SITE_URL = getPublicSiteUrl();
-const exCity = siteConfig.serviceAreas.cities[0] || "Ville";
-const tenant = getTenantSettings();
-const pricing = tenant.pricingDisplay.tarifsPage;
 
-export const metadata = {
-  title: `Tarifs VTC — ${siteConfig.commercialName}`,
-  description: `Exemples de trajets et grille indicative. ${seoConfig.defaultDescription} Utilisez le calculateur pour un tarif personnalisé.`,
-  alternates: {
-    canonical: `${SITE_URL}/tarifs`,
-  },
-};
-
-const tarifs = pricing.transfers
-  .filter((x) => x.enabled)
-  .map((x) => (x.depart === tenant.general.serviceAreas.cities[0] ? { ...x, depart: exCity } : x));
-
-const codeColors = tenant.pricingDisplay.codeColors;
-
-const badgeLib = new Map(tenant.badges.library.filter((b) => b.enabled).map((b) => [b.id, b] as const));
-type Garantie = { label: string; icon: string };
-
-const guaranteeIconByBadgeId: Partial<Record<string, string>> = {
-  fixed_price: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z",
-  luggage_included: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4",
-  home_pickup: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6",
-  flight_tracking: "M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
-  availability_24_7: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
-  no_surcharge: "M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636",
-};
-
-const garanties: Garantie[] = tenant.badges.placements.pricing_page_guarantees.flatMap((p) => {
-  const b = badgeLib.get(p.badgeId);
-  const icon = guaranteeIconByBadgeId[p.badgeId];
-  if (!b || !icon) return [];
-  return [{ label: p.textOverride ?? b.text, icon }];
-});
-
-const tarifsSchema = {
-  "@context": "https://schema.org",
-  "@type": "Service",
-  name: `Transferts aéroport VTC — ${siteConfig.commercialName}`,
-  provider: {
-    "@type": "LocalBusiness",
-    name: siteConfig.commercialName,
-    url: SITE_URL,
-  },
-  offers: [
-    {
-      "@type": "Offer",
-      name: "VTC zone centre → Orly",
-      price: "260",
-      priceCurrency: "EUR",
-      description: "Exemple indicatif : zone centre vers Paris-Orly (prix à confirmer via calculateur).",
+export async function generateMetadata(): Promise<Metadata> {
+  const tenant = await getPublicTenantSettings();
+  const site = buildSiteConfigFromTenant(tenant);
+  return {
+    title: `Tarifs VTC — ${site.commercialName}`,
+    description: `Exemples de trajets et grille indicative. ${seoConfig.defaultDescription} Utilisez le calculateur pour un tarif personnalisé.`,
+    alternates: {
+      canonical: `${SITE_URL}/tarifs`,
     },
-    {
-      "@type": "Offer",
-      name: "VTC ville côte → Roissy CDG",
-      price: "270",
-      priceCurrency: "EUR",
-      description: "Exemple indicatif : ville côte vers Roissy CDG (prix à confirmer via calculateur).",
-    },
-    {
-      "@type": "Offer",
-      name: "VTC ville est → Roissy CDG",
-      price: "260",
-      priceCurrency: "EUR",
-      description: "Exemple indicatif : ville est vers Roissy CDG.",
-    },
-    {
-      "@type": "Offer",
-      name: "VTC site touristique → Orly",
-      price: "260",
-      priceCurrency: "EUR",
-      description: "Exemple indicatif : site touristique vers Orly.",
-    },
-    {
-      "@type": "Offer",
-      name: `VTC ${exCity} → Caen`,
-      price: "165",
-      priceCurrency: "EUR",
-      description: `Exemple de transfert depuis ${exCity} vers l'aéroport de Caen (indicatif).`,
-    },
-    {
-      "@type": "Offer",
-      name: "VTC ville voisine → Beauvais",
-      price: "215",
-      priceCurrency: "EUR",
-      description: "Exemple indicatif : ville voisine vers Beauvais-Tillé.",
-    },
-    {
-      "@type": "Offer",
-      name: "Mise à Disposition — Chauffeur Privé",
-      price: "80",
-      priceCurrency: "EUR",
-      unitText: "HOUR",
-      description: "Chauffeur privé à l'heure pour mariages, séminaires, événements. À partir de 80€/h TTC.",
-    },
-  ],
-};
+  };
+}
 
 const breadcrumbSchema = {
   "@context": "https://schema.org",
@@ -115,7 +29,99 @@ const breadcrumbSchema = {
   ],
 };
 
-export default function TarifsPage() {
+const guaranteeIconByBadgeId: Partial<Record<string, string>> = {
+  fixed_price: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z",
+  luggage_included: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4",
+  home_pickup: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6",
+  flight_tracking: "M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
+  availability_24_7: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
+  no_surcharge: "M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636",
+};
+
+type Garantie = { label: string; icon: string };
+
+export default async function TarifsPage() {
+  const tenant = await getPublicTenantSettings();
+  const site = buildSiteConfigFromTenant(tenant);
+  const exCity = site.serviceAreas.cities[0] || "Ville";
+  const pricing = tenant.pricingDisplay.tarifsPage;
+  const tarifs = pricing.transfers
+    .filter((x) => x.enabled)
+    .map((x) => (x.depart === tenant.general.serviceAreas.cities[0] ? { ...x, depart: exCity } : x));
+
+  const codeColors = tenant.pricingDisplay.codeColors;
+
+  const badgeLib = new Map(tenant.badges.library.filter((b) => b.enabled).map((b) => [b.id, b] as const));
+  const garanties: Garantie[] = tenant.badges.placements.pricing_page_guarantees.flatMap((p) => {
+    const b = badgeLib.get(p.badgeId);
+    const icon = guaranteeIconByBadgeId[p.badgeId];
+    if (!b || !icon) return [];
+    return [{ label: p.textOverride ?? b.text, icon }];
+  });
+
+  const tarifsSchema = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: `Transferts aéroport VTC — ${site.commercialName}`,
+    provider: {
+      "@type": "LocalBusiness",
+      name: site.commercialName,
+      url: SITE_URL,
+    },
+    offers: [
+      {
+        "@type": "Offer",
+        name: "VTC zone centre → Orly",
+        price: "260",
+        priceCurrency: "EUR",
+        description: "Exemple indicatif : zone centre vers Paris-Orly (prix à confirmer via calculateur).",
+      },
+      {
+        "@type": "Offer",
+        name: "VTC ville côte → Roissy CDG",
+        price: "270",
+        priceCurrency: "EUR",
+        description: "Exemple indicatif : ville côte vers Roissy CDG (prix à confirmer via calculateur).",
+      },
+      {
+        "@type": "Offer",
+        name: "VTC ville est → Roissy CDG",
+        price: "260",
+        priceCurrency: "EUR",
+        description: "Exemple indicatif : ville est vers Roissy CDG.",
+      },
+      {
+        "@type": "Offer",
+        name: "VTC site touristique → Orly",
+        price: "260",
+        priceCurrency: "EUR",
+        description: "Exemple indicatif : site touristique vers Orly.",
+      },
+      {
+        "@type": "Offer",
+        name: `VTC ${exCity} → Caen`,
+        price: "165",
+        priceCurrency: "EUR",
+        description: `Exemple de transfert depuis ${exCity} vers l'aéroport de Caen (indicatif).`,
+      },
+      {
+        "@type": "Offer",
+        name: "VTC ville voisine → Beauvais",
+        price: "215",
+        priceCurrency: "EUR",
+        description: "Exemple indicatif : ville voisine vers Beauvais-Tillé.",
+      },
+      {
+        "@type": "Offer",
+        name: "Mise à Disposition — Chauffeur Privé",
+        price: "80",
+        priceCurrency: "EUR",
+        unitText: "HOUR",
+        description: "Chauffeur privé à l'heure pour mariages, séminaires, événements. À partir de 80€/h TTC.",
+      },
+    ],
+  };
+
   return (
     <div className="min-h-screen bg-dark">
       <script

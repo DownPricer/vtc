@@ -1,23 +1,26 @@
 import Link from "next/link";
 import Image from "next/image";
-import { siteConfig } from "@/config/site.config";
-import { businessConfig } from "@/config/business.config";
+import type { Metadata } from "next";
+import { buildSiteConfigFromTenant } from "@/config/siteConfigFromTenant";
+import { buildBusinessConfigFromTenant } from "@/config/businessConfigFromTenant";
 import { seoConfig } from "@/config/seo.config";
 import { getPublicSiteUrl } from "@/lib/siteUrl";
-import { getTenantSettings } from "@/config/getTenantSettings";
+import { getPublicTenantSettings } from "@/lib/publicTenantSettingsClient";
 
 const SITE_URL = getPublicSiteUrl();
-const about = siteConfig.about;
-const hq = businessConfig.headquarters;
-const tenant = getTenantSettings();
 
-export const metadata = {
-  title: `À propos — ${siteConfig.commercialName}`,
-  description: `${about.leadParagraph} ${seoConfig.defaultDescription}`,
-  alternates: {
-    canonical: `${SITE_URL}/a-propos`,
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const tenant = await getPublicTenantSettings();
+  const site = buildSiteConfigFromTenant(tenant);
+  const about = site.about;
+  return {
+    title: `À propos — ${site.commercialName}`,
+    description: `${about.leadParagraph} ${seoConfig.defaultDescription}`,
+    alternates: {
+      canonical: `${SITE_URL}/a-propos`,
+    },
+  };
+}
 
 const icons = {
   clock: (
@@ -42,33 +45,39 @@ const icons = {
   ),
 } as const;
 
-const organizationSchema = {
-  "@context": "https://schema.org",
-  "@type": "LocalBusiness",
-  name: siteConfig.legalName,
-  alternateName: siteConfig.commercialName,
-  url: SITE_URL,
-  image: `${SITE_URL}${about.portraitSrc}`,
-  address: {
-    "@type": "PostalAddress",
-    streetAddress: hq.street,
-    addressLocality: hq.city,
-    postalCode: hq.postalCode,
-    addressCountry: hq.country,
-  },
-  knowsAbout: ["VTC", "Transfert aéroport", "Chauffeur privé"],
-};
+export default async function AProposPage() {
+  const tenant = await getPublicTenantSettings();
+  const site = buildSiteConfigFromTenant(tenant);
+  const business = buildBusinessConfigFromTenant(tenant);
+  const about = site.about;
+  const hq = business.headquarters;
 
-const breadcrumbSchema = {
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  itemListElement: [
-    { "@type": "ListItem", position: 1, name: "Accueil", item: SITE_URL },
-    { "@type": "ListItem", position: 2, name: "À propos", item: `${SITE_URL}/a-propos` },
-  ],
-};
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: site.legalName,
+    alternateName: site.commercialName,
+    url: SITE_URL,
+    image: `${SITE_URL}${about.portraitSrc}`,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: hq.street,
+      addressLocality: hq.city,
+      postalCode: hq.postalCode,
+      addressCountry: hq.country,
+    },
+    knowsAbout: ["VTC", "Transfert aéroport", "Chauffeur privé"],
+  };
 
-export default function AProposPage() {
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Accueil", item: SITE_URL },
+      { "@type": "ListItem", position: 2, name: "À propos", item: `${SITE_URL}/a-propos` },
+    ],
+  };
+
   return (
     <div className="min-h-screen bg-dark">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
@@ -110,10 +119,10 @@ export default function AProposPage() {
             <div className="flex items-center gap-3 mt-6">
               <span className="flex items-center gap-1.5 text-xs text-gray-300 font-medium">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                {siteConfig.hero.badge}
+                {site.hero.badge}
               </span>
               <span className="w-px h-3 bg-white/20" />
-              <span className="text-xs text-gray-300 font-medium">{siteConfig.seo.regionLabel}</span>
+              <span className="text-xs text-gray-300 font-medium">{site.seo.regionLabel}</span>
             </div>
           </div>
         </div>

@@ -9,6 +9,9 @@ import { siteConfig } from "@/config/site.config";
 import { seoConfig } from "@/config/seo.config";
 import { getPublicSiteUrl } from "@/lib/siteUrl";
 import { getBrandCssVariables } from "@/lib/branding/cssVariables";
+import { getPublicTenantSettings } from "@/lib/publicTenantSettingsClient";
+import { buildSiteConfigFromTenant } from "@/config/siteConfigFromTenant";
+import { buildBusinessConfigFromTenant } from "@/config/businessConfigFromTenant";
 
 const SITE_URL = getPublicSiteUrl();
 const ogUrl = `${SITE_URL}${siteConfig.branding.ogImageSrc}`;
@@ -71,20 +74,24 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const tenantSettings = await getPublicTenantSettings();
+  const runtimeSite = buildSiteConfigFromTenant(tenantSettings);
+  const runtimeBusiness = buildBusinessConfigFromTenant(tenantSettings);
+
   return (
-    <html lang="fr" style={getBrandCssVariables()}>
+    <html lang="fr" style={getBrandCssVariables(runtimeSite.branding.colors)}>
       <body className="antialiased bg-dark text-white min-h-screen flex flex-col">
-        {siteConfig.features.introScreen ? <IntroScreen /> : null}
-        <Header />
+        {runtimeSite.features.introScreen ? <IntroScreen runtimeSite={runtimeSite} /> : null}
+        <Header runtimeSite={runtimeSite} />
         <main className="flex-1 pb-24 md:pb-0">{children}</main>
-        <Footer />
-        <FloatingButtons />
-        <MobileCtaBar />
+        <Footer runtimeSite={runtimeSite} runtimeBusiness={runtimeBusiness} />
+        <FloatingButtons runtimeSite={runtimeSite} />
+        <MobileCtaBar runtimeSite={runtimeSite} tenantSettings={tenantSettings} />
       </body>
     </html>
   );

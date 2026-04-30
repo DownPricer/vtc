@@ -1,56 +1,24 @@
 import { ContactForm } from "@/components/forms/ContactForm";
-import { siteConfig } from "@/config/site.config";
-import { businessConfig } from "@/config/business.config";
+import type { Metadata } from "next";
+import { buildSiteConfigFromTenant } from "@/config/siteConfigFromTenant";
+import { buildBusinessConfigFromTenant } from "@/config/businessConfigFromTenant";
 import { seoConfig } from "@/config/seo.config";
 import { getPublicSiteUrl } from "@/lib/siteUrl";
-import { getTenantSettings } from "@/config/getTenantSettings";
+import { getPublicTenantSettings } from "@/lib/publicTenantSettingsClient";
 
 const SITE_URL = getPublicSiteUrl();
-const hq = businessConfig.headquarters;
-const phoneTel = siteConfig.contact.phoneE164.replace(/\s/g, "");
-const phoneDisplay = siteConfig.contact.phoneDisplay;
-const wa = siteConfig.contact.whatsappDigits;
-const tenant = getTenantSettings();
 
-export const metadata = {
-  title: `Contact — ${siteConfig.commercialName}`,
-  description: `Contact et réservations pour ${siteConfig.commercialName}. ${seoConfig.defaultDescription}`,
-  alternates: {
-    canonical: `${SITE_URL}/contact`,
-  },
-};
-
-const contactSchema = {
-  "@context": "https://schema.org",
-  "@type": "ContactPage",
-  name: `Contact — ${siteConfig.commercialName}`,
-  description: "Page de contact pour demandes et réservations VTC",
-  url: `${SITE_URL}/contact`,
-  mainEntity: {
-    "@type": "LocalBusiness",
-    name: siteConfig.legalName,
-    telephone: siteConfig.contact.phoneE164,
-    email: siteConfig.contact.email,
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: hq.street,
-      addressLocality: hq.city,
-      postalCode: hq.postalCode,
-      addressCountry: hq.country,
+export async function generateMetadata(): Promise<Metadata> {
+  const tenant = await getPublicTenantSettings();
+  const site = buildSiteConfigFromTenant(tenant);
+  return {
+    title: `Contact — ${site.commercialName}`,
+    description: `Contact et réservations pour ${site.commercialName}. ${seoConfig.defaultDescription}`,
+    alternates: {
+      canonical: `${SITE_URL}/contact`,
     },
-    geo: {
-      "@type": "GeoCoordinates",
-      latitude: hq.latitude,
-      longitude: hq.longitude,
-    },
-    openingHoursSpecification: {
-      "@type": "OpeningHoursSpecification",
-      dayOfWeek: siteConfig.openingHours.days,
-      opens: siteConfig.openingHours.opens,
-      closes: siteConfig.openingHours.closes,
-    },
-  },
-};
+  };
+}
 
 const breadcrumbSchema = {
   "@context": "https://schema.org",
@@ -61,7 +29,47 @@ const breadcrumbSchema = {
   ],
 };
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const tenant = await getPublicTenantSettings();
+  const site = buildSiteConfigFromTenant(tenant);
+  const business = buildBusinessConfigFromTenant(tenant);
+  const hq = business.headquarters;
+  const phoneTel = site.contact.phoneE164.replace(/\s/g, "");
+  const phoneDisplay = site.contact.phoneDisplay;
+  const wa = site.contact.whatsappDigits;
+
+  const contactSchema = {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    name: `Contact — ${site.commercialName}`,
+    description: "Page de contact pour demandes et réservations VTC",
+    url: `${SITE_URL}/contact`,
+    mainEntity: {
+      "@type": "LocalBusiness",
+      name: site.legalName,
+      telephone: site.contact.phoneE164,
+      email: site.contact.email,
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: hq.street,
+        addressLocality: hq.city,
+        postalCode: hq.postalCode,
+        addressCountry: hq.country,
+      },
+      geo: {
+        "@type": "GeoCoordinates",
+        latitude: hq.latitude,
+        longitude: hq.longitude,
+      },
+      openingHoursSpecification: {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: site.openingHours.days,
+        opens: site.openingHours.opens,
+        closes: site.openingHours.closes,
+      },
+    },
+  };
+
   return (
     <div className="min-h-screen bg-dark">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(contactSchema) }} />
@@ -137,7 +145,7 @@ export default function ContactPage() {
             ) : null}
 
             <a
-              href={`mailto:${siteConfig.contact.email}`}
+              href={`mailto:${site.contact.email}`}
               className="flex items-center gap-3.5 p-4 rounded-xl border border-white/[0.07] hover:border-primary/30 transition-all duration-200 group"
               style={{ background: "linear-gradient(145deg, #1a1a1a, #111)" }}
             >
@@ -148,7 +156,7 @@ export default function ContactPage() {
               </div>
               <div>
                 <p className="text-[10px] text-gray-600 uppercase tracking-wider mb-0.5">E-mail</p>
-                <p className="text-white font-bold text-sm">{siteConfig.contact.email}</p>
+                <p className="text-white font-bold text-sm">{site.contact.email}</p>
               </div>
             </a>
 

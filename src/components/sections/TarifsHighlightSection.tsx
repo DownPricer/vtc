@@ -1,9 +1,12 @@
 import Link from "next/link";
 import Image from "next/image";
-import { getTenantSettings } from "@/config/getTenantSettings";
+import { defaultTenantSettings } from "@/config/defaultTenantSettings";
+import type { TenantSettingsV1 } from "@/config/tenant-settings.types";
 
-export function TarifsHighlightSection() {
-  const t = getTenantSettings();
+type Props = { tenantSettings?: TenantSettingsV1 };
+
+export function TarifsHighlightSection({ tenantSettings = defaultTenantSettings }: Props) {
+  const t = tenantSettings;
   const highlights = t.pricingDisplay.highlights;
   const tarifs = highlights.popularTransfers.filter((x) => x.enabled);
 
@@ -42,50 +45,50 @@ export function TarifsHighlightSection() {
 
         {/* Tarif cards — compact horizontal layout */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-          {tarifs.map((t) => (
+          {tarifs.map((row) => (
             <div
-              key={`${t.depart}-${t.code}`}
+              key={`${row.depart}-${row.code}`}
               className={`relative rounded-xl overflow-hidden transition-all duration-300 hover:scale-[1.02] ${
-                t.featured
+                row.featured
                   ? "border border-primary/40 ring-1 ring-primary/20"
                   : "border border-white/[0.06]"
               }`}
             >
-              <div className={`p-4 h-full bg-white/[0.03] ${t.featured ? "bg-primary/[0.04]" : ""}`}>
+              <div className={`p-4 h-full bg-white/[0.03] ${row.featured ? "bg-primary/[0.04]" : ""}`}>
 
-                {t.featured && (
+                {row.featured && (
                   <span className="inline-block text-[9px] font-bold uppercase tracking-widest text-primary bg-primary/15 px-2 py-0.5 rounded-full mb-2">
                     Populaire
                   </span>
                 )}
 
                 {/* Route */}
-                <p className="text-white font-bold text-sm leading-none mb-1">{t.depart}</p>
+                <p className="text-white font-bold text-sm leading-none mb-1">{row.depart}</p>
                 <div className="flex items-center gap-1.5 mb-1">
                   <div className="flex-1 h-px bg-white/10" />
                   <svg className="w-3 h-3 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                   </svg>
                 </div>
-                <p className="text-gray-400 text-xs mb-2">{t.destination}</p>
+                <p className="text-gray-400 text-xs mb-2">{row.destination}</p>
 
                 {/* Badges */}
                 <div className="flex items-center gap-1.5 mb-3">
                   <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-white/[0.06] text-gray-400">
-                    {t.code}
+                    {row.code}
                   </span>
-                  <span className="text-[9px] text-gray-600">{t.duree}</span>
+                  <span className="text-[9px] text-gray-600">{row.duree}</span>
                 </div>
 
                 {/* Price */}
                 <div className="border-t border-white/[0.06] pt-2.5 space-y-1">
                   <div className="flex items-baseline justify-between">
                     <span className="text-[9px] text-gray-600 uppercase">Aller</span>
-                    <span className="text-sm font-bold text-gray-400">{t.prixAller} €</span>
+                    <span className="text-sm font-bold text-gray-400">{row.prixAller} €</span>
                   </div>
                   <div className="flex items-baseline justify-between">
                     <span className="text-[9px] text-gray-600 uppercase">A/R</span>
-                    <span className="text-xl font-black text-primary">{t.prixAR} €</span>
+                    <span className="text-xl font-black text-primary">{row.prixAR} €</span>
                   </div>
                 </div>
               </div>

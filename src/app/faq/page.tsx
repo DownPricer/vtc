@@ -1,21 +1,23 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { siteConfig } from "@/config/site.config";
+import { buildSiteConfigFromTenant } from "@/config/siteConfigFromTenant";
 import { seoConfig } from "@/config/seo.config";
 import { getPublicSiteUrl } from "@/lib/siteUrl";
-import { getTenantSettings } from "@/config/getTenantSettings";
+import { getPublicTenantSettings } from "@/lib/publicTenantSettingsClient";
 
 const SITE_URL = getPublicSiteUrl();
-const tenant = getTenantSettings();
-const faqConfig = tenant.faq;
 
-export const metadata: Metadata = {
-  title: `FAQ — ${siteConfig.commercialName}`,
-  description: `Questions fréquentes : bagages, vols, paiements, zone d’intervention. ${seoConfig.defaultDescription}`,
-  alternates: {
-    canonical: `${SITE_URL}/faq`,
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const tenant = await getPublicTenantSettings();
+  const site = buildSiteConfigFromTenant(tenant);
+  return {
+    title: `FAQ — ${site.commercialName}`,
+    description: `Questions fréquentes : bagages, vols, paiements, zone d’intervention. ${seoConfig.defaultDescription}`,
+    alternates: {
+      canonical: `${SITE_URL}/faq`,
+    },
+  };
+}
 
 const icons = {
   luggage_check: (
@@ -56,23 +58,6 @@ const icons = {
   ),
 } as const;
 
-const faqs = faqConfig.items
-  .filter((x) => x.enabled)
-  .map((x) => ({ q: x.question, a: x.answer, icon: icons[x.iconKey as keyof typeof icons] }));
-
-const faqStructuredData = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: faqs.map((f) => ({
-    "@type": "Question",
-    name: f.q,
-    acceptedAnswer: {
-      "@type": "Answer",
-      text: f.a,
-    },
-  })),
-};
-
 const breadcrumbSchema = {
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
@@ -82,7 +67,28 @@ const breadcrumbSchema = {
   ],
 };
 
-export default function FAQPage() {
+export default async function FAQPage() {
+  const tenant = await getPublicTenantSettings();
+  const site = buildSiteConfigFromTenant(tenant);
+  const faqConfig = tenant.faq;
+
+  const faqs = faqConfig.items
+    .filter((x) => x.enabled)
+    .map((x) => ({ q: x.question, a: x.answer, icon: icons[x.iconKey as keyof typeof icons] }));
+
+  const faqStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((f) => ({
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: f.a,
+      },
+    })),
+  };
+
   return (
     <div className="min-h-screen bg-dark">
       <script
@@ -113,7 +119,7 @@ export default function FAQPage() {
             <span className="text-gradient">{faqConfig.pageHero.titleHighlight}</span>
           </h1>
           <p className="text-gray-400 text-base md:text-lg leading-relaxed max-w-lg">
-            {faqConfig.pageHero.introTemplate.replace("{brand}", siteConfig.commercialName)}
+            {faqConfig.pageHero.introTemplate.replace("{brand}", site.commercialName)}
           </p>
         </div>
       </div>

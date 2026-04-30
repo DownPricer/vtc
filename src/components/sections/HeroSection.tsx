@@ -1,12 +1,16 @@
 import Link from "next/link";
 import Image from "next/image";
-import { siteConfig } from "@/config/site.config";
-import { getTenantSettings } from "@/config/getTenantSettings";
+import { buildSiteConfigFromTenant } from "@/config/siteConfigFromTenant";
+import { defaultTenantSettings } from "@/config/defaultTenantSettings";
+import type { TenantSettingsV1 } from "@/config/tenant-settings.types";
 
-const t = getTenantSettings();
-const hero = t.home.hero;
+type Props = { tenantSettings?: TenantSettingsV1 };
 
-export function HeroSection() {
+export function HeroSection({ tenantSettings = defaultTenantSettings }: Props) {
+  const t = tenantSettings;
+  const hero = t.home.hero;
+  const site = buildSiteConfigFromTenant(t);
+
   return (
     <section className="relative h-svh flex flex-col justify-center overflow-hidden bg-black">
 
@@ -38,7 +42,7 @@ export function HeroSection() {
           <div className="animate-fade-down inline-flex items-center gap-2 mb-5 md:mb-6">
             <span className="w-6 h-px bg-primary flex-shrink-0" />
             <span className="text-primary text-[11px] font-bold tracking-[0.2em] uppercase whitespace-nowrap">
-              {hero.badgeText} · {siteConfig.seo.regionLabel}
+              {hero.badgeText} · {site.seo.regionLabel}
             </span>
           </div>
 

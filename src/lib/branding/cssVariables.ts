@@ -1,10 +1,11 @@
 import type { CSSProperties } from "react";
 import { siteConfig } from "@/config/site.config";
+import type { SiteConfig } from "@/config/site.config";
 import { rgbTriplet } from "@/lib/branding/colorUtils";
 
 /** Variables CSS racine — à appliquer sur `<html>` (voir `layout.tsx`). */
-export function getBrandCssVariables(): CSSProperties {
-  const c = siteConfig.branding.colors;
+export function getBrandCssVariables(colors?: SiteConfig["branding"]["colors"]): CSSProperties {
+  const c = colors ?? siteConfig.branding.colors;
   const vars: Record<string, string> = {
     "--background": c.background,
     "--foreground": c.foreground,

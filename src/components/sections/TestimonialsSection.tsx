@@ -1,17 +1,8 @@
-import { siteConfig } from "@/config/site.config";
-import { getTenantSettings } from "@/config/getTenantSettings";
+import { buildSiteConfigFromTenant } from "@/config/siteConfigFromTenant";
+import { defaultTenantSettings } from "@/config/defaultTenantSettings";
+import type { TenantSettingsV1 } from "@/config/tenant-settings.types";
 
-const tenant = getTenantSettings();
-
-const avis = tenant.testimonials.items
-  .filter((t) => t.enabled)
-  .map((t) => ({
-    text: t.text,
-    auteur: t.author,
-    trajet: t.trajet || "—",
-    note: t.rating,
-    date: t.date || "—",
-  }));
+type Props = { tenantSettings?: TenantSettingsV1 };
 
 function Stars({ n }: { n: number }) {
   return (
@@ -25,7 +16,9 @@ function Stars({ n }: { n: number }) {
   );
 }
 
-function TestimonialCard({ a }: { a: (typeof avis)[0] }) {
+type AvisItem = { text: string; auteur: string; trajet: string; note: number; date: string };
+
+function TestimonialCard({ a }: { a: AvisItem }) {
   return (
     <blockquote className="relative flex-shrink-0 w-[85vw] sm:w-[340px] md:w-auto glass-dark rounded-2xl p-6 flex flex-col group hover:border-primary/30 hover:shadow-glow transition-all duration-300 border border-white/6">
       <span className="absolute top-4 right-5 text-6xl text-primary/10 font-serif leading-none select-none pointer-events-none">
@@ -59,8 +52,20 @@ function TestimonialCard({ a }: { a: (typeof avis)[0] }) {
   );
 }
 
-export function TestimonialsSection() {
-  const reviewsUrl = tenant.testimonials.reviewsUrl ?? siteConfig.urls.reviewsUrl;
+export function TestimonialsSection({ tenantSettings = defaultTenantSettings }: Props) {
+  const t = tenantSettings;
+  const site = buildSiteConfigFromTenant(t);
+  const avis: AvisItem[] = t.testimonials.items
+    .filter((x) => x.enabled)
+    .map((x) => ({
+      text: x.text,
+      auteur: x.author,
+      trajet: x.trajet || "—",
+      note: x.rating,
+      date: x.date || "—",
+    }));
+
+  const reviewsUrl = t.testimonials.reviewsUrl ?? site.urls.reviewsUrl;
   const firstRow = avis.slice(0, 3);
   const secondRow = avis.slice(3);
 
@@ -73,11 +78,11 @@ export function TestimonialsSection() {
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-12 px-5">
           <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold tracking-widest uppercase mb-5">
-            {tenant.testimonials.eyebrow}
+            {t.testimonials.eyebrow}
           </span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 leading-tight">
-            {tenant.testimonials.title}{" "}
-            <span className="text-gradient">{tenant.testimonials.titleHighlight}</span>
+            {t.testimonials.title}{" "}
+            <span className="text-gradient">{t.testimonials.titleHighlight}</span>
           </h2>
           <div className="inline-flex items-center gap-3 px-5 py-3 glass rounded-2xl">
             <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 24 24">
@@ -85,10 +90,10 @@ export function TestimonialsSection() {
             </svg>
             <div className="flex items-center gap-1.5">
               <Stars n={5} />
-              <span className="text-white font-black text-sm">{tenant.testimonials.ratingValueText}</span>
+              <span className="text-white font-black text-sm">{t.testimonials.ratingValueText}</span>
             </div>
             <span className="text-gray-400 text-xs">·</span>
-            <span className="text-gray-400 text-xs">{tenant.testimonials.ratingCountLabel}</span>
+            <span className="text-gray-400 text-xs">{t.testimonials.ratingCountLabel}</span>
           </div>
         </div>
 

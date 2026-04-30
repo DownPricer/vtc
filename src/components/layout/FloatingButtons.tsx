@@ -1,14 +1,17 @@
 "use client";
 
-import { siteConfig } from "@/config/site.config";
+import { siteConfig, type SiteConfig } from "@/config/site.config";
 
-export function FloatingButtons() {
-  const phone = siteConfig.contact.phoneE164.replace(/\s/g, "");
-  const wa = siteConfig.contact.whatsappDigits;
+type Props = { runtimeSite?: SiteConfig };
+
+export function FloatingButtons({ runtimeSite }: Props) {
+  const site = runtimeSite ?? siteConfig;
+  const phone = site.contact.phoneE164.replace(/\s/g, "");
+  const wa = site.contact.whatsappDigits;
   const showRadio =
-    siteConfig.features.floatingRadioButton &&
-    (siteConfig.features.radioHomeSection || siteConfig.features.radioPage);
-  const radioHref = siteConfig.features.radioHomeSection ? "/#radio" : "/radio";
+    site.features.floatingRadioButton &&
+    (site.features.radioHomeSection || site.features.radioPage);
+  const radioHref = site.features.radioHomeSection ? "/#radio" : "/radio";
   const showWa = Boolean(wa?.length);
 
   return (

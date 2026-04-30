@@ -1,7 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
-import { siteConfig } from "@/config/site.config";
-import { getTenantSettings } from "@/config/getTenantSettings";
+import { buildSiteConfigFromTenant } from "@/config/siteConfigFromTenant";
+import { defaultTenantSettings } from "@/config/defaultTenantSettings";
+import type { TenantSettingsV1 } from "@/config/tenant-settings.types";
 
 const icons = {
   plane: (
@@ -40,8 +41,11 @@ function renderVehicleTitle(name: string) {
   return name;
 }
 
-export function ServicesSection() {
-  const t = getTenantSettings();
+type Props = { tenantSettings?: TenantSettingsV1 };
+
+export function ServicesSection({ tenantSettings = defaultTenantSettings }: Props) {
+  const t = tenantSettings;
+  const site = buildSiteConfigFromTenant(t);
   const commitments = t.home.commitments;
   const services = commitments.items.filter((x) => x.enabled);
   const vehicle = t.vehicles.featured;
@@ -65,7 +69,7 @@ export function ServicesSection() {
               {commitments.eyebrow}
             </span>
             <h2 className="text-2xl sm:text-3xl font-black text-white mb-2 leading-tight">
-              {commitments.titlePrefix} <span className="text-gradient">{siteConfig.commercialName}</span> ?
+              {commitments.titlePrefix} <span className="text-gradient">{site.commercialName}</span> ?
             </h2>
             <p className="text-gray-500 text-sm leading-relaxed mb-5">
               {commitments.subtitle}
