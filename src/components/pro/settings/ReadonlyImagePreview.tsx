@@ -8,6 +8,13 @@ type ReadonlyImagePreviewProps = {
 
 /** Aperçu image (chemins locaux `/…`). */
 export function ReadonlyImagePreview({ src, alt, caption }: ReadonlyImagePreviewProps) {
+  if (!src?.trim()) {
+    return (
+      <figure className="overflow-hidden rounded-xl border border-dashed border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-3 py-6 text-center">
+        <figcaption className="text-xs text-[var(--pro-text-muted)]">{caption ? `${caption} — ` : ""}Aucune image</figcaption>
+      </figure>
+    );
+  }
   return (
     <figure className="overflow-hidden rounded-xl border border-[var(--pro-border)] bg-black/15">
       <div className="flex max-h-40 items-center justify-center bg-[var(--pro-panel-muted)] p-3">
