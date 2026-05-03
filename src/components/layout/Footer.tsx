@@ -7,6 +7,7 @@ const footerLinksBase = {
     { href: "/calculateur", label: "Réservation en ligne" },
     { href: "/devis", label: "Devis gratuit" },
     { href: "/tarifs", label: "Tarifs" },
+    { href: "/pro/login", label: "Espace professionnel" },
   ],
   infos: [
     { href: "/services", label: "Nos services" },

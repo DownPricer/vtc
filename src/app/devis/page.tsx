@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { DevisForm } from "@/components/forms/DevisForm";
 
+import { getPublicTenantSettings } from "@/lib/publicTenantSettingsClient";
 import { getPublicSiteUrl } from "@/lib/siteUrl";
 import { siteConfig } from "@/config/site.config";
 import { seoConfig } from "@/config/seo.config";
@@ -15,7 +16,10 @@ export const metadata = {
   },
 };
 
-export default function DevisPage() {
+export default async function DevisPage() {
+  const tenant = await getPublicTenantSettings();
+  const vtcBaseAddress = tenant.calculatorDisplay.vtcBaseAddress;
+
   return (
     <div className="min-h-screen bg-dark">
       <div className="relative overflow-hidden page-hero-devis">
@@ -79,7 +83,7 @@ export default function DevisPage() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
-        <DevisForm />
+        <DevisForm vtcBaseAddress={vtcBaseAddress} />
       </div>
     </div>
   );

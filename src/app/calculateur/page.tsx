@@ -1,6 +1,7 @@
 import { CalculatorForm } from "@/components/forms/CalculatorForm";
 import Link from "next/link";
 
+import { getPublicTenantSettings } from "@/lib/publicTenantSettingsClient";
 import { getPublicSiteUrl } from "@/lib/siteUrl";
 import { siteConfig } from "@/config/site.config";
 import { seoConfig } from "@/config/seo.config";
@@ -15,7 +16,10 @@ export const metadata = {
   },
 };
 
-export default function CalculateurPage() {
+export default async function CalculateurPage() {
+  const tenant = await getPublicTenantSettings();
+  const vtcBaseAddress = tenant.calculatorDisplay.vtcBaseAddress;
+
   return (
     <main className="min-h-screen bg-dark">
       <div className="relative overflow-hidden page-hero-calculator">
@@ -80,7 +84,7 @@ export default function CalculateurPage() {
       </div>
 
       <div className="max-w-3xl mx-auto px-5 py-10 pb-20">
-        <CalculatorForm />
+        <CalculatorForm vtcBaseAddress={vtcBaseAddress} />
       </div>
     </main>
   );

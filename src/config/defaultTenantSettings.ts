@@ -132,6 +132,7 @@ export const defaultTenantSettings: TenantSettingsV1 = {
 
   /** Paramètres d’affichage du formulaire calculateur (listes / limites) — aligné sur `CalculatorForm`. */
   calculatorDisplay: {
+    vtcBaseAddress: "Paris, France",
     serviceTypes: [
       {
         id: "transfert-aeroport",

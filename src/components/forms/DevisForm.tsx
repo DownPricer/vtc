@@ -2,6 +2,10 @@
 
 import { CalculatorForm } from "./CalculatorForm";
 
-export function DevisForm() {
-  return <CalculatorForm mode="devis" />;
+type DevisFormProps = {
+  vtcBaseAddress: string;
+};
+
+export function DevisForm({ vtcBaseAddress }: DevisFormProps) {
+  return <CalculatorForm mode="devis" vtcBaseAddress={vtcBaseAddress} />;
 }

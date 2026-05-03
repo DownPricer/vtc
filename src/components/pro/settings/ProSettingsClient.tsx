@@ -15,6 +15,7 @@ import { SettingsEditToolbar } from "./editable/SettingsEditToolbar";
 import { UnsavedChangesBar } from "./editable/UnsavedChangesBar";
 import { SettingsTabs, type SettingsTabId } from "./SettingsTabs";
 import { SettingsTabPanels } from "./tabs/SettingsTabPanels";
+import { SiteDraftPreviewModal } from "./SiteDraftPreviewModal";
 import { useTenantDraft } from "./useTenantDraft";
 import { validateContactSection } from "./contactValidation";
 import type { ProSettingsMailMeta } from "./types";
@@ -40,6 +41,7 @@ export function ProSettingsClient({ tenant, mailMeta, siteFeatures }: ProSetting
   const [loadMessage, setLoadMessage] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<Feedback>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -99,7 +101,7 @@ export function ProSettingsClient({ tenant, mailMeta, siteFeatures }: ProSetting
   };
 
   const handlePreview = () => {
-    window.alert("Prévisualisation complète disponible à l’étape suivante.");
+    setPreviewOpen(true);
   };
 
   const handleCancel = () => {
@@ -110,6 +112,7 @@ export function ProSettingsClient({ tenant, mailMeta, siteFeatures }: ProSetting
 
   return (
     <ProGuard>
+      <SiteDraftPreviewModal open={previewOpen} onClose={() => setPreviewOpen(false)} draft={draft} />
       <ProShell>
         <ProNav />
         <ProPanel>

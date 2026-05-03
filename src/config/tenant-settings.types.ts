@@ -172,6 +172,11 @@ export type CalculatorExtraOptionDisplay = {
 };
 
 export type TenantCalculatorDisplayV1 = {
+  /**
+   * Adresse complète de la base / départ chauffeur (Distance Matrix).
+   * Envoyée au corps des requêtes `calculer-tarif`, `devis`, `réservation` sous le champ `vtcBaseAddress`.
+   */
+  vtcBaseAddress: string;
   serviceTypes: CalculatorServiceTypeDisplay[];
   maxPassengers: number;
   /** Indice max du sélecteur bagages (0 = aucun, 8 = 8 bagages) — 9 options au total. */

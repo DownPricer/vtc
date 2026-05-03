@@ -12,8 +12,8 @@ type EditableSwitchProps = {
 
 export function EditableSwitch({ label, checked, onChange, editing, hint }: EditableSwitchProps) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel)] px-4 py-3">
-      <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel)] px-4 py-3 min-h-[3.25rem]">
+      <div className="flex min-w-0 flex-1 items-center gap-2">
         <span className="text-sm font-medium text-[var(--pro-text)]">{label}</span>
         {hint ? <HelpTooltip text={hint} /> : null}
       </div>
@@ -23,14 +23,23 @@ export function EditableSwitch({ label, checked, onChange, editing, hint }: Edit
           role="switch"
           aria-checked={checked}
           onClick={() => onChange(!checked)}
-          className={`relative h-7 w-12 shrink-0 rounded-full transition ${checked ? "bg-emerald-500/80" : "bg-[var(--pro-border)]"}`}
+          className={`
+            relative flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full border border-black/25 px-1 shadow-inner transition-colors
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--pro-panel)]
+            ${checked ? "bg-emerald-600 border-emerald-700/30" : "bg-zinc-600/90 border-zinc-800/40"}
+          `}
         >
           <span
-            className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition ${checked ? "left-5" : "left-0.5"}`}
+            className={`
+              pointer-events-none h-6 w-6 rounded-full bg-white shadow-md ring-1 ring-black/10
+              transition-[margin] duration-200 ease-out
+              ${checked ? "ml-auto" : "ml-0"}
+            `}
+            aria-hidden="true"
           />
         </button>
       ) : (
-        <span className="text-sm text-[var(--pro-text-muted)]">{checked ? "Oui" : "Non"}</span>
+        <span className="text-sm tabular-nums text-[var(--pro-text-muted)]">{checked ? "Oui" : "Non"}</span>
       )}
     </div>
   );

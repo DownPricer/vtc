@@ -10,12 +10,37 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
   return (
     <div className="space-y-6">
       <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
-        <p className="font-medium">Édition locale uniquement</p>
-        <p className="mt-1 text-xs leading-relaxed text-amber-100/90">
-          Ces champs modifient la copie locale de la configuration vitrine. Le calculateur public, le moteur de tarification et les
-          appels API ne sont pas branchés sur cet écran.
+        <p className="font-medium">Ce qui est enregistré et ce qui pilote le prix</p>
+        <p className="mt-1.5 text-xs leading-relaxed text-amber-100/90">
+          L’adresse <strong className="font-semibold text-amber-50">Base chauffeur / dépôt</strong> ci-dessous est enregistrée dans vos
+          paramètres et envoyée à l’API centrale sous le nom <code className="rounded bg-black/25 px-1 py-0.5 text-[11px]">vtcBaseAddress</code>{" "}
+          à chaque calcul, devis ou réservation. Si ce champ est vide côté requête, le serveur conserve un repli sur sa configuration
+          interne du tenant.
+        </p>
+        <p className="mt-2 text-xs leading-relaxed text-amber-100/90">
+          Le <strong className="font-semibold text-amber-50">montant du tarif</strong> reste calculé uniquement par l’API centrale
+          (grilles, majorations, Distance Matrix). Les autres options de cet onglet préparent l’interface ; les listes d’aéroports du
+          formulaire public peuvent encore être partiellement en dur dans le code en attendant alignement complet.
         </p>
       </div>
+
+      <SettingsSectionCard
+        title="Base chauffeur / dépôt (calcul des distances)"
+        description="Adresse complète utilisée pour les segments « approche » et « retour base » (Distance Matrix). Envoyée à l’API comme vtcBaseAddress."
+      >
+        <EditableField
+          label="Adresse de la base VTC"
+          value={draft.calculatorDisplay.vtcBaseAddress}
+          onChange={(v) =>
+            setDraft((d) => ({
+              ...d,
+              calculatorDisplay: { ...d.calculatorDisplay, vtcBaseAddress: v },
+            }))
+          }
+          editing={editing}
+          hint="Ex. : numéro, rue, code postal, ville, pays — telle qu’acceptée par Google Maps."
+        />
+      </SettingsSectionCard>
       <SettingsSectionCard title="Types de prestation proposés" description="Cartes de choix du type de service (affichage).">
         <ul className="space-y-3">
           {draft.calculatorDisplay.serviceTypes.map((s, i) => (

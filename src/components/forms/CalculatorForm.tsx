@@ -28,6 +28,8 @@ function toFrDate(isoDate: string): string {
 
 export interface CalculatorFormProps {
   mode?: "reservation" | "devis";
+  /** Adresse complète base / dépôt chauffeur — envoyée à l’API centrale (`vtcBaseAddress`). */
+  vtcBaseAddress: string;
 }
 
 /* ─── Composants UI ─── */
@@ -213,7 +215,7 @@ const SERVICE_OPTIONS = [
 const BAGAGES_OPTIONS = Array.from({ length: 9 }, (_, i) => ({ label: i === 0 ? "Aucun" : `${i} bagage${i > 1 ? "s" : ""}`, value: String(i) }));
 
 /* ─── Composant principal ─── */
-export function CalculatorForm({ mode = "reservation" }: CalculatorFormProps) {
+export function CalculatorForm({ mode = "reservation", vtcBaseAddress }: CalculatorFormProps) {
   const isDevis = mode === "devis";
 
   const [typeService, setTypeService] = useState<TypeService>("Transfert Aéroport");
@@ -299,6 +301,7 @@ export function CalculatorForm({ mode = "reservation" }: CalculatorFormProps) {
     const isAeroAR = transfertAeroport.TAtrajet === "Aller/Retour";
 
     const payload: Record<string, unknown> = {
+      vtcBaseAddress: vtcBaseAddress.trim(),
       client: clientData,
       general: {
         TypeService: typeService,
@@ -367,7 +370,22 @@ export function CalculatorForm({ mode = "reservation" }: CalculatorFormProps) {
     }
 
     return payload;
-  }, [client, isEntreprise, typeService, typeTrajet, transfertAeroport, trajetClassique, madEvenementiel, commentaires, optionsExtras, departDepuisAeroport, aeroportDepartCode, taRetourAdresseDifferente, tcRetourAdresseDifferente]);
+  }, [
+    vtcBaseAddress,
+    client,
+    isEntreprise,
+    typeService,
+    typeTrajet,
+    transfertAeroport,
+    trajetClassique,
+    madEvenementiel,
+    commentaires,
+    optionsExtras,
+    departDepuisAeroport,
+    aeroportDepartCode,
+    taRetourAdresseDifferente,
+    tcRetourAdresseDifferente,
+  ]);
 
   const fetchTarif = useCallback(async () => {
     const payload = buildPayload();

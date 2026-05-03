@@ -26,6 +26,13 @@ import type { Distances } from "./types";
 
 const AR_MAD_CANON = "A/R + Mise à disposition";
 
+/** Repli local : `vtcBaseAddress` dans le payload, sinon constante déployée. */
+function resolveVtcBaseAddressLocal(payload: Record<string, unknown>): string {
+  const raw = payload.vtcBaseAddress;
+  if (typeof raw === "string" && raw.trim().length > 0) return raw.trim();
+  return BASE_ADDRESS;
+}
+
 function normalizeString(str: string): string {
   if (!str || typeof str !== "string") return "";
   return str
@@ -158,6 +165,7 @@ export async function calculerDistances(
   apiKey: string,
   payload: Record<string, unknown>
 ): Promise<Distances> {
+  const base = resolveVtcBaseAddressLocal(payload);
   const tsNorm = normalizeTypeService((payload?.general as Record<string, unknown>)?.TypeService as string);
   const dist: Distances = {
     aller: {
@@ -179,12 +187,12 @@ export async function calculerDistances(
   };
 
   if (tsNorm === "MAD Evenementiel") {
-    add(BASE_ADDRESS);
+    add(base);
     add((payload?.madEvenementiel as Record<string, string>)?.LieuEvenement);
   } else if (tsNorm === "Trajet Classique") {
     const t = (payload?.trajetClassique || {}) as Record<string, string>;
     const tct = normalizeTCtrajet(t?.TCtrajet);
-    add(BASE_ADDRESS);
+    add(base);
     add(t?.TCallerpriseencharge);
     add(t?.TCallerDestination);
     if (tct === "Aller/Retour" || tct === AR_MAD_CANON) {
@@ -193,7 +201,7 @@ export async function calculerDistances(
     }
   } else if (tsNorm === "Transfert Aéroport") {
     const a = (payload?.transfertAeroport || {}) as Record<string, string>;
-    add(BASE_ADDRESS);
+    add(base);
     add(airportAddressFrom(a?.TAallerpriseencharge));
     add(airportAddressFrom(a?.TAallerdestination));
     if (a?.TAtrajet === "Aller/Retour") {
@@ -215,32 +223,32 @@ export async function calculerDistances(
   if (tsNorm === "MAD Evenementiel") {
     const L = (payload?.madEvenementiel as Record<string, string>)
       ?.LieuEvenement;
-    dist.aller.approche = get(BASE_ADDRESS, L);
-    dist.aller.retourBase = get(L, BASE_ADDRESS);
+    dist.aller.approche = get(base, L);
+    dist.aller.retourBase = get(L, base);
   } else if (tsNorm === "Trajet Classique") {
     const t = (payload?.trajetClassique || {}) as Record<string, string>;
     const tct = normalizeTCtrajet(t?.TCtrajet);
-    dist.aller.approche = get(BASE_ADDRESS, t?.TCallerpriseencharge);
+    dist.aller.approche = get(base, t?.TCallerpriseencharge);
     dist.aller.trajet = get(t?.TCallerpriseencharge, t?.TCallerDestination);
-    dist.aller.retourBase = get(t?.TCallerDestination, BASE_ADDRESS);
+    dist.aller.retourBase = get(t?.TCallerDestination, base);
     if (tct === "Aller/Retour" || tct === AR_MAD_CANON) {
-      dist.retour.approche = get(BASE_ADDRESS, t?.TCretourpriseencharge);
+      dist.retour.approche = get(base, t?.TCretourpriseencharge);
       dist.retour.trajet = get(t?.TCretourpriseencharge, t?.TCretourDestination);
-      dist.retour.retourBase = get(t?.TCretourDestination, BASE_ADDRESS);
+      dist.retour.retourBase = get(t?.TCretourDestination, base);
     }
   } else if (tsNorm === "Transfert Aéroport") {
     const a = (payload?.transfertAeroport || {}) as Record<string, string>;
     const p1 = airportAddressFrom(a?.TAallerpriseencharge);
     const d1 = airportAddressFrom(a?.TAallerdestination);
-    dist.aller.approche = get(BASE_ADDRESS, p1);
+    dist.aller.approche = get(base, p1);
     dist.aller.trajet = get(p1, d1);
-    dist.aller.retourBase = get(d1, BASE_ADDRESS);
+    dist.aller.retourBase = get(d1, base);
     if (a?.TAtrajet === "Aller/Retour") {
       const p2 = airportAddressFrom(a?.TAretourpriseencharge);
       const d2 = airportAddressFrom(a?.TAretourdestination);
-      dist.retour.approche = get(BASE_ADDRESS, p2);
+      dist.retour.approche = get(base, p2);
       dist.retour.trajet = get(p2, d2);
-      dist.retour.retourBase = get(d2, BASE_ADDRESS);
+      dist.retour.retourBase = get(d2, base);
     }
   }
   return dist;
