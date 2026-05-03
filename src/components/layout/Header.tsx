@@ -99,8 +99,8 @@ export function Header({ runtimeSite }: HeaderProps) {
     <>
       <header className="sticky top-0 z-50 bg-dark/95 backdrop-blur-md border-b border-white/8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link href="/" className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center justify-between gap-3 h-16 min-h-16">
+            <Link href="/" className="flex items-center gap-2.5 shrink-0 min-w-0">
               <div className="relative w-9 h-9">
                 <Image
                   src={site.branding.logoSrc}
@@ -116,12 +116,12 @@ export function Header({ runtimeSite }: HeaderProps) {
               </div>
             </Link>
 
-            <nav className="hidden md:flex items-center gap-5">
+            <nav className="hidden lg:flex flex-nowrap items-center justify-center gap-3 xl:gap-4 min-w-0">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`text-sm font-medium transition-colors ${
+                  className={`shrink-0 whitespace-nowrap inline-flex items-center h-10 text-sm font-medium leading-none transition-colors ${
                     pathname === link.href ? "text-primary" : "text-gray-400 hover:text-white"
                   }`}
                 >
@@ -130,10 +130,10 @@ export function Header({ runtimeSite }: HeaderProps) {
               ))}
             </nav>
 
-            <div className="hidden md:flex items-center gap-2">
+            <div className="hidden lg:flex items-center shrink-0 gap-1.5 xl:gap-2">
               <a
                 href={`tel:${phoneTel}`}
-                className="flex items-center gap-1.5 px-3 py-2 text-gray-400 hover:text-white text-sm transition-colors"
+                className="flex items-center gap-1.5 px-2 py-2 xl:px-3 text-gray-400 hover:text-white text-sm whitespace-nowrap transition-colors"
               >
                 <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -142,7 +142,7 @@ export function Header({ runtimeSite }: HeaderProps) {
               </a>
               <Link
                 href="/calculateur"
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary hover:bg-primary-dark text-white font-semibold text-sm transition-colors shadow-glow"
+                className="flex items-center gap-1.5 px-3 py-2 xl:px-4 rounded-lg bg-primary hover:bg-primary-dark text-white font-semibold text-sm whitespace-nowrap transition-colors shadow-glow"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -154,7 +154,7 @@ export function Header({ runtimeSite }: HeaderProps) {
             <button
               type="button"
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="md:hidden flex items-center justify-center w-11 h-11 rounded-xl hover:bg-white/5 transition-colors"
+              className="lg:hidden flex items-center justify-center w-11 h-11 rounded-xl hover:bg-white/5 transition-colors shrink-0"
               aria-label={mobileOpen ? "Fermer le menu" : "Ouvrir le menu"}
             >
               <div className="w-5 flex flex-col gap-1.5">
@@ -168,7 +168,7 @@ export function Header({ runtimeSite }: HeaderProps) {
       </header>
 
       <div
-        className={`md:hidden fixed inset-0 z-40 transition-all duration-300 ${
+        className={`lg:hidden fixed inset-0 z-40 transition-all duration-300 ${
           mobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
       >

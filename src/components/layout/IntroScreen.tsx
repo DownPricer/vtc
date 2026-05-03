@@ -44,8 +44,8 @@ export function IntroScreen({ runtimeSite }: IntroScreenProps) {
           background: linear-gradient(to bottom, ${Pc}, transparent);
           border-radius: 2px;
           opacity: 0;
-          animation: introParticle ${0.5 + Math.random() * 0.9}s linear infinite;
-          animation-delay: ${Math.random() * 2}s;
+          animation: introParticle ${0.35 + Math.random() * 0.45}s linear infinite;
+          animation-delay: ${Math.random() * 0.85}s;
         `;
         container.appendChild(p);
       }
@@ -54,19 +54,19 @@ export function IntroScreen({ runtimeSite }: IntroScreenProps) {
     // Déclenche l'onde de choc et le halo au moment où le logo s'arrête
     const shockTimer = setTimeout(() => {
       document.querySelectorAll(".intro-shockwave").forEach((el, i) => {
-        (el as HTMLElement).style.animation = `introShockwave 1s cubic-bezier(.25,.8,.25,1) ${i * 0.18}s forwards`;
+        (el as HTMLElement).style.animation = `introShockwave 0.45s cubic-bezier(.25,.8,.25,1) ${i * 0.08}s forwards`;
       });
       const glow = document.getElementById("intro-glow");
-      if (glow) glow.style.animation = "introGlow 1.4s ease forwards";
+      if (glow) glow.style.animation = "introGlow 0.55s ease forwards";
       const reflection = document.getElementById("intro-reflection");
-      if (reflection) reflection.style.animation = "introReflection 0.8s ease forwards";
-    }, 2900);
+      if (reflection) reflection.style.animation = "introReflection 0.35s ease forwards";
+    }, 1050);
 
     // Texte sous le logo
     const textTimer = setTimeout(() => {
       const text = document.getElementById("intro-tagline");
-      if (text) text.style.animation = "introTextIn 0.7s ease forwards";
-    }, 3500);
+      if (text) text.style.animation = "introTextIn 0.4s ease forwards";
+    }, 1280);
 
     // Arrêt des particules
     const stopTimer = setTimeout(() => {
@@ -76,17 +76,17 @@ export function IntroScreen({ runtimeSite }: IntroScreenProps) {
           (p as HTMLElement).style.opacity = "0";
         });
       }
-    }, 3900);
+    }, 1680);
 
-    // Transition vers le site
+    // Transition vers le site (total ~2,5 s avant fondu, puis ~0,5 s de sortie)
     const exitTimer = setTimeout(() => {
       setPhase("exit");
       setTimeout(() => {
         setVisible(false);
         sessionStorage.setItem("intro-done", "1");
         document.body.style.overflow = "";
-      }, 900);
-    }, 4800);
+      }, 520);
+    }, 2080);
 
     document.body.style.overflow = "hidden";
 
@@ -113,7 +113,7 @@ export function IntroScreen({ runtimeSite }: IntroScreenProps) {
         justifyContent: "center",
         alignItems: "center",
         overflow: "hidden",
-        animation: phase === "exit" ? "introFadeOut 0.9s ease forwards" : "none",
+        animation: phase === "exit" ? "introFadeOut 0.52s ease forwards" : "none",
       }}
     >
       {/* Route en perspective */}
@@ -127,7 +127,7 @@ export function IntroScreen({ runtimeSite }: IntroScreenProps) {
           perspective: "450px",
           overflow: "hidden",
           opacity: 0,
-          animation: "introRoadFadeIn 1s ease 0.2s forwards",
+          animation: "introRoadFadeIn 0.48s ease 0.08s forwards",
         }}
       >
         <div
@@ -177,8 +177,8 @@ export function IntroScreen({ runtimeSite }: IntroScreenProps) {
                 background: P,
                 borderRadius: "2px",
                 opacity: 0,
-                animation: `introRoadLine 1.1s linear infinite`,
-                animationDelay: `${i * 0.22}s`,
+                animation: `introRoadLine 0.62s linear infinite`,
+                animationDelay: `${i * 0.12}s`,
               }}
             />
           ))}
@@ -196,7 +196,7 @@ export function IntroScreen({ runtimeSite }: IntroScreenProps) {
           background: `radial-gradient(ellipse at top, ${hlSoft(0.18)} 0%, transparent 70%)`,
           transform: "rotate(-6deg)",
           opacity: 0,
-          animation: "introHeadlight 1.8s ease 0.6s forwards",
+          animation: "introHeadlight 0.75s ease 0.18s forwards",
           pointerEvents: "none",
           zIndex: 1,
         }}
@@ -211,7 +211,7 @@ export function IntroScreen({ runtimeSite }: IntroScreenProps) {
           background: `radial-gradient(ellipse at top, ${hlSoft(0.18)} 0%, transparent 70%)`,
           transform: "rotate(6deg)",
           opacity: 0,
-          animation: "introHeadlight 1.8s ease 0.6s forwards",
+          animation: "introHeadlight 0.75s ease 0.18s forwards",
           pointerEvents: "none",
           zIndex: 1,
         }}
@@ -289,7 +289,7 @@ export function IntroScreen({ runtimeSite }: IntroScreenProps) {
             borderRadius: "50%",
             opacity: 0,
             filter: "blur(18px) brightness(2.5)",
-            animation: "introLogoArrival 2.2s cubic-bezier(.16,1,.3,1) 0.9s forwards",
+            animation: "introLogoArrival 0.95s cubic-bezier(.16,1,.3,1) 0.22s forwards",
           }}
         />
 

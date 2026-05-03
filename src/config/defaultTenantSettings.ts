@@ -317,8 +317,8 @@ export const defaultTenantSettings: TenantSettingsV1 = {
       heroImageSrc: "/images/s2/s2-2.jpg",
       heroImageAlt: "Transferts aéroport Normandie",
       heroBadge: "Grille tarifaire",
-      heroTitle: "Tarifs fixes &",
-      heroTitleHighlight: "transparents",
+      heroTitle: "Tarifs fixes",
+      heroTitleHighlight: "et transparents",
       heroIntro:
         "Le prix annoncé est le prix payé. Aucun supplément bagage, embouteillage ou heure tardive.",
       guarantees: [
