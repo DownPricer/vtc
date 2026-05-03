@@ -1,33 +1,30 @@
 "use client";
 
-import { SettingsSectionCard } from "../SettingsSectionCard";
+import { SettingsCallout, SettingsSectionCard } from "../SettingsSectionCard";
 import { EditableSwitch } from "../editable/EditableSwitch";
 import { EditableField } from "../editable/EditableField";
 import { EditableNumberField } from "../editable/EditableNumberField";
 import type { SettingsTabsSharedProps } from "./context";
 
+const itemCardClass =
+  "space-y-4 rounded-[22px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/70 p-4 shadow-sm";
+
 export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedProps) {
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
-        <p className="font-medium">Ce qui est enregistré et ce qui pilote le prix</p>
-        <p className="mt-1.5 text-xs leading-relaxed text-amber-100/90">
-          L’adresse <strong className="font-semibold text-amber-50">Base chauffeur / dépôt</strong> ci-dessous est enregistrée dans vos
-          paramètres et envoyée à l’API centrale sous le nom <code className="rounded bg-black/25 px-1 py-0.5 text-[11px]">vtcBaseAddress</code>{" "}
-          à chaque calcul, devis ou réservation. Si ce champ est vide côté requête, le serveur conserve un repli sur sa configuration
-          interne du tenant.
-        </p>
-        <p className="mt-2 text-xs leading-relaxed text-amber-100/90">
-          Le <strong className="font-semibold text-amber-50">montant du tarif</strong> reste calculé uniquement par l’API centrale
-          (grilles, majorations, Distance Matrix). Les autres options de cet onglet préparent l’interface ; les listes d’aéroports du
-          formulaire public peuvent encore être partiellement en dur dans le code en attendant alignement complet.
-        </p>
-      </div>
+      <SettingsCallout
+        title="Ce que vous reglez ici"
+        description="Cet onglet pilote surtout l affichage du formulaire public. Le montant final reste calcule par le moteur de calcul existant."
+        caption="Les aides ci-dessous servent a mieux comprendre chaque bloc sans changer la logique actuelle."
+      />
 
       <SettingsSectionCard
-        title="Base chauffeur / dépôt (calcul des distances)"
-        description="Adresse complète utilisée pour les segments « approche » et « retour base » (Distance Matrix). Envoyée à l’API comme vtcBaseAddress."
+        title="Base chauffeur / depot"
+        description="Cette adresse sert de point de depart du chauffeur pour calculer le trajet d approche et le retour depot."
       >
+        <p className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm leading-relaxed text-[var(--pro-text-soft)]">
+          Renseignez une adresse complete et stable. Elle est reutilisee dans les calculs existants tels qu ils fonctionnent deja.
+        </p>
         <EditableField
           label="Adresse de la base VTC"
           value={draft.calculatorDisplay.vtcBaseAddress}
@@ -38,15 +35,22 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
             }))
           }
           editing={editing}
-          hint="Ex. : numéro, rue, code postal, ville, pays — telle qu’acceptée par Google Maps."
+          hint="Exemple : numero, rue, code postal, ville, pays."
         />
       </SettingsSectionCard>
-      <SettingsSectionCard title="Types de prestation proposés" description="Cartes de choix du type de service (affichage).">
+
+      <SettingsSectionCard
+        title="Types de prestation proposes"
+        description="Ces options determinent les types de demandes visibles dans le formulaire public."
+      >
+        <p className="text-sm leading-relaxed text-[var(--pro-text-soft)]">
+          Chaque carte aide le client a choisir son besoin des le debut du formulaire.
+        </p>
         <ul className="space-y-3">
           {draft.calculatorDisplay.serviceTypes.map((s, i) => (
-            <li key={s.id} className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/50 p-4 space-y-3">
+            <li key={s.id} className={itemCardClass}>
               <EditableSwitch
-                label="Activé"
+                label="Option visible"
                 checked={s.enabled}
                 onChange={(v) =>
                   setDraft((d) => {
@@ -56,39 +60,47 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
                   })
                 }
                 editing={editing}
+                hint="Desactivez une option pour la retirer du formulaire sans la supprimer."
               />
-              <EditableField
-                label="Libellé"
-                value={s.label}
-                onChange={(v) =>
-                  setDraft((d) => {
-                    const serviceTypes = [...d.calculatorDisplay.serviceTypes];
-                    serviceTypes[i] = { ...serviceTypes[i], label: v };
-                    return { ...d, calculatorDisplay: { ...d.calculatorDisplay, serviceTypes } };
-                  })
-                }
-                editing={editing}
-              />
-              <EditableField
-                label="Sous-titre"
-                value={s.sublabel}
-                onChange={(v) =>
-                  setDraft((d) => {
-                    const serviceTypes = [...d.calculatorDisplay.serviceTypes];
-                    serviceTypes[i] = { ...serviceTypes[i], sublabel: v };
-                    return { ...d, calculatorDisplay: { ...d.calculatorDisplay, serviceTypes } };
-                  })
-                }
-                editing={editing}
-              />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <EditableField
+                  label="Libelle"
+                  value={s.label}
+                  onChange={(v) =>
+                    setDraft((d) => {
+                      const serviceTypes = [...d.calculatorDisplay.serviceTypes];
+                      serviceTypes[i] = { ...serviceTypes[i], label: v };
+                      return { ...d, calculatorDisplay: { ...d.calculatorDisplay, serviceTypes } };
+                    })
+                  }
+                  editing={editing}
+                />
+                <EditableField
+                  label="Sous-titre"
+                  value={s.sublabel}
+                  onChange={(v) =>
+                    setDraft((d) => {
+                      const serviceTypes = [...d.calculatorDisplay.serviceTypes];
+                      serviceTypes[i] = { ...serviceTypes[i], sublabel: v };
+                      return { ...d, calculatorDisplay: { ...d.calculatorDisplay, serviceTypes } };
+                    })
+                  }
+                  editing={editing}
+                  hint="Ajoutez une phrase courte pour aider le client a choisir."
+                />
+              </div>
             </li>
           ))}
         </ul>
       </SettingsSectionCard>
-      <SettingsSectionCard title="Limites passagers & bagages" description="Contraintes du stepper / listes du formulaire.">
+
+      <SettingsSectionCard
+        title="Passagers et bagages"
+        description="Ces limites controlent les choix visibles pour le client. Elles ne changent pas les regles tarifaires avancees."
+      >
         <div className="grid gap-3 sm:grid-cols-2">
           <EditableNumberField
-            label="Passagers max."
+            label="Passagers maximum"
             value={draft.calculatorDisplay.maxPassengers}
             onChange={(v) =>
               setDraft((d) => ({
@@ -98,10 +110,10 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
             }
             editing={editing}
             min={1}
-            hint="Correspond au stepper « Nombre de passagers » (1 à N)."
+            hint="Le client verra un choix de 1 a N passagers."
           />
           <EditableNumberField
-            label="Bagages max. (indice)"
+            label="Bagages maximum"
             value={draft.calculatorDisplay.maxBaggageIndex}
             onChange={(v) =>
               setDraft((d) => ({
@@ -111,39 +123,48 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
             }
             editing={editing}
             min={0}
-            hint="0 = aucun, jusqu’à N bagages inclus (liste déroulante)."
+            hint="0 signifie aucun bagage propose dans la liste."
           />
         </div>
       </SettingsSectionCard>
-      <SettingsSectionCard title="Aéroports configurés" description="Libellés et adresses (affichage calculateur).">
+
+      <SettingsSectionCard
+        title="Aeroports"
+        description="Les aeroports actives sont proposes au client dans le formulaire de transfert aeroport."
+      >
+        <p className="text-sm leading-relaxed text-[var(--pro-text-soft)]">
+          Gardez des libelles clairs et une adresse exploitable pour vos transferts.
+        </p>
         <ul className="space-y-3">
           {draft.calculatorDisplay.airports.map((a, i) => (
-            <li key={a.code} className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/50 p-4 space-y-3">
-              <EditableField
-                label="Code"
-                value={a.code}
-                onChange={(v) =>
-                  setDraft((d) => {
-                    const airports = [...d.calculatorDisplay.airports];
-                    airports[i] = { ...airports[i], code: v };
-                    return { ...d, calculatorDisplay: { ...d.calculatorDisplay, airports } };
-                  })
-                }
-                editing={editing}
-                mono
-              />
-              <EditableField
-                label="Nom affiché"
-                value={a.label}
-                onChange={(v) =>
-                  setDraft((d) => {
-                    const airports = [...d.calculatorDisplay.airports];
-                    airports[i] = { ...airports[i], label: v };
-                    return { ...d, calculatorDisplay: { ...d.calculatorDisplay, airports } };
-                  })
-                }
-                editing={editing}
-              />
+            <li key={a.code} className={itemCardClass}>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <EditableField
+                  label="Code"
+                  value={a.code}
+                  onChange={(v) =>
+                    setDraft((d) => {
+                      const airports = [...d.calculatorDisplay.airports];
+                      airports[i] = { ...airports[i], code: v };
+                      return { ...d, calculatorDisplay: { ...d.calculatorDisplay, airports } };
+                    })
+                  }
+                  editing={editing}
+                  mono
+                />
+                <EditableField
+                  label="Nom affiche"
+                  value={a.label}
+                  onChange={(v) =>
+                    setDraft((d) => {
+                      const airports = [...d.calculatorDisplay.airports];
+                      airports[i] = { ...airports[i], label: v };
+                      return { ...d, calculatorDisplay: { ...d.calculatorDisplay, airports } };
+                    })
+                  }
+                  editing={editing}
+                />
+              </div>
               <EditableField
                 label="Adresse"
                 value={a.address}
@@ -160,12 +181,16 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
           ))}
         </ul>
       </SettingsSectionCard>
-      <SettingsSectionCard title="Options extras" description="Cases à cocher « besoins spécifiques ».">
+
+      <SettingsSectionCard
+        title="Options extras"
+        description="Les options activees apparaissent comme cases a cocher dans le formulaire public."
+      >
         <ul className="space-y-3">
           {draft.calculatorDisplay.extrasOptions.map((e, i) => (
-            <li key={e.id} className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/50 p-4 space-y-3">
+            <li key={e.id} className={itemCardClass}>
               <EditableSwitch
-                label="Proposée"
+                label="Option proposee"
                 checked={e.enabled}
                 onChange={(v) =>
                   setDraft((d) => {
@@ -177,7 +202,7 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
                 editing={editing}
               />
               <EditableField
-                label="Libellé"
+                label="Libelle"
                 value={e.label}
                 onChange={(v) =>
                   setDraft((d) => {
@@ -187,6 +212,7 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
                   })
                 }
                 editing={editing}
+                hint="Exemple : siege bebe, accueil pancarte, attente supplementaire."
               />
             </li>
           ))}

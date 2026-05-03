@@ -22,7 +22,7 @@ export function SettingsEditToolbar({
   onPreview,
 }: SettingsEditToolbarProps) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2.5">
       {!editing ? (
         <button type="button" onClick={onModify} className={proBtnPrimaryClass}>
           Modifier
@@ -38,12 +38,12 @@ export function SettingsEditToolbar({
             className={proBtnPrimaryClass}
             disabled={!isDirty || saving}
           >
-            {saving ? "Enregistrement…" : "Enregistrer"}
+            {saving ? "Enregistrement..." : "Enregistrer"}
           </button>
         </>
       )}
       <button type="button" onClick={onPreview} className={proBtnSecondaryClass}>
-        Prévisualiser
+        Previsualiser
       </button>
     </div>
   );
