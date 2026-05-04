@@ -103,22 +103,6 @@ export function EditableVideoField({ label, value, onChange, editing, hint }: Ed
           onChange={(e) => void onFile(e.target.files)}
         />
       ) : null}
-      {editing ? (
-        <details className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/50 px-3 py-2 text-sm">
-          <summary className="cursor-pointer font-medium text-[var(--pro-text-soft)]">Chemin ou URL (avancé)</summary>
-          <input
-            type="text"
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            className={`${proInputClass} mt-2 font-mono text-[13px]`}
-            placeholder="/uploads/settings/default/… ou URL https://"
-          />
-        </details>
-      ) : (
-        <p className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 font-mono text-[13px] text-[var(--pro-text-soft)]">
-          {trimmed ? trimmed : "—"}
-        </p>
-      )}
       {showPreview ? (
         <div className="overflow-hidden rounded-xl border border-[var(--pro-border)] bg-black/80">
           <video
@@ -132,7 +116,9 @@ export function EditableVideoField({ label, value, onChange, editing, hint }: Ed
         </div>
       ) : (
         <figure className="rounded-xl border border-dashed border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-3 py-6 text-center">
-          <figcaption className="text-xs text-[var(--pro-text-muted)]">Aucune vidéo — importez un fichier MP4, WebM ou MOV.</figcaption>
+          <figcaption className="text-xs text-[var(--pro-text-muted)]">
+            {editing ? "Aucune vidéo — importez un fichier MP4, WebM ou MOV." : "Aucune vidéo enregistrée."}
+          </figcaption>
         </figure>
       )}
       <div className="flex flex-wrap gap-2">
@@ -142,7 +128,7 @@ export function EditableVideoField({ label, value, onChange, editing, hint }: Ed
         {editing ? (
           <>
             <button type="button" className={proBtnSecondaryClass} disabled={busy} onClick={openPicker}>
-              {busy ? "Traitement…" : "Importer une vidéo"}
+              {busy ? "Traitement…" : "Importer / remplacer la vidéo"}
             </button>
             <button type="button" className={proBtnSecondaryClass} disabled={busy} onClick={() => void handleRemove()}>
               Supprimer la vidéo
@@ -150,6 +136,18 @@ export function EditableVideoField({ label, value, onChange, editing, hint }: Ed
           </>
         ) : null}
       </div>
+      {editing ? (
+        <details className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/50 px-3 py-2 text-sm">
+          <summary className="cursor-pointer font-medium text-[var(--pro-text-soft)]">Chemin ou URL (avancé)</summary>
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className={`${proInputClass} mt-2 font-mono text-[13px]`}
+            placeholder="/uploads/settings/default/… ou URL https://"
+          />
+        </details>
+      ) : null}
       {error ? <p className="text-xs font-medium text-red-600">{error}</p> : null}
     </div>
   );

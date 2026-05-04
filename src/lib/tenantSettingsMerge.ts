@@ -1,4 +1,5 @@
 import type { TenantSettingsV1 } from "@/config/tenant-settings.types";
+import { normalizeTenantVehicles } from "@/lib/tenantVehiclesNormalize";
 
 function isPlainObject(v: unknown): v is Record<string, unknown> {
   return v !== null && typeof v === "object" && !Array.isArray(v);
@@ -29,10 +30,11 @@ function deepMerge<T>(target: T, source: unknown): T {
  */
 export function mergeTenantSettings(defaults: TenantSettingsV1, persisted: unknown | null): TenantSettingsV1 {
   if (persisted === null || persisted === undefined) {
-    return structuredClone(defaults);
+    return normalizeTenantVehicles(structuredClone(defaults));
   }
   if (!isPlainObject(persisted)) {
-    return structuredClone(defaults);
+    return normalizeTenantVehicles(structuredClone(defaults));
   }
-  return deepMerge(structuredClone(defaults), persisted) as TenantSettingsV1;
+  const merged = deepMerge(structuredClone(defaults), persisted) as TenantSettingsV1;
+  return normalizeTenantVehicles(merged);
 }

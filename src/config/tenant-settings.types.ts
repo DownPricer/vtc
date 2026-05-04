@@ -81,6 +81,13 @@ export type FeaturedVehicle = {
   gallery: Array<{ src: string; alt: string; tag: string }>;
 };
 
+/** Véhicule dans la flotte (paramètres) — `featured` reste synchronisé pour compatibilité. */
+export type VehicleListItem = FeaturedVehicle & {
+  enabled: boolean;
+  /** Libellé court bagages / capacité (affichage vitrine). */
+  baggageLabel?: string;
+};
+
 export type TestimonialItem = {
   id: string;
   text: string;
@@ -435,7 +442,10 @@ export type TenantSettingsV1 = {
 
   vehicles: {
     featuredVehicleId: string;
+    /** Copie du véhicule « vitrine » (mis en avant) — dérivée de `items` via normalisation. */
     featured: FeaturedVehicle;
+    /** Flotte ; les entrées `enabled: false` sont masquées sur la vitrine. */
+    items: VehicleListItem[];
   };
 
   /** Référentiel d’affichage du calculateur (limites, listes) — ne pilote pas le moteur pricing. */

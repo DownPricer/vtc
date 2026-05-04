@@ -1,7 +1,8 @@
 import Link from "next/link";
-import Image from "next/image";
 import type { Metadata } from "next";
 import { buildSiteConfigFromTenant } from "@/config/siteConfigFromTenant";
+import { getEnabledVehicleItems } from "@/lib/tenantVehiclesNormalize";
+import { TenantPublicImage } from "@/components/media/TenantPublicImage";
 import { seoConfig } from "@/config/seo.config";
 import { getPublicSiteUrl } from "@/lib/siteUrl";
 import { getPublicTenantSettings } from "@/lib/publicTenantSettingsClient";
@@ -102,6 +103,8 @@ export default async function ServicesPage() {
   const hero = tenant.services.pageHero;
   const comfort = tenant.services.comfortBlock;
   const featuredVehicle = tenant.vehicles.featured;
+  const fleet = getEnabledVehicleItems(tenant);
+  const multiFleet = fleet.length > 1;
 
   return (
     <div className="min-h-screen bg-dark">
@@ -117,7 +120,7 @@ export default async function ServicesPage() {
       {/* ── Hero avec fond photo ── */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <Image
+          <TenantPublicImage
             src={hero.imageSrc}
             alt={hero.imageAlt}
             fill
@@ -197,15 +200,43 @@ export default async function ServicesPage() {
           ))}
         </div>
 
-        {/* Véhicule */}
+        {/* Véhicule(s) */}
         <div
           className="p-5 md:p-6 rounded-2xl border border-white/[0.07]"
           style={{ background: "linear-gradient(145deg, #1a1a1a, #111)" }}
         >
           <p className="text-[10px] text-gray-600 uppercase tracking-widest font-bold mb-2">Votre confort</p>
-          <p className="text-white font-bold text-base mb-1">
-            {featuredVehicle.name}
-          </p>
+          {multiFleet ? (
+            <>
+              <p className="text-white font-bold text-base mb-3">Nos véhicules</p>
+              <ul className="mb-4 space-y-3">
+                {fleet.map((veh) => {
+                  const thumb = veh.gallery[0];
+                  return (
+                    <li key={veh.id} className="flex gap-3 rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+                      <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-md bg-black/40">
+                        {thumb?.src?.trim() ? (
+                          <TenantPublicImage src={thumb.src} alt={thumb.alt || veh.name} fill className="object-cover" sizes="96px" />
+                        ) : null}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-white text-sm">{veh.name}</p>
+                        <p className="text-[11px] text-gray-500">
+                          {veh.passengerMax} passagers max.
+                          {veh.baggageLabel?.trim() ? ` · ${veh.baggageLabel.trim()}` : ""}
+                        </p>
+                        {veh.highlightText?.trim() ? (
+                          <p className="mt-1 line-clamp-2 text-[11px] text-gray-500">{veh.highlightText.trim()}</p>
+                        ) : null}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          ) : (
+            <p className="text-white font-bold text-base mb-1">{featuredVehicle.name}</p>
+          )}
           <p className="text-gray-500 text-sm mb-3">{comfort.bullets}</p>
           <div className="flex flex-wrap gap-2">
             {comfort.paymentChips.map((m) => (

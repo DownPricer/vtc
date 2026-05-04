@@ -1,5 +1,6 @@
 import path from "path";
-import { mkdir, unlink, writeFile } from "fs/promises";
+import { access, mkdir, unlink, writeFile } from "fs/promises";
+import { constants as fsConstants } from "fs";
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
@@ -97,6 +98,11 @@ export async function POST(req: NextRequest) {
   const baseName = `${randomUUID()}${ext}`;
   const outPath = path.join(dir, baseName);
   await writeFile(outPath, buf);
+  try {
+    await access(outPath, fsConstants.R_OK);
+  } catch {
+    return NextResponse.json({ error: "Écriture du fichier impossible (vérifiez les droits disque)." }, { status: 500 });
+  }
 
   const publicPath = `${SETTINGS_UPLOAD_PUBLIC_PREFIX}/${baseName}`;
 

@@ -18,6 +18,7 @@ import { SettingsTabPanels } from "./tabs/SettingsTabPanels";
 import { SiteDraftPreviewModal } from "./SiteDraftPreviewModal";
 import { useTenantDraft } from "./useTenantDraft";
 import { validateContactSection } from "./contactValidation";
+import { normalizeTenantVehicles } from "@/lib/tenantVehiclesNormalize";
 import type { ProSettingsMailMeta } from "./types";
 
 type ProSettingsClientProps = {
@@ -80,7 +81,8 @@ export function ProSettingsClient({ tenant, mailMeta, siteFeatures }: ProSetting
     setSaving(true);
     setFeedback(null);
     try {
-      const result = await putProTenantSettingsToApi(draft);
+      const payload = normalizeTenantVehicles(structuredClone(draft));
+      const result = await putProTenantSettingsToApi(payload);
       if (!result.ok) {
         if (result.kind === "unauthorized") {
           setFeedback({ tone: "error", text: "Session expirée, reconnectez-vous." });

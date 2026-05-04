@@ -104,13 +104,6 @@ export function EditableImageField({ label, value, onChange, editing, hint, altP
           onChange={(e) => void onFile(e.target.files)}
         />
       ) : null}
-      {editing ? (
-        <input type="text" value={value} onChange={(e) => onChange(e.target.value)} className={`${proInputClass} font-mono text-[13px]`} />
-      ) : (
-        <p className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 font-mono text-[13px] text-[var(--pro-text-soft)]">
-          {value.trim() ? value : "—"}
-        </p>
-      )}
       <ReadonlyImagePreview key={value.trim() || "empty"} src={value} alt={altPreview} caption="Aperçu" />
       <div className="flex flex-wrap gap-2">
         <button type="button" className={proBtnSecondaryClass} disabled={!value.trim() || busy} onClick={() => triggerDownload(value)}>
@@ -127,6 +120,20 @@ export function EditableImageField({ label, value, onChange, editing, hint, altP
           </>
         ) : null}
       </div>
+      {editing ? (
+        <details className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/60 px-3 py-2 text-sm">
+          <summary className="cursor-pointer font-medium text-[var(--pro-text-soft)]">Chemin ou URL (avancé)</summary>
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className={`${proInputClass} mt-2 font-mono text-[13px]`}
+            placeholder="/images/… ou /uploads/settings/default/…"
+          />
+        </details>
+      ) : value.trim() ? (
+        <p className="text-xs text-[var(--pro-text-muted)]">Un média est enregistré pour ce champ.</p>
+      ) : null}
       {error ? <p className="text-xs font-medium text-red-600">{error}</p> : null}
     </div>
   );

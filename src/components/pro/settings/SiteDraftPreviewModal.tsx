@@ -3,6 +3,7 @@
 import { useEffect, type ReactNode } from "react";
 import Image from "next/image";
 import type { TenantSettingsV1 } from "@/config/tenant-settings.types";
+import { isTenantDashboardUploadPath } from "@/lib/tenantVehiclesNormalize";
 import { rgbString } from "@/lib/branding/colorUtils";
 
 type SiteDraftPreviewModalProps = {
@@ -69,7 +70,12 @@ export function SiteDraftPreviewModal({ open, onClose, draft }: SiteDraftPreview
           <Section title="Identité & couleurs">
             <div className="flex items-start gap-4">
               <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full border border-white/10 bg-black/30">
-                <Image src={draft.branding.logoSrc} alt={draft.branding.logoAlt} fill className="object-contain p-1" sizes="56px" />
+                {isTenantDashboardUploadPath(draft.branding.logoSrc) ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- uploads dashboard hors optimiseur
+                  <img src={draft.branding.logoSrc} alt={draft.branding.logoAlt} className="absolute inset-0 h-full w-full object-contain p-1" />
+                ) : (
+                  <Image src={draft.branding.logoSrc} alt={draft.branding.logoAlt} fill className="object-contain p-1" sizes="56px" />
+                )}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-[var(--pro-text)] truncate">{draft.general.commercialName}</p>
@@ -98,6 +104,11 @@ export function SiteDraftPreviewModal({ open, onClose, draft }: SiteDraftPreview
               <span style={{ color: pSoft(1) }}>{draft.home.hero.titleHighlight}</span>
             </p>
             <p className="mt-2 text-sm text-[var(--pro-text-muted)] line-clamp-3">{draft.home.hero.subtitle}</p>
+          </Section>
+
+          <Section title="Médias accueil (aperçu)">
+            <p className="text-sm text-[var(--pro-text)]">Vidéo promo : {draft.home.video.enabled ? "affichée" : "masquée"}</p>
+            <p className="text-sm text-[var(--pro-text)]">Moyens de paiement : {draft.home.paymentMethods.enabled ? "affichés" : "masqués"}</p>
           </Section>
 
           <Section title="À propos (aperçu)">

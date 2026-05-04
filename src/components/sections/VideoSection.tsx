@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef } from "react";
-import Image from "next/image";
 import { buildSiteConfigFromTenant } from "@/config/siteConfigFromTenant";
+import { TenantPublicImage } from "@/components/media/TenantPublicImage";
 import { defaultTenantSettings } from "@/config/defaultTenantSettings";
 import type { TenantSettingsV1 } from "@/config/tenant-settings.types";
 
@@ -82,7 +82,7 @@ export function VideoSection({ tenantSettings = defaultTenantSettings }: Props) 
 
           {!playing && (
             <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/30 cursor-pointer" onClick={handlePlay}>
-              <Image
+              <TenantPublicImage
                 src={video.posterSrc}
                 alt={`Vidéo ${site.commercialName}`}
                 fill

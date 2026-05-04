@@ -1,7 +1,8 @@
 import Link from "next/link";
-import Image from "next/image";
 import type { Metadata } from "next";
 import { buildSiteConfigFromTenant } from "@/config/siteConfigFromTenant";
+import { getEnabledVehicleItems } from "@/lib/tenantVehiclesNormalize";
+import { TenantPublicImage } from "@/components/media/TenantPublicImage";
 import { buildBusinessConfigFromTenant } from "@/config/businessConfigFromTenant";
 import { seoConfig } from "@/config/seo.config";
 import { getPublicSiteUrl } from "@/lib/siteUrl";
@@ -51,6 +52,8 @@ export default async function AProposPage() {
   const business = buildBusinessConfigFromTenant(tenant);
   const about = site.about;
   const hq = business.headquarters;
+  const fleet = getEnabledVehicleItems(tenant);
+  const multiFleet = fleet.length > 1;
 
   const organizationSchema = {
     "@context": "https://schema.org",
@@ -85,7 +88,7 @@ export default async function AProposPage() {
 
       <div className="relative overflow-hidden min-h-[50vh] md:min-h-[60vh] flex items-end md:items-center">
         <div className="absolute inset-0 z-0">
-          <Image
+          <TenantPublicImage
             src={tenant.aboutPage.heroImageSrc}
             alt={tenant.aboutPage.heroImageAlt}
             fill
@@ -160,38 +163,77 @@ export default async function AProposPage() {
           ))}
         </div>
 
-        <div className="flex items-center gap-4 mb-6">
-          <div className="flex-1 h-px bg-white/[0.06]" />
-          <span className="text-gray-500 text-[11px] font-bold tracking-widest uppercase whitespace-nowrap">Véhicule</span>
-          <div className="flex-1 h-px bg-white/[0.06]" />
-        </div>
-
-        <div
-          className="p-5 md:p-6 rounded-2xl border border-white/[0.07] mb-10 group"
-          style={{ background: "linear-gradient(145deg, #1a1a1a, #111)" }}
-        >
-          <div className="flex items-start gap-4">
-            <div className="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary flex-shrink-0">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 17a2 2 0 104 0m-4 0a2 2 0 014 0m0 0h2m-6 0H6m12 0a2 2 0 104 0m-4 0a2 2 0 014 0M4 17H2M3 7l2-2h10l3 4H3V7zm0 4v4" />
-              </svg>
+        {multiFleet ? (
+          <>
+            <div className="flex items-center gap-4 mb-6">
+              <div className="flex-1 h-px bg-white/[0.06]" />
+              <span className="text-gray-500 text-[11px] font-bold tracking-widest uppercase whitespace-nowrap">Véhicules disponibles</span>
+              <div className="flex-1 h-px bg-white/[0.06]" />
             </div>
-            <div>
-              <p className="text-white font-bold text-base mb-1">{about.vehicleLabel}</p>
-              <p className="text-gray-500 text-sm mb-2">{tenant.aboutPage.vehicleBlock.helperText}</p>
-              <div className="flex flex-wrap gap-2">
-                {tenant.vehicles.featured.paymentChips.map((m) => (
-                  <span
-                    key={m}
-                    className="text-[10px] px-2.5 py-1 rounded-full border border-white/[0.08] bg-white/[0.03] text-gray-400 font-medium"
+            <div className="mb-10 grid gap-3 sm:grid-cols-2">
+              {fleet.map((veh) => {
+                const thumb = veh.gallery[0];
+                return (
+                  <div
+                    key={veh.id}
+                    className="flex gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 transition-colors hover:border-primary/25"
                   >
-                    {m}
-                  </span>
-                ))}
+                    <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-lg bg-black/40">
+                      {thumb?.src?.trim() ? (
+                        <TenantPublicImage src={thumb.src} alt={thumb.alt || veh.name} fill className="object-cover" sizes="112px" />
+                      ) : null}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-white text-sm">{veh.name}</p>
+                      <p className="text-[11px] text-gray-500 mt-0.5">
+                        {veh.passengerMax} passagers max.
+                        {veh.baggageLabel?.trim() ? ` · ${veh.baggageLabel.trim()}` : ""}
+                      </p>
+                      {veh.highlightText?.trim() ? (
+                        <p className="mt-2 line-clamp-2 text-xs text-gray-500">{veh.highlightText.trim()}</p>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center gap-4 mb-6">
+              <div className="flex-1 h-px bg-white/[0.06]" />
+              <span className="text-gray-500 text-[11px] font-bold tracking-widest uppercase whitespace-nowrap">Véhicule</span>
+              <div className="flex-1 h-px bg-white/[0.06]" />
+            </div>
+
+            <div
+              className="p-5 md:p-6 rounded-2xl border border-white/[0.07] mb-10 group"
+              style={{ background: "linear-gradient(145deg, #1a1a1a, #111)" }}
+            >
+              <div className="flex items-start gap-4">
+                <div className="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary flex-shrink-0">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 17a2 2 0 104 0m-4 0a2 2 0 014 0m0 0h2m-6 0H6m12 0a2 2 0 104 0m-4 0a2 2 0 014 0M4 17H2M3 7l2-2h10l3 4H3V7zm0 4v4" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-white font-bold text-base mb-1">{about.vehicleLabel}</p>
+                  <p className="text-gray-500 text-sm mb-2">{tenant.aboutPage.vehicleBlock.helperText}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {tenant.vehicles.featured.paymentChips.map((m) => (
+                      <span
+                        key={m}
+                        className="text-[10px] px-2.5 py-1 rounded-full border border-white/[0.08] bg-white/[0.03] text-gray-400 font-medium"
+                      >
+                        {m}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+          </>
+        )}
 
         <div className="flex flex-col sm:flex-row gap-3">
           <Link

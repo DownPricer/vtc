@@ -128,6 +128,26 @@ export const defaultTenantSettings: TenantSettingsV1 = {
         { src: "/images/s1/s1-6.png", alt: "Confort & discrétion", tag: "Confort" },
       ],
     },
+    items: [
+      {
+        id: "vehicle_1",
+        name: "Renault Espace 5 Initiale Paris",
+        headline: "4 passagers max · Confort grand luxe",
+        passengerMax: 4,
+        highlightText: "4 passagers max · Climatisation · Sièges confortables · Bagages inclus",
+        baggageLabel: "Bagages inclus",
+        paymentChips: ["CB", "Virement", "Espèces", "Chèque"],
+        enabled: true,
+        gallery: [
+          { src: "/images/s2/s2-1.jpg", alt: "Renault Espace 5 – Service VTC", tag: "Votre véhicule" },
+          { src: "/images/s1/s1-1.png", alt: "Transfert aéroport premium", tag: "Aéroport" },
+          { src: "/images/s2/s2-3.webp", alt: "Trajet longue distance", tag: "Longue distance" },
+          { src: "/images/s1/s1-4.png", alt: "Service VTC clé en main", tag: "Premium" },
+          { src: "/images/s2/s2-5.webp", alt: "Mise à disposition chauffeur", tag: "Mise à dispo" },
+          { src: "/images/s1/s1-6.png", alt: "Confort & discrétion", tag: "Confort" },
+        ],
+      },
+    ],
   },
 
   /** Paramètres d’affichage du formulaire calculateur (listes / limites) — aligné sur `CalculatorForm`. */

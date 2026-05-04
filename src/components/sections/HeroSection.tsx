@@ -1,6 +1,6 @@
 import Link from "next/link";
-import Image from "next/image";
 import { buildSiteConfigFromTenant } from "@/config/siteConfigFromTenant";
+import { TenantPublicImage } from "@/components/media/TenantPublicImage";
 import { defaultTenantSettings } from "@/config/defaultTenantSettings";
 import type { TenantSettingsV1 } from "@/config/tenant-settings.types";
 
@@ -17,7 +17,7 @@ export function HeroSection({ tenantSettings = defaultTenantSettings }: Props) {
 
       {/* ── Image de fond ── */}
       <div className="absolute inset-0 z-0">
-        <Image
+        <TenantPublicImage
           src={hero.backgroundImageSrc}
           alt={hero.imageAlt}
           fill
