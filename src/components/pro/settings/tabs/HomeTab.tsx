@@ -1,6 +1,6 @@
 "use client";
 
-import { SettingsSectionCard } from "../SettingsSectionCard";
+import { CollapsibleSettingsCard } from "../CollapsibleSettingsCard";
 import { ReadonlyBadgeList } from "../ReadonlyBadgeList";
 import { ReadonlyListCard } from "../ReadonlyListCard";
 import { EditableField } from "../editable/EditableField";
@@ -12,8 +12,13 @@ import type { SettingsTabsSharedProps } from "./context";
 
 export function HomeTab({ draft, setDraft, editing, siteFeatures }: SettingsTabsSharedProps) {
   return (
-    <div className="space-y-6">
-      <SettingsSectionCard title="Fonctionnalités site (hors contenu page d’accueil)" description="Interrupteurs globaux — impactent d’autres pages.">
+    <div className="space-y-4">
+      <CollapsibleSettingsCard
+        title="Fonctionnalités site (hors page d’accueil)"
+        subtitle="Lecture seule — ces interrupteurs concernent d’autres pages ou le comportement global du site."
+        defaultOpen={false}
+        editing={editing}
+      >
         <ReadonlyBadgeList
           items={[
             { label: `Écran d’intro : ${siteFeatures.introScreen ? "activé" : "désactivé"}` },
@@ -25,9 +30,14 @@ export function HomeTab({ draft, setDraft, editing, siteFeatures }: SettingsTabs
           ]}
         />
         <p className="mt-3 text-xs text-[var(--pro-text-muted)]">Ces options se configurent hors de cet écran (code / variables).</p>
-      </SettingsSectionCard>
+      </CollapsibleSettingsCard>
 
-      <SettingsSectionCard title="Hero" description="Bloc principal en tête de la page d’accueil.">
+      <CollapsibleSettingsCard
+        title="Héros"
+        subtitle="Image principale, titre, texte d’introduction et boutons d’action."
+        defaultOpen
+        editing={editing}
+      >
         <EditableImageField
           label="Image de fond"
           value={draft.home.hero.backgroundImageSrc}
@@ -124,9 +134,14 @@ export function HomeTab({ draft, setDraft, editing, siteFeatures }: SettingsTabs
             </li>
           ))}
         </ul>
-      </SettingsSectionCard>
+      </CollapsibleSettingsCard>
 
-      <SettingsSectionCard title="Sections page d’accueil" description="Aperçu rapide (état dérivé du brouillon).">
+      <CollapsibleSettingsCard
+        title="Aperçu des sections page d’accueil"
+        subtitle="État dérivé du brouillon — ce qui s’affiche ou non selon vos réglages."
+        defaultOpen={false}
+        editing={editing}
+      >
         <ReadonlyBadgeList
           items={[
             { label: `Bloc « engagements » : ${draft.home.commitments.items.some((i) => i.enabled) ? "affiché" : "vide"}` },
@@ -138,9 +153,14 @@ export function HomeTab({ draft, setDraft, editing, siteFeatures }: SettingsTabs
             { label: `Mise à disposition (encart accueil) : ${draft.pricingDisplay.highlights.madEnabled ? "oui" : "non"}` },
           ]}
         />
-      </SettingsSectionCard>
+      </CollapsibleSettingsCard>
 
-      <SettingsSectionCard title="Vidéo" description="Importez la vidéo et l’affiche depuis le tableau de bord — plus besoin de chemins techniques.">
+      <CollapsibleSettingsCard
+        title="Vidéo"
+        subtitle="Activez ou modifiez la vidéo de présentation affichée sur la page d’accueil."
+        defaultOpen={false}
+        editing={editing}
+      >
         <EditableSwitch
           label="Vidéo activée"
           checked={draft.home.video.enabled}
@@ -205,10 +225,29 @@ export function HomeTab({ draft, setDraft, editing, siteFeatures }: SettingsTabs
               ))}
           </div>
         </div>
-      </SettingsSectionCard>
+      </CollapsibleSettingsCard>
 
-      <SettingsSectionCard title="Mise à disposition (accueil)" description="Encart tarifaire sur la page d’accueil.">
-        <div className="grid gap-3 sm:grid-cols-2">
+      <CollapsibleSettingsCard
+        title="Mise à disposition"
+        subtitle="Bloc commercial pour les prestations à l’heure."
+        defaultOpen={false}
+        editing={editing}
+      >
+        <EditableSwitch
+          label="Encart « mise à disposition » activé sur l’accueil"
+          checked={draft.pricingDisplay.highlights.madEnabled}
+          onChange={(v) =>
+            setDraft((d) => ({
+              ...d,
+              pricingDisplay: {
+                ...d.pricingDisplay,
+                highlights: { ...d.pricingDisplay.highlights, madEnabled: v },
+              },
+            }))
+          }
+          editing={editing}
+        />
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <EditableField
             label="Prix à partir de (€/h)"
             value={String(draft.pricingDisplay.highlights.madHourlyFrom)}
@@ -238,9 +277,14 @@ export function HomeTab({ draft, setDraft, editing, siteFeatures }: SettingsTabs
             editing={editing}
           />
         </div>
-      </SettingsSectionCard>
+      </CollapsibleSettingsCard>
 
-      <SettingsSectionCard title="Paiements (accueil)" description="Cartes moyens de paiement.">
+      <CollapsibleSettingsCard
+        title="Moyens de paiement"
+        subtitle="Textes d’en-tête du bloc et détail de chaque moyen affiché sur l’accueil."
+        defaultOpen={false}
+        editing={editing}
+      >
         <EditableSwitch
           label="Bloc activé"
           checked={draft.home.paymentMethods.enabled}
@@ -252,7 +296,7 @@ export function HomeTab({ draft, setDraft, editing, siteFeatures }: SettingsTabs
           }
           editing={editing}
         />
-        <div className="grid gap-3 sm:grid-cols-2 mt-3">
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <EditableField
             label="Sur-titre"
             value={draft.home.paymentMethods.eyebrow}
@@ -289,12 +333,28 @@ export function HomeTab({ draft, setDraft, editing, siteFeatures }: SettingsTabs
             />
           </div>
         </div>
-        <ul className="space-y-2 mt-3">
+        <ul className="mt-4 space-y-3">
           {draft.home.paymentMethods.items.map((p, i) => (
             <li key={p.id}>
-              <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/50 p-4 space-y-3">
+              <CollapsibleSettingsCard
+                title={p.label || `Paiement ${i + 1}`}
+                subtitle={p.sub || "Sous-texte affiché sous le libellé."}
+                defaultOpen={false}
+                editing={editing}
+                badge={
+                  <span
+                    className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${
+                      p.enabled
+                        ? "border-emerald-400/35 bg-emerald-500/10 text-[var(--pro-text)]"
+                        : "border-white/15 bg-[var(--pro-panel-muted)] text-[var(--pro-text-muted)]"
+                    }`}
+                  >
+                    {p.enabled ? "Actif" : "Inactif"}
+                  </span>
+                }
+              >
                 <EditableSwitch
-                  label={`Activer « ${p.label} »`}
+                  label={`Afficher « ${p.label} »`}
                   checked={p.enabled}
                   onChange={(en) =>
                     setDraft((d) => {
@@ -329,13 +389,18 @@ export function HomeTab({ draft, setDraft, editing, siteFeatures }: SettingsTabs
                   }
                   editing={editing}
                 />
-              </div>
+              </CollapsibleSettingsCard>
             </li>
           ))}
         </ul>
-      </SettingsSectionCard>
+      </CollapsibleSettingsCard>
 
-      <SettingsSectionCard title="CTA final" description="Dernière section avant pied de page.">
+      <CollapsibleSettingsCard
+        title="CTA final"
+        subtitle="Dernier bloc d’appel à l’action en bas de page."
+        defaultOpen={false}
+        editing={editing}
+      >
         <EditableSwitch
           label="Bloc activé"
           checked={draft.home.ctaFinal.enabled}
@@ -361,7 +426,7 @@ export function HomeTab({ draft, setDraft, editing, siteFeatures }: SettingsTabs
             altPreview="CTA final"
           />
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 mt-3">
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <EditableField
             label="Sur-titre"
             value={draft.home.ctaFinal.eyebrow}
@@ -477,7 +542,7 @@ export function HomeTab({ draft, setDraft, editing, siteFeatures }: SettingsTabs
           />
           <p className="mt-2 text-xs text-[var(--pro-text-muted)]">Édition des références badges : étape ultérieure.</p>
         </div>
-      </SettingsSectionCard>
+      </CollapsibleSettingsCard>
     </div>
   );
 }

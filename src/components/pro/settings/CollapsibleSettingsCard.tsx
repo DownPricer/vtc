@@ -25,15 +25,15 @@ export function CollapsibleSettingsCard({
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div className="rounded-[22px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/35 shadow-sm">
+    <div className="rounded-[22px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/35 shadow-sm transition-colors">
       <div className="flex items-stretch gap-3 p-3 sm:p-4">
         {preview ? <div className="shrink-0">{preview}</div> : null}
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h4 className="text-sm font-semibold text-[var(--pro-text)] sm:text-base">{title}</h4>
+            <h4 className="text-sm font-semibold leading-snug text-[var(--pro-text)] sm:text-base">{title}</h4>
             {badge}
           </div>
-          {subtitle ? <p className="line-clamp-2 text-xs text-[var(--pro-text-muted)]">{subtitle}</p> : null}
+          {subtitle ? <p className="line-clamp-3 text-xs leading-relaxed text-[var(--pro-text-muted)]">{subtitle}</p> : null}
         </div>
         <div className="flex shrink-0 flex-col items-end justify-center gap-2 sm:flex-row sm:items-center">
           {editing ? (
@@ -43,7 +43,7 @@ export function CollapsibleSettingsCard({
           ) : null}
           <button
             type="button"
-            className="rounded-lg border border-[var(--pro-border)] bg-[var(--pro-panel)] px-2.5 py-2 text-[var(--pro-text-muted)] transition hover:border-[var(--pro-accent)]/30 hover:bg-[var(--pro-accent-soft)] hover:text-[var(--pro-text)]"
+            className="min-h-[44px] min-w-[44px] rounded-lg border border-[var(--pro-border)] bg-[var(--pro-panel)] px-2.5 py-2 text-[var(--pro-text)] transition hover:border-[var(--pro-accent)]/35 hover:bg-[var(--pro-accent-soft)] hover:text-[var(--pro-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pro-accent)]/40 sm:min-h-0 sm:min-w-0"
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
             title={open ? "Replier" : "Déplier"}
