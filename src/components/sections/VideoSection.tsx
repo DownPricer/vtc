@@ -26,6 +26,14 @@ const icons = {
 
 type Props = { tenantSettings?: TenantSettingsV1 };
 
+function pickVideoTypes(src: string): { src: string; type: string }[] {
+  const lower = src.split("?")[0]?.toLowerCase() ?? "";
+  if (lower.endsWith(".webm")) return [{ src, type: "video/webm" }];
+  if (lower.endsWith(".mov")) return [{ src, type: "video/quicktime" }];
+  if (lower.endsWith(".mkv")) return [{ src, type: "video/x-matroska" }];
+  return [{ src, type: "video/mp4" }];
+}
+
 export function VideoSection({ tenantSettings = defaultTenantSettings }: Props) {
   const [playing, setPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -33,6 +41,10 @@ export function VideoSection({ tenantSettings = defaultTenantSettings }: Props) 
   const site = buildSiteConfigFromTenant(t);
   const video = t.home.video;
   const markers = video.markers.filter((m) => m.enabled);
+
+  if (!video.enabled) {
+    return null;
+  }
 
   const handlePlay = () => {
     if (videoRef.current) {
@@ -103,8 +115,9 @@ export function VideoSection({ tenantSettings = defaultTenantSettings }: Props) 
             poster={video.posterSrc}
             onPause={() => setPlaying(false)}
           >
-            <source src={video.videoSrc} type="video/mp4" />
-            <source src={video.videoSrc} type="video/x-matroska" />
+            {pickVideoTypes(video.videoSrc).map((s) => (
+              <source key={`${s.type}-${s.src}`} src={s.src} type={s.type} />
+            ))}
             <p className="text-gray-400 p-4">
               Votre navigateur ne supporte pas la lecture vidéo.{" "}
               <a href={video.videoSrc} download className="text-primary underline">

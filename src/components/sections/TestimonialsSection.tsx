@@ -55,13 +55,18 @@ function TestimonialCard({ a }: { a: AvisItem }) {
 export function TestimonialsSection({ tenantSettings = defaultTenantSettings }: Props) {
   const t = tenantSettings;
   const site = buildSiteConfigFromTenant(t);
+
+  if (!t.testimonials.enabled) {
+    return null;
+  }
+
   const avis: AvisItem[] = t.testimonials.items
     .filter((x) => x.enabled)
     .map((x) => ({
       text: x.text,
       auteur: x.author,
       trajet: x.trajet || "—",
-      note: x.rating,
+      note: Math.min(5, Math.max(0, x.rating)),
       date: x.date || "—",
     }));
 

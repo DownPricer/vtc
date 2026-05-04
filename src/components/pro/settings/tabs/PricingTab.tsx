@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { SettingsCallout, SettingsSectionCard } from "../SettingsSectionCard";
 import { ReadonlyBadgeList } from "../ReadonlyBadgeList";
 import { EditableSwitch } from "../editable/EditableSwitch";
@@ -82,6 +83,7 @@ function TransferRowEditor({
 
 export function PricingTab({ draft, setDraft, editing }: SettingsTabsSharedProps) {
   const { highlights, tarifsPage, codeColors } = draft.pricingDisplay;
+  const [showAirportCodeAdvanced, setShowAirportCodeAdvanced] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -392,77 +394,90 @@ export function PricingTab({ draft, setDraft, editing }: SettingsTabsSharedProps
       </SettingsSectionCard>
 
       <SettingsSectionCard
-        title="Couleurs des codes aeroport"
-        description="Reglez ici le rendu visuel des pastilles de codes sur la vitrine."
+        title="Couleurs des codes aéroport"
+        description="Réglages visuels des pastilles (réservés au profil technique — masqués par défaut)."
       >
-        <div className="space-y-4">
-          {Object.entries(codeColors).map(([code, cls]) => (
-            <div key={code} className={transferCardClass}>
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-semibold text-[var(--pro-text)]">{code}</p>
-                <span className="rounded-full border border-[var(--pro-border)] bg-[var(--pro-panel)] px-3 py-1 text-xs text-[var(--pro-text-muted)]">
-                  Apercu technique du style
-                </span>
+        <button
+          type="button"
+          className="w-full rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-left text-sm font-medium text-[var(--pro-text)] transition hover:border-[var(--pro-accent)]/35"
+          onClick={() => setShowAirportCodeAdvanced((x) => !x)}
+        >
+          {showAirportCodeAdvanced ? "▼" : "▶"} Avancé développeur — classes Tailwind des pastilles
+        </button>
+        {showAirportCodeAdvanced ? (
+          <div className="space-y-4 pt-2">
+            <p className="text-xs leading-relaxed text-[var(--pro-text-muted)]">
+              Ces champs pilotent les classes CSS affichées sur la vitrine. Ne les modifiez que si vous savez ce que vous
+              faites ; en cas de doute, laissez les valeurs par défaut.
+            </p>
+            {Object.entries(codeColors).map(([code, cls]) => (
+              <div key={code} className={transferCardClass}>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-[var(--pro-text)]">{code}</p>
+                  <span className="rounded-full border border-[var(--pro-border)] bg-[var(--pro-panel)] px-3 py-1 text-xs text-[var(--pro-text-muted)]">
+                    Aperçu technique
+                  </span>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <EditableField
+                    label="Classe bg"
+                    value={cls.bg}
+                    onChange={(v) =>
+                      setDraft((d) => ({
+                        ...d,
+                        pricingDisplay: {
+                          ...d.pricingDisplay,
+                          codeColors: {
+                            ...d.pricingDisplay.codeColors,
+                            [code]: { ...d.pricingDisplay.codeColors[code as keyof typeof codeColors], bg: v },
+                          },
+                        },
+                      }))
+                    }
+                    editing={editing}
+                    mono
+                  />
+                  <EditableField
+                    label="Classe text"
+                    value={cls.text}
+                    onChange={(v) =>
+                      setDraft((d) => ({
+                        ...d,
+                        pricingDisplay: {
+                          ...d.pricingDisplay,
+                          codeColors: {
+                            ...d.pricingDisplay.codeColors,
+                            [code]: { ...d.pricingDisplay.codeColors[code as keyof typeof codeColors], text: v },
+                          },
+                        },
+                      }))
+                    }
+                    editing={editing}
+                    mono
+                  />
+                  <EditableField
+                    label="Classe point"
+                    value={cls.dot}
+                    onChange={(v) =>
+                      setDraft((d) => ({
+                        ...d,
+                        pricingDisplay: {
+                          ...d.pricingDisplay,
+                          codeColors: {
+                            ...d.pricingDisplay.codeColors,
+                            [code]: { ...d.pricingDisplay.codeColors[code as keyof typeof codeColors], dot: v },
+                          },
+                        },
+                      }))
+                    }
+                    editing={editing}
+                    mono
+                  />
+                </div>
               </div>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <EditableField
-                  label="Classe bg"
-                  value={cls.bg}
-                  onChange={(v) =>
-                    setDraft((d) => ({
-                      ...d,
-                      pricingDisplay: {
-                        ...d.pricingDisplay,
-                        codeColors: {
-                          ...d.pricingDisplay.codeColors,
-                          [code]: { ...d.pricingDisplay.codeColors[code as keyof typeof codeColors], bg: v },
-                        },
-                      },
-                    }))
-                  }
-                  editing={editing}
-                  mono
-                />
-                <EditableField
-                  label="Classe text"
-                  value={cls.text}
-                  onChange={(v) =>
-                    setDraft((d) => ({
-                      ...d,
-                      pricingDisplay: {
-                        ...d.pricingDisplay,
-                        codeColors: {
-                          ...d.pricingDisplay.codeColors,
-                          [code]: { ...d.pricingDisplay.codeColors[code as keyof typeof codeColors], text: v },
-                        },
-                      },
-                    }))
-                  }
-                  editing={editing}
-                  mono
-                />
-                <EditableField
-                  label="Classe point"
-                  value={cls.dot}
-                  onChange={(v) =>
-                    setDraft((d) => ({
-                      ...d,
-                      pricingDisplay: {
-                        ...d.pricingDisplay,
-                        codeColors: {
-                          ...d.pricingDisplay.codeColors,
-                          [code]: { ...d.pricingDisplay.codeColors[code as keyof typeof codeColors], dot: v },
-                        },
-                      },
-                    }))
-                  }
-                  editing={editing}
-                  mono
-                />
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : null}
       </SettingsSectionCard>
     </div>
   );

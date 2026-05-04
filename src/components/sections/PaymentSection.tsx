@@ -51,6 +51,10 @@ export function PaymentSection({ tenantSettings = defaultTenantSettings }: Props
   const section = t.home.paymentMethods;
   const moyens = section.items.filter((m) => m.enabled);
 
+  if (!section.enabled || moyens.length === 0) {
+    return null;
+  }
+
   return (
     <section className="py-10 md:py-14 bg-dark relative overflow-hidden">
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/[0.05] to-transparent" />

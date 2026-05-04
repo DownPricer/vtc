@@ -6,6 +6,7 @@ import { SettingsCallout, SettingsSectionCard } from "../SettingsSectionCard";
 import { ReadonlyListCard } from "../ReadonlyListCard";
 import { EditableField } from "../editable/EditableField";
 import { EditableSwitch } from "../editable/EditableSwitch";
+import { ProBadgeIcon } from "../editable/proBadgeIcon";
 import type { SettingsTabsSharedProps } from "./context";
 
 const PLACEMENT_LABELS: Record<BadgePlacementId, string> = {
@@ -39,41 +40,18 @@ const ICON_OPTIONS: IconKey[] = [
 ];
 
 const previewToneByIcon: Partial<Record<IconKey, string>> = {
-  shield_check: "border-emerald-300/70 bg-emerald-50 text-emerald-700",
-  luggage_check: "border-sky-300/70 bg-sky-50 text-sky-700",
-  sparkle: "border-orange-300/70 bg-orange-50 text-orange-700",
-  plane: "border-violet-300/70 bg-violet-50 text-violet-700",
-  cash: "border-amber-300/70 bg-amber-50 text-amber-700",
-  credit_card: "border-blue-300/70 bg-blue-50 text-blue-700",
-  bank: "border-slate-300/70 bg-slate-50 text-slate-700",
-  ban: "border-red-300/70 bg-red-50 text-red-700",
-};
-
-const iconGlyphByKey: Record<IconKey, string> = {
-  id_card: "ID",
-  car: "VTC",
-  credit_card: "CB",
-  globe: "WEB",
-  clock: "24h",
-  luggage_check: "BG",
-  shield_check: "OK",
-  home: "HQ",
-  check: "OK",
-  user_badge: "PRO",
-  users: "VIP",
-  building: "BUS",
-  refresh: "A/R",
-  calendar: "CAL",
-  plane: "AIR",
-  sparkle: "PRE",
-  bank: "BAN",
-  cash: "EUR",
-  document: "DOC",
-  ban: "NO",
+  shield_check: "border-emerald-400/40 bg-emerald-500/12 text-[var(--pro-text)]",
+  luggage_check: "border-sky-400/40 bg-sky-500/12 text-[var(--pro-text)]",
+  sparkle: "border-orange-400/45 bg-orange-500/14 text-[var(--pro-text)]",
+  plane: "border-violet-400/40 bg-violet-500/12 text-[var(--pro-text)]",
+  cash: "border-amber-400/45 bg-amber-500/14 text-[var(--pro-text)]",
+  credit_card: "border-blue-400/40 bg-blue-500/12 text-[var(--pro-text)]",
+  bank: "border-slate-400/40 bg-slate-500/14 text-[var(--pro-text)]",
+  ban: "border-red-400/45 bg-red-500/12 text-[var(--pro-text)]",
 };
 
 function getPreviewTone(iconKey: IconKey) {
-  return previewToneByIcon[iconKey] ?? "border-orange-300/70 bg-orange-50 text-orange-700";
+  return previewToneByIcon[iconKey] ?? "border-orange-400/45 bg-orange-500/14 text-[var(--pro-text)]";
 }
 
 export function BadgesTab({ draft, setDraft, editing }: SettingsTabsSharedProps) {
@@ -94,13 +72,15 @@ export function BadgesTab({ draft, setDraft, editing }: SettingsTabsSharedProps)
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="space-y-1">
                   <p className="font-mono text-xs text-[var(--pro-text-muted)]">{b.id}</p>
-                  <p className="text-sm text-[var(--pro-text-soft)]">Apercu du badge sur la vitrine</p>
+                  <p className="text-sm text-[var(--pro-text-soft)]">Aperçu du badge sur la vitrine</p>
                 </div>
-                <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium shadow-sm ${getPreviewTone(b.iconKey)}`}>
-                  <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-white/70 px-2 text-[11px] font-bold tracking-wide">
-                    {iconGlyphByKey[b.iconKey]}
+                <div
+                  className={`inline-flex max-w-full items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium shadow-sm ${getPreviewTone(b.iconKey)}`}
+                >
+                  <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--pro-border)] bg-[var(--pro-panel)] text-[var(--pro-accent)]">
+                    <ProBadgeIcon iconKey={b.iconKey} className="h-4 w-4" />
                   </span>
-                  <span>{b.text || "Texte du badge"}</span>
+                  <span className="min-w-0 break-words">{b.text || "Texte du badge"}</span>
                 </div>
               </div>
 
@@ -133,32 +113,45 @@ export function BadgesTab({ draft, setDraft, editing }: SettingsTabsSharedProps)
               />
 
               {editing ? (
-                <label className="block text-xs font-medium text-[var(--pro-text-muted)]">
-                  Icone
-                  <select
-                    value={b.iconKey}
-                    onChange={(e) =>
-                      setDraft((d) => {
-                        const library = [...d.badges.library];
-                        library[i] = { ...library[i], iconKey: e.target.value as IconKey };
-                        return { ...d, badges: { ...d.badges, library } };
-                      })
-                    }
-                    className="mt-1 w-full rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm text-[var(--pro-text)] shadow-sm"
-                  >
-                    {ICON_OPTIONS.map((k) => (
-                      <option key={k} value={k}>
-                        {k}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <div>
+                  <p className="mb-2 text-xs font-medium text-[var(--pro-text-muted)]">Icône</p>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                    {ICON_OPTIONS.map((k) => {
+                      const selected = b.iconKey === k;
+                      return (
+                        <button
+                          key={k}
+                          type="button"
+                          title={k}
+                          onClick={() =>
+                            setDraft((d) => {
+                              const library = [...d.badges.library];
+                              library[i] = { ...library[i], iconKey: k };
+                              return { ...d, badges: { ...d.badges, library } };
+                            })
+                          }
+                          className={`flex flex-col items-center gap-1.5 rounded-xl border px-2 py-3 text-center transition ${
+                            selected
+                              ? "border-[var(--pro-accent)] bg-[var(--pro-accent-soft)] text-[var(--pro-accent)]"
+                              : "border-[var(--pro-border)] bg-[var(--pro-panel)] text-[var(--pro-text-muted)] hover:border-[var(--pro-accent)]/40 hover:text-[var(--pro-text)]"
+                          }`}
+                        >
+                          <ProBadgeIcon iconKey={k} className="h-6 w-6 text-current" />
+                          <span className="w-full truncate text-[10px] font-medium leading-tight">{k}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               ) : (
-                <p className="text-xs text-[var(--pro-text-muted)]">Icone : {b.iconKey}</p>
+                <div className="flex items-center gap-2 text-xs text-[var(--pro-text-muted)]">
+                  <ProBadgeIcon iconKey={b.iconKey} />
+                  <span>Icône : {b.iconKey}</span>
+                </div>
               )}
 
               <p className="text-xs leading-relaxed text-[var(--pro-text-muted)]">
-                Variante d affichage : pastille texte + repere visuel. La previsualisation sert de guide rapide.
+                Variante d affichage : pastille + pictogramme. La prévisualisation reflète l’icône choisie.
               </p>
             </li>
           ))}
@@ -177,11 +170,13 @@ export function BadgesTab({ draft, setDraft, editing }: SettingsTabsSharedProps)
                   return (
                     <li key={`${pid}-${idx}`} className="space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-medium ${getPreviewTone(iconKey)}`}>
-                          <span className="rounded-full bg-white/70 px-1.5 py-0.5 text-[10px] font-bold tracking-wide">
-                            {iconGlyphByKey[iconKey]}
+                        <span
+                          className={`inline-flex max-w-full items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-medium ${getPreviewTone(iconKey)}`}
+                        >
+                          <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[var(--pro-border)] bg-[var(--pro-panel)] text-[var(--pro-accent)]">
+                            <ProBadgeIcon iconKey={iconKey} className="h-3.5 w-3.5" />
                           </span>
-                          {label}
+                          <span className="min-w-0 break-words">{label}</span>
                         </span>
                         <span className="text-[var(--pro-text-muted)]">ref. {item.badgeId}</span>
                       </div>

@@ -72,6 +72,17 @@ export default async function FAQPage() {
   const site = buildSiteConfigFromTenant(tenant);
   const faqConfig = tenant.faq;
 
+  if (!faqConfig.enabled) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-dark px-4 py-20 text-center">
+        <p className="mb-4 max-w-md text-gray-300">La foire aux questions n’est pas disponible pour le moment.</p>
+        <Link href="/" className="font-semibold text-primary hover:underline">
+          Retour à l’accueil
+        </Link>
+      </div>
+    );
+  }
+
   const faqs = faqConfig.items
     .filter((x) => x.enabled)
     .map((x) => ({ q: x.question, a: x.answer, icon: icons[x.iconKey as keyof typeof icons] }));

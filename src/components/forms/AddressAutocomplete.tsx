@@ -7,6 +7,7 @@ import {
   type AddressSuggestion,
 } from "@/lib/addressAutocomplete";
 import { AIRPORTS } from "@/lib/pricing/config";
+import { proInputClass } from "@/components/pro/settings/editable/proFieldStyles";
 
 const DEBOUNCE_MS = 300;
 type RequestState = "idle" | "loading" | "success" | "empty" | "error";
@@ -17,6 +18,8 @@ export interface AddressAutocompleteProps {
   value?: string;
   placeholder?: string;
   airportMode?: boolean;
+  /** `pro` : styles alignés sur le dashboard paramètres (clair / sombre). */
+  appearance?: "calculator" | "pro";
   onChange?: (value: { formatted: string; lat?: number; lon?: number } | string) => void;
   onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
   disabled?: boolean;
@@ -31,6 +34,7 @@ export function AddressAutocomplete({
   value = "",
   placeholder = "Rechercher une adresse...",
   airportMode = false,
+  appearance = "calculator",
   onChange,
   onBlur,
   disabled = false,
@@ -38,6 +42,7 @@ export function AddressAutocomplete({
   className = "",
   label,
 }: AddressAutocompleteProps) {
+  const isPro = appearance === "pro";
   const generatedId = useId();
   const inputId = id ?? `address-autocomplete-${generatedId}`;
   const [input, setInput] = useState(value);
@@ -181,6 +186,29 @@ export function AddressAutocomplete({
     onChange?.({ formatted: s.label, lat: s.lat, lon: s.lon });
   };
 
+  const labelClass = isPro
+    ? "mb-1.5 block text-xs font-medium uppercase tracking-wide text-[var(--pro-text-muted)]"
+    : "mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400";
+
+  const inputClass = isPro
+    ? `${proInputClass} pl-10 pr-10`
+    : "w-full pl-10 pr-10 py-3.5 rounded-xl bg-dark border border-white/8 text-white text-sm placeholder-gray-600 focus:border-primary/60 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all disabled:opacity-50";
+
+  const listboxClass = isPro
+    ? "absolute z-[80] mt-1.5 max-h-60 w-full overflow-y-auto overscroll-contain rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel)] py-1 text-[var(--pro-text)] shadow-lg"
+    : "absolute z-[80] mt-1.5 w-full rounded-xl bg-surface border border-white/10 shadow-xl max-h-60 overflow-y-auto overscroll-contain";
+
+  const optionIdleClass = isPro
+    ? "border-b border-[var(--pro-border)]/60 px-4 py-3.5 text-sm last:border-0"
+    : "border-b border-white/5 px-4 py-3.5 text-white cursor-pointer transition-colors text-sm flex items-start gap-3 last:border-0";
+
+  const optionActiveClass = isPro ? "bg-[var(--pro-accent-soft)]" : "bg-white/10";
+  const optionHoverClass = isPro ? "hover:bg-[var(--pro-panel-muted)]" : "hover:bg-white/5";
+
+  const mutedTextClass = isPro ? "text-[var(--pro-text-muted)]" : "text-gray-400";
+  const subTextClass = isPro ? "text-[var(--pro-text-muted)]" : "text-gray-500";
+  const iconMutedClass = isPro ? "text-[var(--pro-text-muted)]" : "text-gray-500";
+
   const selectAirport = (ap: { code: string; formatted: string }) => {
     setInput(ap.formatted);
     setOpen(false);
@@ -244,13 +272,13 @@ export function AddressAutocomplete({
   return (
     <div ref={containerRef} className={`relative ${className}`}>
       {label && (
-        <label htmlFor={inputId} className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-          {label} {required && <span className="text-primary">*</span>}
+        <label htmlFor={inputId} className={labelClass}>
+          {label} {required && <span className={isPro ? "text-[var(--pro-accent)]" : "text-primary"}>*</span>}
         </label>
       )}
       <div className="relative">
         {/* Icône localisation */}
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
+        <div className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${iconMutedClass}`}>
           {airportMode ? (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -280,7 +308,7 @@ export function AddressAutocomplete({
           disabled={disabled}
           required={required}
           autoComplete="off"
-          className="w-full pl-10 pr-10 py-3.5 rounded-xl bg-dark border border-white/8 text-white text-sm placeholder-gray-600 focus:border-primary/60 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all disabled:opacity-50"
+          className={inputClass}
           role="combobox"
           aria-expanded={showDropdown}
           aria-controls={`${inputId}-listbox`}
@@ -289,7 +317,7 @@ export function AddressAutocomplete({
         />
         {requestState === "loading" && !airportMode && (
           <div className="absolute right-3 top-1/2 -translate-y-1/2">
-            <svg className="animate-spin w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24">
+            <svg className={`h-4 w-4 animate-spin ${iconMutedClass}`} fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
@@ -300,7 +328,7 @@ export function AddressAutocomplete({
         <ul
           id={`${inputId}-listbox`}
           role="listbox"
-          className="absolute z-[80] mt-1.5 w-full rounded-xl bg-surface border border-white/10 shadow-xl max-h-60 overflow-y-auto overscroll-contain"
+          className={listboxClass}
         >
           {airportMode
             ? filteredAirports.map((ap, i) => (
@@ -310,16 +338,21 @@ export function AddressAutocomplete({
                   role="option"
                   tabIndex={0}
                   aria-selected={input === ap.formatted}
-                  className={`px-4 py-3.5 text-white cursor-pointer transition-colors text-sm flex items-center gap-3 border-b border-white/5 last:border-0 ${
-                    highlightedIndex === i ? "bg-white/10" : "hover:bg-white/5"
-                  }`}
+                  className={`flex cursor-pointer items-center gap-3 px-4 py-3.5 text-sm transition-colors ${optionIdleClass} ${
+                    highlightedIndex === i ? optionActiveClass : optionHoverClass
+                  } ${isPro ? "text-[var(--pro-text)]" : "text-white"}`}
                   onMouseEnter={() => setHighlightedIndex(i)}
                   onMouseDown={(e) => {
                     e.preventDefault();
                     selectAirport(ap);
                   }}
                 >
-                  <svg className="w-4 h-4 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className={`h-4 w-4 flex-shrink-0 ${isPro ? "text-[var(--pro-accent)]" : "text-primary"}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                   </svg>
                   {ap.label}
@@ -328,13 +361,13 @@ export function AddressAutocomplete({
             : (
               <>
                 {requestState === "loading" && (
-                  <li className="px-4 py-3 text-sm text-gray-300">Recherche...</li>
+                  <li className={`px-4 py-3 text-sm ${isPro ? "text-[var(--pro-text-soft)]" : "text-gray-300"}`}>Recherche...</li>
                 )}
                 {requestState === "error" && (
-                  <li className="px-4 py-3 text-sm text-gray-400">Suggestions indisponibles pour le moment.</li>
+                  <li className={`px-4 py-3 text-sm ${mutedTextClass}`}>Suggestions indisponibles pour le moment.</li>
                 )}
                 {requestState === "empty" && (
-                  <li className="px-4 py-3 text-sm text-gray-400">Aucune adresse trouvée.</li>
+                  <li className={`px-4 py-3 text-sm ${mutedTextClass}`}>Aucune adresse trouvée.</li>
                 )}
                 {requestState !== "loading" &&
                   requestState !== "error" &&
@@ -345,23 +378,23 @@ export function AddressAutocomplete({
                       role="option"
                       tabIndex={0}
                       aria-selected={input === s.label}
-                      className={`px-4 py-3.5 text-white cursor-pointer transition-colors text-sm flex items-start gap-3 border-b border-white/5 last:border-0 ${
-                        highlightedIndex === i ? "bg-white/10" : "hover:bg-white/5"
-                      }`}
+                      className={`flex cursor-pointer items-start gap-3 px-4 py-3.5 text-sm transition-colors ${optionIdleClass} ${
+                        highlightedIndex === i ? optionActiveClass : optionHoverClass
+                      } ${isPro ? "text-[var(--pro-text)]" : "text-white"}`}
                       onMouseEnter={() => setHighlightedIndex(i)}
                       onMouseDown={(e) => {
                         e.preventDefault();
                         selectAddress(s);
                       }}
                     >
-                      <svg className="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className={`mt-0.5 h-4 w-4 flex-shrink-0 ${iconMutedClass}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
                       <div className="min-w-0">
                         <div className="truncate">{s.label}</div>
                         {(s.postcode || s.city) && (
-                          <div className="text-xs text-gray-500 mt-1">
+                          <div className={`mt-1 text-xs ${subTextClass}`}>
                             {[s.postcode, s.city].filter(Boolean).join(" ")}
                           </div>
                         )}

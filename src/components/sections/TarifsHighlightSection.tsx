@@ -8,7 +8,14 @@ type Props = { tenantSettings?: TenantSettingsV1 };
 export function TarifsHighlightSection({ tenantSettings = defaultTenantSettings }: Props) {
   const t = tenantSettings;
   const highlights = t.pricingDisplay.highlights;
-  const tarifs = highlights.popularTransfers.filter((x) => x.enabled);
+  const tarifs =
+    highlights.popularTransfersEnabled ? highlights.popularTransfers.filter((x) => x.enabled) : [];
+  const showTransfers = highlights.popularTransfersEnabled && tarifs.length > 0;
+  const showMad = highlights.madEnabled;
+
+  if (!showTransfers && !showMad) {
+    return null;
+  }
 
   return (
     <section className="relative py-14 md:py-20 overflow-hidden">
@@ -31,19 +38,22 @@ export function TarifsHighlightSection({ tenantSettings = defaultTenantSettings 
       <div className="relative z-10 max-w-6xl mx-auto px-5 sm:px-6 lg:px-8">
 
         {/* Header — compact */}
-        <div className="text-center mb-8 md:mb-10">
-          <span className="inline-block px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold tracking-widest uppercase mb-3">
-            Tarifs transparents
-          </span>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white mb-2 leading-tight">
-            Nos transferts <span className="text-gradient">les plus demandés</span>
-          </h2>
-          <p className="text-gray-500 text-sm max-w-sm mx-auto">
-            Prix fixes aller-retour. Pas de surprise, pas de compteur.
-          </p>
-        </div>
+        {showTransfers ? (
+          <div className="text-center mb-8 md:mb-10">
+            <span className="inline-block px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold tracking-widest uppercase mb-3">
+              Tarifs transparents
+            </span>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white mb-2 leading-tight">
+              Nos transferts <span className="text-gradient">les plus demandés</span>
+            </h2>
+            <p className="text-gray-500 text-sm max-w-sm mx-auto">
+              Prix fixes aller-retour. Pas de surprise, pas de compteur.
+            </p>
+          </div>
+        ) : null}
 
         {/* Tarif cards — compact horizontal layout */}
+        {showTransfers ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
           {tarifs.map((row) => (
             <div
@@ -95,8 +105,10 @@ export function TarifsHighlightSection({ tenantSettings = defaultTenantSettings 
             </div>
           ))}
         </div>
+        ) : null}
 
         {/* MAD — inline compact */}
+        {showMad ? (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-xl border border-white/[0.06] bg-white/[0.02] mb-6">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
@@ -114,6 +126,7 @@ export function TarifsHighlightSection({ tenantSettings = defaultTenantSettings 
             <span className="text-primary text-sm font-bold">€/h</span>
           </div>
         </div>
+        ) : null}
 
         {/* CTA */}
         <div className="text-center">

@@ -1,5 +1,7 @@
 "use client";
 
+import { AddressAutocomplete } from "@/components/forms/AddressAutocomplete";
+import { ReadonlyField } from "../ReadonlyField";
 import { SettingsCallout, SettingsSectionCard } from "../SettingsSectionCard";
 import { EditableSwitch } from "../editable/EditableSwitch";
 import { EditableField } from "../editable/EditableField";
@@ -23,20 +25,27 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
         description="Cette adresse sert de point de depart du chauffeur pour calculer le trajet d approche et le retour depot."
       >
         <p className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm leading-relaxed text-[var(--pro-text-soft)]">
-          Renseignez une adresse complete et stable. Elle est reutilisee dans les calculs existants tels qu ils fonctionnent deja.
+          Cette adresse sert de point de départ du chauffeur pour calculer le trajet d’approche et le retour dépôt. Elle est
+          réutilisée dans les calculs existants tels qu’ils fonctionnent déjà. Vous pouvez la saisir librement ou choisir une
+          suggestion (sans appeler le calculateur de distance ici).
         </p>
-        <EditableField
-          label="Adresse de la base VTC"
-          value={draft.calculatorDisplay.vtcBaseAddress}
-          onChange={(v) =>
-            setDraft((d) => ({
-              ...d,
-              calculatorDisplay: { ...d.calculatorDisplay, vtcBaseAddress: v },
-            }))
-          }
-          editing={editing}
-          hint="Exemple : numero, rue, code postal, ville, pays."
-        />
+        {editing ? (
+          <AddressAutocomplete
+            appearance="pro"
+            label="Adresse de la base VTC"
+            value={draft.calculatorDisplay.vtcBaseAddress}
+            placeholder="Tapez au moins 3 caractères pour des suggestions…"
+            onChange={(next) => {
+              const v = typeof next === "string" ? next : next.formatted;
+              setDraft((d) => ({
+                ...d,
+                calculatorDisplay: { ...d.calculatorDisplay, vtcBaseAddress: v },
+              }));
+            }}
+          />
+        ) : (
+          <ReadonlyField label="Adresse de la base VTC" value={draft.calculatorDisplay.vtcBaseAddress} />
+        )}
       </SettingsSectionCard>
 
       <SettingsSectionCard

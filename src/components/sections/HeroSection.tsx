@@ -10,6 +10,7 @@ export function HeroSection({ tenantSettings = defaultTenantSettings }: Props) {
   const t = tenantSettings;
   const hero = t.home.hero;
   const site = buildSiteConfigFromTenant(t);
+  const heroCtas = hero.ctas.filter((c) => c.enabled);
 
   return (
     <section className="relative h-svh flex flex-col justify-center overflow-hidden bg-black">
@@ -61,26 +62,32 @@ export function HeroSection({ tenantSettings = defaultTenantSettings }: Props) {
           </p>
 
           {/* CTA buttons */}
-          <div className="animate-fade-up delay-200 flex flex-col sm:flex-row gap-3 mb-8 md:mb-10">
-            <Link
-              href={hero.ctas[0]?.href ?? "/calculateur"}
-              className="animate-glow-pulse flex items-center justify-center gap-2.5 px-7 py-4 rounded-xl bg-primary hover:bg-primary-dark text-white font-bold text-sm shadow-glow-lg transition-all duration-300 active:scale-95"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              {hero.ctas[0]?.label ?? "Calculateur de prix"}
-            </Link>
-            <Link
-              href={hero.ctas[1]?.href ?? "/devis"}
-              className="flex items-center justify-center gap-2.5 px-7 py-4 rounded-xl border border-white/20 text-white hover:border-primary/50 hover:bg-white/5 font-medium text-sm transition-all duration-300 active:scale-95"
-            >
-              <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              {hero.ctas[1]?.label ?? "Devis personnalisé"}
-            </Link>
-          </div>
+          {heroCtas.length > 0 ? (
+            <div className="animate-fade-up delay-200 mb-8 flex flex-col gap-3 md:mb-10 sm:flex-row">
+              {heroCtas.map((c, idx) => (
+                <Link
+                  key={c.id}
+                  href={c.href}
+                  className={
+                    idx === 0
+                      ? "animate-glow-pulse flex items-center justify-center gap-2.5 rounded-xl bg-primary px-7 py-4 text-sm font-bold text-white shadow-glow-lg transition-all duration-300 hover:bg-primary-dark active:scale-95"
+                      : "flex items-center justify-center gap-2.5 rounded-xl border border-white/20 px-7 py-4 text-sm font-medium text-white transition-all duration-300 hover:border-primary/50 hover:bg-white/5 active:scale-95"
+                  }
+                >
+                  {idx === 0 ? (
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  ) : (
+                    <svg className="h-4 w-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  )}
+                  {c.label}
+                </Link>
+              ))}
+            </div>
+          ) : null}
 
         </div>
       </div>

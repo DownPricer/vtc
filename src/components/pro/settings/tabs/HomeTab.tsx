@@ -6,6 +6,7 @@ import { ReadonlyListCard } from "../ReadonlyListCard";
 import { EditableField } from "../editable/EditableField";
 import { EditableSwitch } from "../editable/EditableSwitch";
 import { EditableImageField } from "../editable/EditableImageField";
+import { EditableVideoField } from "../editable/EditableVideoField";
 import { EditableTextarea } from "../editable/EditableTextarea";
 import type { SettingsTabsSharedProps } from "./context";
 
@@ -139,14 +140,14 @@ export function HomeTab({ draft, setDraft, editing, siteFeatures }: SettingsTabs
         />
       </SettingsSectionCard>
 
-      <SettingsSectionCard title="Vidéo" description="Lecteur et messages associés (pas d’upload vidéo ici).">
+      <SettingsSectionCard title="Vidéo" description="Importez la vidéo et l’affiche depuis le tableau de bord — plus besoin de chemins techniques.">
         <EditableSwitch
           label="Vidéo activée"
           checked={draft.home.video.enabled}
           onChange={(v) => setDraft((d) => ({ ...d, home: { ...d.home, video: { ...d.home.video, enabled: v } } }))}
           editing={editing}
         />
-        <div className="grid gap-3 sm:grid-cols-2 mt-3">
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <EditableField
             label="Sur-titre (eyebrow)"
             value={draft.home.video.eyebrow}
@@ -174,19 +175,22 @@ export function HomeTab({ draft, setDraft, editing, siteFeatures }: SettingsTabs
               rows={3}
             />
           </div>
-          <EditableField
-            label="Poster (chemin / URL)"
+        </div>
+        <div className="mt-4 space-y-4">
+          <EditableImageField
+            label="Image de couverture (poster)"
             value={draft.home.video.posterSrc}
             onChange={(v) => setDraft((d) => ({ ...d, home: { ...d.home, video: { ...d.home.video, posterSrc: v } } }))}
             editing={editing}
-            mono
+            altPreview="Poster vidéo"
+            hint="Affichée avant lecture. Formats JPEG, PNG ou WebP."
           />
-          <EditableField
-            label="Fichier vidéo (chemin / URL)"
+          <EditableVideoField
+            label="Fichier vidéo"
             value={draft.home.video.videoSrc}
             onChange={(v) => setDraft((d) => ({ ...d, home: { ...d.home, video: { ...d.home.video, videoSrc: v } } }))}
             editing={editing}
-            mono
+            hint="MP4, WebM ou MOV — max. 50 Mo. Un champ URL/chemin reste disponible dans « avancé »."
           />
         </div>
         <div className="mt-4">

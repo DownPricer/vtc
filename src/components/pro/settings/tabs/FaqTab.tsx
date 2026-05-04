@@ -5,6 +5,7 @@ import { ReadonlyField } from "../ReadonlyField";
 import { EditableField } from "../editable/EditableField";
 import { EditableSwitch } from "../editable/EditableSwitch";
 import { EditableTextarea } from "../editable/EditableTextarea";
+import { proBtnDangerClass } from "../editable/proFieldStyles";
 import type { FaqItem, IconKey } from "@/config/tenant-settings.types";
 import type { SettingsTabsSharedProps } from "./context";
 
@@ -149,7 +150,7 @@ export function FaqTab({ draft, setDraft, editing }: SettingsTabsSharedProps) {
                       </button>
                       <button
                         type="button"
-                        className="rounded-xl border border-red-400/40 bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-200"
+                        className={proBtnDangerClass}
                         onClick={() =>
                           setDraft((d) => ({
                             ...d,

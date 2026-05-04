@@ -14,13 +14,21 @@ export function CTASection({ tenantSettings = defaultTenantSettings }: Props) {
   const phoneDisplay = site.contact.phoneDisplay;
   const cta = t.home.ctaFinal;
   const lib = new Map(t.badges.library.filter((b) => b.enabled).map((b) => [b.id, b] as const));
+  const ctaGuaranteeIds = new Set(t.home.ctaFinal.guarantees.filter((g) => g.enabled).map((g) => g.badgeId));
   const garanties = t.badges.placements.home_cta_guarantees
     .map((p) => {
+      if (!ctaGuaranteeIds.has(p.badgeId)) return null;
       const badge = lib.get(p.badgeId);
       if (!badge) return null;
       return p.textOverride ?? badge.text;
     })
     .filter(Boolean);
+
+  if (!cta.enabled) {
+    return null;
+  }
+
+  const ctaLinks = cta.ctas.filter((c) => c.enabled);
 
   return (
     <section className="relative py-24 md:py-40 overflow-hidden">
@@ -78,26 +86,32 @@ export function CTASection({ tenantSettings = defaultTenantSettings }: Props) {
         </a>
 
         {/* CTA buttons */}
+        {ctaLinks.length > 0 ? (
         <div className="flex flex-col sm:flex-row gap-3 mb-10">
-          <Link
-            href={cta.ctas[0]?.href ?? "/calculateur"}
-            className="flex-1 flex items-center justify-center gap-3 py-4 rounded-xl bg-primary hover:bg-primary-dark text-white font-black text-base shadow-glow-lg transition-all duration-300 hover:scale-105 active:scale-95"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-            {cta.ctas[0]?.label ?? "Calculer mon tarif"}
-          </Link>
-          <Link
-            href={cta.ctas[1]?.href ?? "/devis"}
-            className="flex-1 flex items-center justify-center gap-3 py-4 rounded-xl glass border-white/20 text-white hover:border-primary/40 hover:bg-primary/10 font-semibold text-base transition-all duration-300 active:scale-95"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            {cta.ctas[1]?.label ?? "Devis gratuit"}
-          </Link>
+          {ctaLinks.map((c, idx) => (
+              <Link
+                key={c.id}
+                href={c.href}
+                className={
+                  idx === 0
+                    ? "flex-1 flex items-center justify-center gap-3 py-4 rounded-xl bg-primary hover:bg-primary-dark text-white font-black text-base shadow-glow-lg transition-all duration-300 hover:scale-105 active:scale-95"
+                    : "flex-1 flex items-center justify-center gap-3 py-4 rounded-xl glass border-white/20 text-white hover:border-primary/40 hover:bg-primary/10 font-semibold text-base transition-all duration-300 active:scale-95"
+                }
+              >
+                {idx === 0 ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                )}
+                {c.label}
+              </Link>
+            ))}
         </div>
+        ) : null}
 
         {/* Garanties */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-w-md mx-auto">

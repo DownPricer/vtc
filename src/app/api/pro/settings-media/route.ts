@@ -13,12 +13,19 @@ import {
 
 export const runtime = "nodejs";
 
-const MAX_BYTES = 5 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
 
-const ALLOWED_MIME = new Map<string, string>([
+const ALLOWED_IMAGE_MIME = new Map<string, string>([
   ["image/jpeg", ".jpg"],
   ["image/png", ".png"],
   ["image/webp", ".webp"],
+]);
+
+const ALLOWED_VIDEO_MIME = new Map<string, string>([
+  ["video/mp4", ".mp4"],
+  ["video/webm", ".webm"],
+  ["video/quicktime", ".mov"],
 ]);
 
 async function authOr401(req: NextRequest) {
@@ -63,10 +70,13 @@ export async function POST(req: NextRequest) {
   }
 
   const mime = (file.type || "").toLowerCase().split(";")[0]?.trim() ?? "";
-  const ext = ALLOWED_MIME.get(mime);
+  const ext = ALLOWED_IMAGE_MIME.get(mime) ?? ALLOWED_VIDEO_MIME.get(mime);
   if (!ext) {
     return NextResponse.json(
-      { error: "Type MIME non autorisé. Utilisez JPEG, PNG ou WebP (pas de SVG)." },
+      {
+        error:
+          "Type MIME non autorisé. Images : JPEG, PNG, WebP. Vidéos : MP4, WebM, QuickTime (.mov). Pas de SVG.",
+      },
       { status: 415 }
     );
   }
@@ -75,8 +85,10 @@ export async function POST(req: NextRequest) {
   if (buf.length === 0) {
     return NextResponse.json({ error: "Fichier vide." }, { status: 400 });
   }
-  if (buf.length > MAX_BYTES) {
-    return NextResponse.json({ error: "Fichier trop volumineux (max. 5 Mo)." }, { status: 413 });
+  const maxBytes = ALLOWED_VIDEO_MIME.has(mime) ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
+  if (buf.length > maxBytes) {
+    const maxLabel = ALLOWED_VIDEO_MIME.has(mime) ? "50 Mo" : "5 Mo";
+    return NextResponse.json({ error: `Fichier trop volumineux (max. ${maxLabel}).` }, { status: 413 });
   }
 
   const dir = getSettingsDefaultUploadDir();

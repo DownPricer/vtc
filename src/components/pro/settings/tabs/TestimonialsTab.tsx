@@ -4,7 +4,8 @@ import { SettingsSectionCard } from "../SettingsSectionCard";
 import { EditableField } from "../editable/EditableField";
 import { EditableSwitch } from "../editable/EditableSwitch";
 import { EditableTextarea } from "../editable/EditableTextarea";
-import { EditableNumberField } from "../editable/EditableNumberField";
+import { EditableStarRating } from "../editable/EditableStarRating";
+import { proBtnDangerClass } from "../editable/proFieldStyles";
 import type { TestimonialItem } from "@/config/tenant-settings.types";
 import type { SettingsTabsSharedProps } from "./context";
 
@@ -96,7 +97,7 @@ export function TestimonialsTab({ draft, setDraft, editing }: SettingsTabsShared
                 {editing ? (
                   <button
                     type="button"
-                    className="rounded-xl border border-red-400/40 bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-200"
+                    className={proBtnDangerClass}
                     onClick={() =>
                       setDraft((d) => ({
                         ...d,
@@ -120,18 +121,18 @@ export function TestimonialsTab({ draft, setDraft, editing }: SettingsTabsShared
                 }
                 editing={editing}
               />
-              <EditableNumberField
-                label="Note (/5)"
+              <EditableStarRating
+                label="Note"
                 value={t.rating}
                 onChange={(v) =>
                   setDraft((d) => {
                     const items = [...d.testimonials.items];
-                    items[i] = { ...items[i], rating: Math.min(5, Math.max(0, v)) };
+                    items[i] = { ...items[i], rating: Math.min(5, Math.max(1, v)) };
                     return { ...d, testimonials: { ...d.testimonials, items } };
                   })
                 }
                 editing={editing}
-                min={0}
+                min={1}
                 max={5}
               />
               <EditableTextarea

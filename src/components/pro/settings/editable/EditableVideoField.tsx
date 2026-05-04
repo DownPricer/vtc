@@ -1,21 +1,19 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ReadonlyImagePreview } from "../ReadonlyImagePreview";
 import { HelpTooltip } from "../HelpTooltip";
-import { isSafeSettingsUploadImagePublicPath } from "@/lib/settingsUploadPolicy";
-import { deleteSettingsMediaFile, uploadSettingsMedia } from "@/lib/settingsMediaClient";
+import { isSafeSettingsUploadVideoPublicPath } from "@/lib/settingsUploadPolicy";
+import { deleteSettingsMediaFile, uploadSettingsVideo } from "@/lib/settingsMediaClient";
 import { proBtnSecondaryClass, proInputClass, proLabelClass } from "./proFieldStyles";
 
-const ACCEPT = "image/jpeg,image/png,image/webp";
+const ACCEPT = "video/mp4,video/webm,video/quicktime";
 
-type EditableImageFieldProps = {
+type EditableVideoFieldProps = {
   label: string;
   value: string;
   onChange: (v: string) => void;
   editing: boolean;
   hint?: string;
-  altPreview?: string;
 };
 
 function triggerDownload(src: string) {
@@ -28,7 +26,7 @@ function triggerDownload(src: string) {
   try {
     const a = document.createElement("a");
     a.href = s;
-    a.download = s.split("/").filter(Boolean).pop() || "image";
+    a.download = s.split("/").filter(Boolean).pop() || "video";
     a.rel = "noopener";
     document.body.appendChild(a);
     a.click();
@@ -38,7 +36,14 @@ function triggerDownload(src: string) {
   }
 }
 
-export function EditableImageField({ label, value, onChange, editing, hint, altPreview = "Aperçu" }: EditableImageFieldProps) {
+function videoMimeFromPath(path: string): string {
+  const lower = path.split("?")[0]?.toLowerCase() ?? "";
+  if (lower.endsWith(".webm")) return "video/webm";
+  if (lower.endsWith(".mov")) return "video/quicktime";
+  return "video/mp4";
+}
+
+export function EditableVideoField({ label, value, onChange, editing, hint }: EditableVideoFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,19 +54,10 @@ export function EditableImageField({ label, value, onChange, editing, hint, altP
     const file = list?.[0];
     if (!file) return;
     setError(null);
-    const mime = file.type.toLowerCase().split(";")[0]?.trim() ?? "";
-    if (!["image/jpeg", "image/png", "image/webp"].includes(mime)) {
-      setError("Format non accepté (JPEG, PNG ou WebP uniquement — pas de SVG).");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      setError("Fichier trop volumineux (max. 5 Mo).");
-      return;
-    }
     setBusy(true);
     try {
-      const previous = value.trim() && isSafeSettingsUploadImagePublicPath(value.trim()) ? value.trim() : undefined;
-      const { publicPath } = await uploadSettingsMedia(file, previous);
+      const previous = value.trim() && isSafeSettingsUploadVideoPublicPath(value.trim()) ? value.trim() : undefined;
+      const { publicPath } = await uploadSettingsVideo(file, previous);
       onChange(publicPath);
     } catch (e) {
       setError((e as Error).message || "Échec de l’upload.");
@@ -74,7 +70,7 @@ export function EditableImageField({ label, value, onChange, editing, hint, altP
   const handleRemove = async () => {
     setError(null);
     const v = value.trim();
-    if (v && isSafeSettingsUploadImagePublicPath(v)) {
+    if (v && isSafeSettingsUploadVideoPublicPath(v)) {
       setBusy(true);
       try {
         await deleteSettingsMediaFile(v);
@@ -84,6 +80,9 @@ export function EditableImageField({ label, value, onChange, editing, hint, altP
     }
     onChange("");
   };
+
+  const trimmed = value.trim();
+  const showPreview = Boolean(trimmed);
 
   return (
     <div className="space-y-3 rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel)] p-4">
@@ -105,24 +104,48 @@ export function EditableImageField({ label, value, onChange, editing, hint, altP
         />
       ) : null}
       {editing ? (
-        <input type="text" value={value} onChange={(e) => onChange(e.target.value)} className={`${proInputClass} font-mono text-[13px]`} />
+        <details className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/50 px-3 py-2 text-sm">
+          <summary className="cursor-pointer font-medium text-[var(--pro-text-soft)]">Chemin ou URL (avancé)</summary>
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className={`${proInputClass} mt-2 font-mono text-[13px]`}
+            placeholder="/uploads/settings/default/… ou URL https://"
+          />
+        </details>
       ) : (
         <p className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 font-mono text-[13px] text-[var(--pro-text-soft)]">
-          {value.trim() ? value : "—"}
+          {trimmed ? trimmed : "—"}
         </p>
       )}
-      <ReadonlyImagePreview key={value.trim() || "empty"} src={value} alt={altPreview} caption="Aperçu" />
+      {showPreview ? (
+        <div className="overflow-hidden rounded-xl border border-[var(--pro-border)] bg-black/80">
+          <video
+            key={trimmed}
+            controls
+            className="aspect-video w-full max-h-56 bg-black"
+            preload="metadata"
+          >
+            <source src={trimmed} type={videoMimeFromPath(trimmed)} />
+          </video>
+        </div>
+      ) : (
+        <figure className="rounded-xl border border-dashed border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-3 py-6 text-center">
+          <figcaption className="text-xs text-[var(--pro-text-muted)]">Aucune vidéo — importez un fichier MP4, WebM ou MOV.</figcaption>
+        </figure>
+      )}
       <div className="flex flex-wrap gap-2">
-        <button type="button" className={proBtnSecondaryClass} disabled={!value.trim() || busy} onClick={() => triggerDownload(value)}>
-          Télécharger l’image actuelle
+        <button type="button" className={proBtnSecondaryClass} disabled={!trimmed || busy} onClick={() => triggerDownload(trimmed)}>
+          Télécharger la vidéo actuelle
         </button>
         {editing ? (
           <>
             <button type="button" className={proBtnSecondaryClass} disabled={busy} onClick={openPicker}>
-              {busy ? "Traitement…" : "Remplacer l’image"}
+              {busy ? "Traitement…" : "Importer une vidéo"}
             </button>
             <button type="button" className={proBtnSecondaryClass} disabled={busy} onClick={() => void handleRemove()}>
-              Supprimer l’image
+              Supprimer la vidéo
             </button>
           </>
         ) : null}

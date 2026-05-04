@@ -137,14 +137,16 @@ export function ProSettingsClient({ tenant, mailMeta, siteFeatures }: ProSetting
             <p className="mt-4 text-sm text-[var(--pro-text-muted)]">Chargement des paramètres depuis l’API…</p>
           ) : null}
           {loadState === "error" && loadMessage ? (
-            <div className="mt-4 rounded-xl border border-red-400/35 bg-red-500/15 px-4 py-3 text-sm text-red-100">{loadMessage}</div>
+            <div className="mt-4 rounded-xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-[var(--pro-text)]">
+              {loadMessage}
+            </div>
           ) : null}
           {feedback ? (
             <div
               className={`mt-4 rounded-xl border px-4 py-3 text-sm ${
                 feedback.tone === "success"
-                  ? "border-emerald-400/35 bg-emerald-500/15 text-emerald-50"
-                  : "border-red-400/35 bg-red-500/15 text-red-100"
+                  ? "border-emerald-400/40 bg-emerald-500/10 text-[var(--pro-text)]"
+                  : "border-red-400/40 bg-red-500/10 text-[var(--pro-text)]"
               }`}
               role="status"
             >

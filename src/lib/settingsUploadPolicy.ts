@@ -3,9 +3,13 @@ import path from "path";
 /** Préfixe URL public pour les médias uploadés depuis le dashboard paramètres. */
 export const SETTINGS_UPLOAD_PUBLIC_PREFIX = "/uploads/settings/default";
 
+/** Extensions médias autorisées pour les fichiers déposés depuis le dashboard (hors `/images/...`). */
+export const SETTINGS_UPLOAD_IMAGE_EXT = /\.(jpe?g|png|webp)$/i;
+export const SETTINGS_UPLOAD_VIDEO_EXT = /\.(mp4|webm|mov)$/i;
+
 /**
  * Vérifie qu’une URL publique pointe vers un fichier autorisé sous `public/uploads/settings/default/`.
- * Refuse `..`, segments invalides et extensions hors JPEG/PNG/WebP.
+ * Refuse `..`, segments invalides et extensions hors médias dashboard (images + vidéos).
  */
 export function isSafeSettingsUploadPublicPath(publicPath: string): boolean {
   const trimmed = publicPath.trim();
@@ -17,8 +21,22 @@ export function isSafeSettingsUploadPublicPath(publicPath: string): boolean {
   const [a, b, folder, name] = segments;
   if (a !== "uploads" || b !== "settings" || folder !== "default") return false;
   if (!/^[a-zA-Z0-9._-]+$/.test(name)) return false;
-  if (!/\.(jpe?g|png|webp)$/i.test(name)) return false;
+  if (!SETTINGS_UPLOAD_IMAGE_EXT.test(name) && !SETTINGS_UPLOAD_VIDEO_EXT.test(name)) return false;
   return true;
+}
+
+/** Upload image dashboard uniquement (suppression / remplacement image sans toucher aux vidéos). */
+export function isSafeSettingsUploadImagePublicPath(publicPath: string): boolean {
+  if (!isSafeSettingsUploadPublicPath(publicPath)) return false;
+  const name = (publicPath.trim().split("?")[0] ?? "").split("/").filter(Boolean).pop() ?? "";
+  return SETTINGS_UPLOAD_IMAGE_EXT.test(name);
+}
+
+/** Upload vidéo dashboard uniquement. */
+export function isSafeSettingsUploadVideoPublicPath(publicPath: string): boolean {
+  if (!isSafeSettingsUploadPublicPath(publicPath)) return false;
+  const name = (publicPath.trim().split("?")[0] ?? "").split("/").filter(Boolean).pop() ?? "";
+  return SETTINGS_UPLOAD_VIDEO_EXT.test(name);
 }
 
 /** Chemin absolu sur disque pour un path public sûr, ou `null`. */
