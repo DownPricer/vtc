@@ -550,6 +550,7 @@ export const defaultTenantSettings: TenantSettingsV1 = {
       "Votre demande a bien été reçue. Je vous recontacterai dans les plus brefs délais pour confirmer votre réservation.",
     infoResponseLabel: "Réponse sous",
     infoResponseValue: "2h en général",
+    responseDelayLabel: "2h en général",
     infoPhoneLabel: "Téléphone",
   },
 

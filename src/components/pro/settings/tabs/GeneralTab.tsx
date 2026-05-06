@@ -69,6 +69,37 @@ export function GeneralTab({ draft, setDraft, editing }: SettingsTabsSharedProps
           hint="Une ligne par entrée ; utilisez « Ajouter » pour en créer une nouvelle."
         />
       </SettingsSectionCard>
+
+      <SettingsSectionCard
+        title="Page remerciements"
+        description="Texte affiché après envoi d’une demande depuis le calculateur ou le devis."
+      >
+        <div className="grid gap-3 sm:grid-cols-2">
+          <EditableField
+            label="Libellé (à gauche du délai)"
+            value={draft.thanksPage.infoResponseLabel}
+            onChange={(v) =>
+              setDraft((d) => ({
+                ...d,
+                thanksPage: { ...d.thanksPage, infoResponseLabel: v },
+              }))
+            }
+            editing={editing}
+          />
+          <EditableField
+            label="Délai de réponse affiché"
+            value={draft.thanksPage.responseDelayLabel ?? draft.thanksPage.infoResponseValue}
+            onChange={(v) =>
+              setDraft((d) => ({
+                ...d,
+                thanksPage: { ...d.thanksPage, responseDelayLabel: v },
+              }))
+            }
+            editing={editing}
+            hint="Ex. « 2h en général », « le jour même selon disponibilité »… Visible sur /remerciements."
+          />
+        </div>
+      </SettingsSectionCard>
     </div>
   );
 }

@@ -27,10 +27,15 @@ import {
 } from "@/components/pro/proDisplay";
 import { labelLeadPaymentStatus, leadPaymentStatusBadgeClass } from "@/lib/leadPaymentStatusUi";
 import {
+  clientOnlinePaymentPreferenceBadgeClass,
+  labelClientOnlinePaymentPreference,
+} from "@/lib/clientPaymentPreferenceUi";
+import {
   createDemandePaymentLink,
   mapDemandePaymentLinkErrorToFr,
   mapPaymentLinkEmailErrorCodeToFr,
   ProPaymentsApiError,
+  type DemandePaymentLinkData,
 } from "@/lib/proPaymentsClient";
 import { proApi } from "@/lib/proApi";
 
@@ -55,6 +60,20 @@ type HistoryRow = {
   changedByUser?: { id: string; email: string } | null;
 };
 
+type PaymentSnapshot = {
+  id: string;
+  status: string;
+  mode: string;
+  amount: number;
+  currency: string;
+  stripePaymentLinkUrl: string | null;
+  stripeReceiptUrl: string | null;
+  stripeCheckoutSessionId: string | null;
+  checkoutExpiresAt: string | null;
+  paidAt: string | null;
+  createdAt: string;
+};
+
 type LeadDetail = {
   id: string;
   createdAt: string;
@@ -67,6 +86,8 @@ type LeadDetail = {
   flatPayload: Record<string, unknown>;
   pricingResult?: Record<string, unknown> | null;
   paymentStatus?: string | null;
+  clientWantsOnlinePayment?: boolean | null;
+  payments?: PaymentSnapshot[];
   customerDecisionMailSentAt?: string | null;
   customerDecisionMailLastError?: string | null;
   history: HistoryRow[];
@@ -92,6 +113,44 @@ function formatAmountFromCents(cents: number, currency: string): string {
   return `${eur.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${cur}`;
 }
 
+function paymentStatusExplanation(ps?: string | null): string {
+  switch (ps) {
+    case "NONE":
+      return "Aucun lien de paiement créé pour cette demande.";
+    case "PENDING":
+      return "Préparation du paiement : session en cours de création.";
+    case "LINK_SENT":
+      return "Lien de paiement envoyé — paiement en attente côté client.";
+    case "PAID":
+      return "Paiement validé.";
+    case "FAILED":
+      return "Paiement échoué.";
+    case "EXPIRED":
+      return "Lien expiré.";
+    case "CANCELLED":
+      return "Lien annulé.";
+    case "REFUNDED":
+      return "Remboursé.";
+    default:
+      return "";
+  }
+}
+
+function bannerForPaymentLink(data: DemandePaymentLinkData, wantsEmail: boolean): string {
+  const reused = data.reusedExistingCheckout === true;
+  const base = reused ? "Lien existant récupéré" : "Nouveau lien de paiement créé";
+  if (wantsEmail && data.emailSent === true) {
+    return `${base} — e-mail envoyé au client.`;
+  }
+  if (wantsEmail && data.emailSent === false) {
+    return `${base} — l’e-mail n’a pas pu être envoyé (${mapPaymentLinkEmailErrorCodeToFr(data.emailErrorCode ?? "")}).`;
+  }
+  if (!wantsEmail) {
+    return reused ? `${base}. Partagez le lien manuellement.` : `${base}.`;
+  }
+  return base;
+}
+
 export default function ProDemandeDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [item, setItem] = useState<LeadDetail | null>(null);
@@ -103,6 +162,8 @@ export default function ProDemandeDetailPage() {
   const [paymentBusy, setPaymentBusy] = useState(false);
   const [paymentError, setPaymentError] = useState("");
   const [sendPaymentEmail, setSendPaymentEmail] = useState(true);
+  /** Si le client a choisi « sur place », permet tout de même d’afficher les contrôles de lien. */
+  const [allowPaymentLinkDespitePreference, setAllowPaymentLinkDespitePreference] = useState(false);
   const [lastCheckout, setLastCheckout] = useState<{
     url: string;
     amountCents: number;
@@ -112,6 +173,7 @@ export default function ProDemandeDetailPage() {
     emailDeliveryRequested: boolean;
     emailSent?: boolean;
     emailErrorCode?: string;
+    reusedExistingCheckout?: boolean;
   } | null>(null);
 
   useEffect(() => {
@@ -119,6 +181,11 @@ export default function ProDemandeDetailPage() {
     if (!item?.id) return;
     setSendPaymentEmail(email.includes("@"));
   }, [item?.id, item?.clientEmail]);
+
+  useEffect(() => {
+    setAllowPaymentLinkDespitePreference(false);
+    setLastCheckout(null);
+  }, [item?.id]);
 
   async function load() {
     try {
@@ -179,15 +246,19 @@ export default function ProDemandeDetailPage() {
     }
   }
 
-  async function handleCreatePaymentLink() {
+  async function handlePaymentLinkAction(forceNew: boolean) {
     if (!id || !item) return;
+    const blockedByPreference =
+      item.clientWantsOnlinePayment === false && !allowPaymentLinkDespitePreference && !forceNew;
+    if (blockedByPreference) return;
     setPaymentError("");
     setPaymentBusy(true);
     try {
-      const wantsEmail = Boolean(item && sendPaymentEmail && hasValidClientEmail(item));
+      const wantsEmail = Boolean(sendPaymentEmail && hasValidClientEmail(item));
       const data = await createDemandePaymentLink(String(id), {
         mode: paymentModeChoice,
         sendEmail: wantsEmail,
+        forceNewCheckoutSession: forceNew,
       });
       setLastCheckout({
         url: data.checkoutUrl,
@@ -197,8 +268,9 @@ export default function ProDemandeDetailPage() {
         emailDeliveryRequested: wantsEmail,
         emailSent: data.emailSent,
         emailErrorCode: data.emailErrorCode,
+        reusedExistingCheckout: data.reusedExistingCheckout,
       });
-      setBanner("Lien créé — copiez-le ou ouvrez-le pour le client.");
+      setBanner(bannerForPaymentLink(data, wantsEmail));
       await load();
     } catch (e) {
       if (e instanceof ProPaymentsApiError) {
@@ -209,6 +281,18 @@ export default function ProDemandeDetailPage() {
     } finally {
       setPaymentBusy(false);
     }
+  }
+
+  async function handleRecreatePaymentLink() {
+    if (
+      !confirm(
+        "Créer une nouvelle session de paiement Stripe ? Le client devra utiliser le nouveau lien ; les anciennes sessions ouvertes peuvent être invalidées."
+      )
+    ) {
+      return;
+    }
+    setAllowPaymentLinkDespitePreference(true);
+    await handlePaymentLinkAction(true);
   }
 
   async function copyCheckoutUrl(url: string) {
@@ -224,6 +308,16 @@ export default function ProDemandeDetailPage() {
   const extrasClient = useMemo(() => clientRowsFromFlat(flatPayload), [flatPayload]);
   const prestation = useMemo(() => prestationRowsFromFlat(flatPayload), [flatPayload]);
   const paiementFlat = useMemo(() => paiementRowsFromFlat(flatPayload), [flatPayload]);
+
+  const paidPayment = useMemo(() => item?.payments?.find((p) => p.status === "PAID"), [item?.payments]);
+
+  const pendingLinkPayment = useMemo(
+    () => item?.payments?.find((p) => p.status === "LINK_SENT" || p.status === "PENDING"),
+    [item?.payments]
+  );
+
+  const checkoutUrlFromServer = pendingLinkPayment?.stripePaymentLinkUrl?.trim() ?? "";
+  const checkoutUrlToShow = lastCheckout?.url || checkoutUrlFromServer || "";
 
   const pricing = useMemo(() => {
     if (!item?.pricingResult) return [];
@@ -305,10 +399,24 @@ export default function ProDemandeDetailPage() {
             <ProPanel>
               <ProSectionHeader
                 title="Paiement en ligne"
-                description="Créez un lien Stripe Checkout pour permettre au client de régler cette demande en ligne. Vous pouvez envoyer le lien automatiquement par e-mail si une adresse client est disponible."
+                description="Stripe Checkout — le client paie sur une page sécurisée. La confirmation définitive est traitée par le webhook Stripe ; cet écran reflète l’état en base."
               />
+
+              <div className="mt-5 flex flex-wrap items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Préférence client</span>
+                <span
+                  className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${clientOnlinePaymentPreferenceBadgeClass(item.clientWantsOnlinePayment)}`}
+                >
+                  {labelClientOnlinePaymentPreference(item.clientWantsOnlinePayment)}
+                </span>
+                {item.clientWantsOnlinePayment === true ? (
+                  <span className="text-xs text-[var(--pro-text-soft)]">Le client a demandé un lien s&apos;il souhaite payer en ligne après accord.</span>
+                ) : null}
+              </div>
+
               <div className="mt-5 space-y-4 text-sm text-[var(--pro-text-muted)]">
-                <p>Le paiement s’effectue sur une page sécurisée Stripe.</p>
+                <p>Les paiements en ligne transitent par Stripe ; aucune carte n&apos;est saisie sur votre site.</p>
+
                 <div className="rounded-[22px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-accent)]">Statut paiement (demande)</p>
                   <p className="mt-3 inline-flex">
@@ -318,101 +426,184 @@ export default function ProDemandeDetailPage() {
                       {labelLeadPaymentStatus(item.paymentStatus)}
                     </span>
                   </p>
-                  {item.paymentStatus === "LINK_SENT" && !lastCheckout ? (
-                    <p className="mt-2 text-xs text-[var(--pro-text-soft)]">
-                      Un lien actif peut déjà exister. Cliquez sur « Créer le lien de paiement » pour récupérer l’URL si la session est encore valide
-                      (l’API réutilise le lien ouvert).
-                    </p>
+                  {paymentStatusExplanation(item.paymentStatus) ? (
+                    <p className="mt-3 text-xs text-[var(--pro-text-soft)]">{paymentStatusExplanation(item.paymentStatus)}</p>
                   ) : null}
                 </div>
-                {paymentError ? (
-                  <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{paymentError}</p>
-                ) : null}
-                <div className="rounded-[22px] border border-[var(--pro-border)] bg-[var(--pro-panel)] px-4 py-4">
-                  <label className={`flex cursor-pointer items-start gap-3 ${!hasValidClientEmail(item) ? "cursor-not-allowed opacity-80" : ""}`}>
-                    <input
-                      type="checkbox"
-                      className="mt-1 h-4 w-4 shrink-0 rounded border-[var(--pro-border)] disabled:cursor-not-allowed"
-                      checked={sendPaymentEmail && hasValidClientEmail(item)}
-                      disabled={!hasValidClientEmail(item)}
-                      onChange={(e) => setSendPaymentEmail(e.target.checked)}
-                    />
-                    <span>
-                      <span className="font-medium text-[var(--pro-text)]">Envoyer automatiquement le lien par e-mail au client</span>
-                      {!hasValidClientEmail(item) ? (
-                        <span className="mt-1 block text-xs text-[var(--pro-text-soft)]">Aucun e-mail client disponible.</span>
-                      ) : null}
-                    </span>
-                  </label>
-                </div>
 
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-                  <div className="flex-1">
-                    <label htmlFor="payment-mode-select" className="block text-xs font-semibold text-[var(--pro-text-soft)]">
-                      Mode de paiement Stripe
-                    </label>
-                    <select
-                      id="payment-mode-select"
-                      value={paymentModeChoice}
-                      onChange={(e) => setPaymentModeChoice(e.target.value as "full" | "deposit")}
-                      className="mt-1 w-full rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel)] px-4 py-3 text-sm text-[var(--pro-text)] focus:border-[var(--pro-accent)] focus:outline-none"
-                    >
-                      <option value="full">Paiement total</option>
-                      <option value="deposit">Acompte</option>
-                    </select>
-                  </div>
-                  <button
-                    type="button"
-                    disabled={paymentBusy || busy}
-                    onClick={() => void handleCreatePaymentLink()}
-                    className={`rounded-xl px-5 py-3 text-sm font-semibold transition disabled:opacity-50 ${actionButtonClass("primary")}`}
-                  >
-                    {paymentBusy ? "Création…" : "Créer le lien de paiement"}
-                  </button>
-                </div>
-                {lastCheckout ? (
-                  <div className="rounded-[22px] border border-emerald-300/30 bg-[var(--pro-panel-muted)] px-4 py-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Lien Checkout</p>
-                    <p className="mt-2 text-sm font-medium text-emerald-900">Lien créé</p>
-                    {lastCheckout.emailDeliveryRequested && lastCheckout.emailSent === true ? (
-                      <p className="mt-2 text-sm text-emerald-800">E-mail envoyé au client.</p>
-                    ) : null}
-                    {lastCheckout.emailDeliveryRequested && lastCheckout.emailSent === false ? (
-                      <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
-                        <p className="font-medium">Lien créé, mais e-mail non envoyé</p>
-                        <p className="mt-1 text-amber-900">
-                          {mapPaymentLinkEmailErrorCodeToFr(lastCheckout.emailErrorCode ?? "")}
-                        </p>
-                      </div>
-                    ) : null}
-                    <p className="mt-3 text-sm text-[var(--pro-text)]">
-                      Montant :{" "}
-                      <span className="font-semibold text-[var(--pro-accent)]">
-                        {formatAmountFromCents(lastCheckout.amountCents, lastCheckout.currency)}
-                      </span>{" "}
-                      · Mode :{" "}
-                      <span className="font-medium">{lastCheckout.mode === "full" ? "Paiement total" : "Acompte"}</span>
+                {item.paymentStatus === "PAID" && paidPayment ? (
+                  <div className="rounded-[22px] border border-emerald-200 bg-emerald-50 px-4 py-4 text-emerald-950">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">Paiement validé</p>
+                    <p className="mt-2 text-sm">
+                      Montant encaissé :{" "}
+                      <span className="font-semibold">{formatAmountFromCents(paidPayment.amount, paidPayment.currency)}</span>
                     </p>
-                    <p className="mt-2 break-all font-mono text-xs text-[var(--pro-text-soft)]">{lastCheckout.url}</p>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => void copyCheckoutUrl(lastCheckout.url)}
-                        className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition ${actionButtonClass("neutral")}`}
-                      >
-                        Copier le lien
-                      </button>
+                    {paidPayment.stripeReceiptUrl?.trim() ? (
                       <a
-                        href={lastCheckout.url}
+                        href={paidPayment.stripeReceiptUrl.trim()}
                         target="_blank"
                         rel="noreferrer"
-                        className={`inline-flex rounded-xl px-4 py-2.5 text-sm font-semibold transition ${actionButtonClass("primary")}`}
+                        className={`mt-4 inline-flex rounded-xl px-4 py-2.5 text-sm font-semibold ${actionButtonClass("primary")}`}
                       >
-                        Ouvrir le lien
+                        Voir le reçu Stripe
                       </a>
-                    </div>
+                    ) : (
+                      <p className="mt-2 text-xs text-emerald-800">Le reçu Stripe sera disponible dès qu&apos;il est émis par Stripe.</p>
+                    )}
                   </div>
-                ) : null}
+                ) : (
+                  <>
+                    {item.clientWantsOnlinePayment === false ? (
+                      <div className="rounded-[22px] border border-amber-200 bg-amber-50 px-4 py-4 text-amber-950">
+                        <p className="font-semibold">Paiement en ligne non demandé par le client</p>
+                        <p className="mt-2 text-sm text-amber-900">
+                          La création de lien est masquée par défaut. Cochez l&apos;option ci-dessous uniquement si vous l&apos;avez convenu avec le client.
+                        </p>
+                        <label className="mt-4 flex cursor-pointer items-start gap-3">
+                          <input
+                            type="checkbox"
+                            className="mt-1 h-4 w-4 shrink-0 rounded border-[var(--pro-border)]"
+                            checked={allowPaymentLinkDespitePreference}
+                            onChange={(e) => setAllowPaymentLinkDespitePreference(e.target.checked)}
+                          />
+                          <span className="text-sm font-medium">Créer quand même un lien de paiement en ligne</span>
+                        </label>
+                      </div>
+                    ) : null}
+
+                    {item.clientWantsOnlinePayment === false && !allowPaymentLinkDespitePreference ? null : (
+                      <>
+                        {paymentError ? (
+                          <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{paymentError}</p>
+                        ) : null}
+
+                        <div className="rounded-[22px] border border-[var(--pro-border)] bg-[var(--pro-panel)] px-4 py-4">
+                          <label className={`flex cursor-pointer items-start gap-3 ${!hasValidClientEmail(item) ? "cursor-not-allowed opacity-80" : ""}`}>
+                            <input
+                              type="checkbox"
+                              className="mt-1 h-4 w-4 shrink-0 rounded border-[var(--pro-border)] disabled:cursor-not-allowed"
+                              checked={sendPaymentEmail && hasValidClientEmail(item)}
+                              disabled={!hasValidClientEmail(item)}
+                              onChange={(e) => setSendPaymentEmail(e.target.checked)}
+                            />
+                            <span>
+                              <span className="font-medium text-[var(--pro-text)]">Envoyer automatiquement le lien par e-mail au client</span>
+                              {!hasValidClientEmail(item) ? (
+                                <span className="mt-1 block text-xs text-[var(--pro-text-soft)]">Aucun e-mail client disponible.</span>
+                              ) : null}
+                            </span>
+                          </label>
+                        </div>
+
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                          <div className="flex-1">
+                            <label htmlFor="payment-mode-select" className="block text-xs font-semibold text-[var(--pro-text-soft)]">
+                              Mode de paiement Stripe
+                            </label>
+                            <select
+                              id="payment-mode-select"
+                              value={paymentModeChoice}
+                              onChange={(e) => setPaymentModeChoice(e.target.value as "full" | "deposit")}
+                              className="mt-1 w-full rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel)] px-4 py-3 text-sm text-[var(--pro-text)] focus:border-[var(--pro-accent)] focus:outline-none"
+                            >
+                              <option value="full">Paiement total</option>
+                              <option value="deposit">Acompte</option>
+                            </select>
+                          </div>
+                          <button
+                            type="button"
+                            disabled={
+                              paymentBusy ||
+                              busy ||
+                              (item.clientWantsOnlinePayment === false && !allowPaymentLinkDespitePreference)
+                            }
+                            onClick={() => void handlePaymentLinkAction(false)}
+                            className={`rounded-xl px-5 py-3 text-sm font-semibold transition disabled:opacity-50 ${actionButtonClass("primary")}`}
+                          >
+                            {paymentBusy
+                              ? checkoutUrlToShow
+                                ? "Récupération…"
+                                : "Création…"
+                              : checkoutUrlToShow
+                                ? "Récupérer / ouvrir le lien"
+                                : "Créer le lien de paiement"}
+                          </button>
+                        </div>
+
+                        {checkoutUrlToShow ? (
+                          <div className="rounded-[22px] border border-emerald-300/30 bg-[var(--pro-panel-muted)] px-4 py-4">
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                              {item.paymentStatus === "LINK_SENT"
+                                ? "Lien envoyé / paiement en attente"
+                                : lastCheckout?.reusedExistingCheckout === false
+                                  ? "Lien Checkout"
+                                  : "Lien Checkout"}
+                            </p>
+                            <p className="mt-2 text-sm font-medium text-emerald-900">
+                              {lastCheckout?.reusedExistingCheckout === true
+                                ? "Lien existant récupéré — aucune nouvelle session créée."
+                                : lastCheckout?.reusedExistingCheckout === false
+                                  ? "Nouvelle session Stripe générée."
+                                  : "Session Stripe disponible pour cette demande."}
+                            </p>
+
+                            {lastCheckout?.emailDeliveryRequested && lastCheckout.emailSent === true ? (
+                              <p className="mt-2 text-sm text-emerald-800">E-mail envoyé au client.</p>
+                            ) : null}
+                            {lastCheckout?.emailDeliveryRequested && lastCheckout.emailSent === false ? (
+                              <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+                                <p className="font-medium">Lien disponible, mais e-mail non envoyé</p>
+                                <p className="mt-1 text-amber-900">{mapPaymentLinkEmailErrorCodeToFr(lastCheckout.emailErrorCode ?? "")}</p>
+                              </div>
+                            ) : null}
+
+                            <p className="mt-3 text-sm text-[var(--pro-text)]">
+                              Montant :{" "}
+                              <span className="font-semibold text-[var(--pro-accent)]">
+                                {formatAmountFromCents(
+                                  lastCheckout?.amountCents ?? pendingLinkPayment?.amount ?? 0,
+                                  lastCheckout?.currency ?? pendingLinkPayment?.currency ?? "eur"
+                                )}
+                              </span>{" "}
+                              · Mode :{" "}
+                              <span className="font-medium">
+                                {lastCheckout?.mode === "deposit" || pendingLinkPayment?.mode === "DEPOSIT"
+                                  ? "Acompte"
+                                  : "Paiement total"}
+                              </span>
+                            </p>
+                            <p className="mt-2 break-all font-mono text-xs text-[var(--pro-text-soft)]">{checkoutUrlToShow}</p>
+                            <div className="mt-4 flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                onClick={() => void copyCheckoutUrl(checkoutUrlToShow)}
+                                className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition ${actionButtonClass("neutral")}`}
+                              >
+                                Copier le lien
+                              </button>
+                              <a
+                                href={checkoutUrlToShow}
+                                target="_blank"
+                                rel="noreferrer"
+                                className={`inline-flex rounded-xl px-4 py-2.5 text-sm font-semibold transition ${actionButtonClass("primary")}`}
+                              >
+                                Ouvrir le lien
+                              </a>
+                              <button
+                                type="button"
+                                disabled={paymentBusy || busy}
+                                onClick={() => void handleRecreatePaymentLink()}
+                                className={`rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel)] px-4 py-2.5 text-sm font-semibold text-[var(--pro-text-soft)] transition hover:bg-[var(--pro-accent-soft)] disabled:opacity-50`}
+                              >
+                                Recréer un lien
+                              </button>
+                            </div>
+                          </div>
+                        ) : null}
+                      </>
+                    )}
+                  </>
+                )}
               </div>
             </ProPanel>
 

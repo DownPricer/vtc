@@ -414,6 +414,8 @@ export type TenantSettingsV1 = {
     body: string;
     infoResponseLabel: string;
     infoResponseValue: string;
+    /** Texte principal pour le délai de réponse affiché sur /remerciements (prioritaire si renseigné). */
+    responseDelayLabel?: string;
     infoPhoneLabel: string;
   };
 
@@ -450,5 +452,10 @@ export type TenantSettingsV1 = {
 
   /** Référentiel d’affichage du calculateur (limites, listes) — ne pilote pas le moteur pricing. */
   calculatorDisplay: TenantCalculatorDisplayV1;
+
+  /**
+   * Paiement en ligne activé pour ce tenant (injecté par `meta` sur GET public tenant-settings, hors JSON persisté).
+   */
+  paymentOnlineEnabled?: boolean;
 };
 

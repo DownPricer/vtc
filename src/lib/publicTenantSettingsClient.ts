@@ -20,7 +20,14 @@ function getPublicTenantSettingsFetchConfig(): { baseUrl: string; tenantId: stri
 }
 
 export type FetchPublicTenantSettingsResult =
-  | { ok: true; status: number; settings: unknown | null; meta?: { persisted?: boolean } }
+  | {
+      ok: true;
+      status: number;
+      settings: unknown | null;
+      meta?: { persisted?: boolean; paymentOnlineEnabled?: boolean };
+      /** Provient de `meta.paymentOnlineEnabled` sur la réponse API publique. */
+      paymentOnlineEnabled?: boolean;
+    }
   | { ok: false; status: number };
 
 async function readJsonBody(res: Response): Promise<Record<string, unknown>> {
@@ -62,13 +69,15 @@ export async function fetchPublicTenantSettings(): Promise<FetchPublicTenantSett
     }
 
     const data = json.data as { settings?: unknown } | undefined;
-    const meta = json.meta as { persisted?: boolean } | undefined;
+    const meta = json.meta as { persisted?: boolean; paymentOnlineEnabled?: boolean } | undefined;
 
     return {
       ok: true,
       status: res.status,
       settings: data?.settings ?? null,
       meta,
+      paymentOnlineEnabled:
+        typeof meta?.paymentOnlineEnabled === "boolean" ? meta.paymentOnlineEnabled : undefined,
     };
   } catch {
     return { ok: false, status: 0 };
@@ -84,7 +93,11 @@ export const getPublicTenantSettings = cache(async (): Promise<TenantSettingsV1>
     if (!result.ok) {
       return mergeTenantSettings(defaultTenantSettings, null);
     }
-    return mergeTenantSettings(defaultTenantSettings, result.settings);
+    const merged = mergeTenantSettings(defaultTenantSettings, result.settings);
+    if (typeof result.paymentOnlineEnabled === "boolean") {
+      return { ...merged, paymentOnlineEnabled: result.paymentOnlineEnabled };
+    }
+    return merged;
   } catch {
     return mergeTenantSettings(defaultTenantSettings, null);
   }

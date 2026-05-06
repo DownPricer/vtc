@@ -84,7 +84,7 @@ export default async function CalculateurPage() {
       </div>
 
       <div className="max-w-3xl mx-auto px-5 py-10 pb-20">
-        <CalculatorForm vtcBaseAddress={vtcBaseAddress} />
+        <CalculatorForm vtcBaseAddress={vtcBaseAddress} paymentOnlineEnabled={tenant.paymentOnlineEnabled ?? false} />
       </div>
     </main>
   );

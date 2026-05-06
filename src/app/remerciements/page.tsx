@@ -17,6 +17,10 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RemerciementsPage() {
   const t = await getPublicTenantSettings();
   const thanks = t.thanksPage;
+  const responseDelayDisplay =
+    thanks.responseDelayLabel?.trim() || thanks.infoResponseValue?.trim() || "";
+  const responseDelayCaption =
+    thanks.responseDelayLabel?.trim() ? thanks.infoResponseLabel || "Délai de réponse" : thanks.infoResponseLabel;
 
   return (
     <div className="min-h-[80vh] bg-dark flex items-center justify-center px-5">
@@ -46,7 +50,7 @@ export default async function RemerciementsPage() {
           style={{ background: "linear-gradient(145deg, #1a1a1a, #111)" }}
         >
           {[
-            { label: thanks.infoResponseLabel, value: thanks.infoResponseValue },
+            { label: responseDelayCaption, value: responseDelayDisplay },
             { label: thanks.infoPhoneLabel, value: t.contact.phoneDisplay },
           ].map((item) => (
             <div key={item.label} className="flex items-center justify-between">

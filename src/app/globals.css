@@ -236,6 +236,13 @@ a {
     0 0 12px rgba(var(--primary-rgb), 0.1) !important;
 }
 
+/* Options natives des <select> (Windows / contrôles système) — contraste lisible */
+select.dashboard-input option,
+.dashboard-input option {
+  background-color: #141416;
+  color: #e5e7eb;
+}
+
 .gauge-step {
   background: linear-gradient(135deg, #1a1a1c, #0c0c0e);
   border: 2px solid rgba(var(--primary-rgb), 0.4);
@@ -372,6 +379,12 @@ a {
     inset 0 2px 6px rgba(0, 0, 0, 0.6),
     0 0 0 2px rgba(var(--secondary-rgb), 0.1),
     0 0 12px rgba(var(--secondary-rgb), 0.06) !important;
+}
+
+[data-mode="devis"] select.dashboard-input option,
+[data-mode="devis"] .dashboard-input option {
+  background-color: #10121a;
+  color: #e5e7eb;
 }
 
 [data-mode="devis"] .chrome-btn {

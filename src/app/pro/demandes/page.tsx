@@ -16,6 +16,10 @@ import {
   mapApiErrorToFr,
   statusBadgeClass,
 } from "@/components/pro/proDisplay";
+import {
+  clientOnlinePaymentPreferenceBadgeClass,
+  labelClientOnlinePaymentPreference,
+} from "@/lib/clientPaymentPreferenceUi";
 import { labelLeadPaymentStatus, leadPaymentStatusBadgeClass } from "@/lib/leadPaymentStatusUi";
 import { proApi } from "@/lib/proApi";
 
@@ -31,6 +35,7 @@ type LeadRow = {
   flatPayload?: Record<string, unknown>;
   pricingResult?: Record<string, unknown> | null;
   paymentStatus?: string | null;
+  clientWantsOnlinePayment?: boolean | null;
 };
 
 const STATUS_FILTERS = [
@@ -133,6 +138,7 @@ export default function ProDemandesPage() {
                   <th className="px-4 py-4 font-semibold">Type</th>
                   <th className="px-4 py-4 font-semibold">Client</th>
                   <th className="px-4 py-4 font-semibold">Statut</th>
+                  <th className="px-4 py-4 font-semibold">Préf.</th>
                   <th className="px-4 py-4 font-semibold">Paiement</th>
                   <th className="px-4 py-4 font-semibold">Tarif</th>
                   <th className="px-4 py-4 font-semibold">Action</th>
@@ -161,6 +167,13 @@ export default function ProDemandesPage() {
                       <td className="px-4 py-4 align-top">
                         <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${statusBadgeClass(row.status)}`}>
                           {labelStatus(row.status)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 align-top">
+                        <span
+                          className={`inline-flex max-w-[11rem] rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-tight ${clientOnlinePaymentPreferenceBadgeClass(row.clientWantsOnlinePayment)}`}
+                        >
+                          {labelClientOnlinePaymentPreference(row.clientWantsOnlinePayment)}
                         </span>
                       </td>
                       <td className="px-4 py-4 align-top">
@@ -205,8 +218,13 @@ export default function ProDemandesPage() {
                     {labelStatus(row.status)}
                   </span>
                 </div>
-                <p className="mt-2 text-xs font-medium text-[var(--pro-text-soft)]">
-                  Paiement :{" "}
+                <p className="mt-2 flex flex-wrap items-center gap-2 text-xs font-medium text-[var(--pro-text-soft)]">
+                  <span
+                    className={`inline-flex rounded-full border px-2 py-0.5 font-semibold ${clientOnlinePaymentPreferenceBadgeClass(row.clientWantsOnlinePayment)}`}
+                  >
+                    {labelClientOnlinePaymentPreference(row.clientWantsOnlinePayment)}
+                  </span>
+                  <span>Paiement :</span>
                   <span className={`inline-flex rounded-full border px-2 py-0.5 font-semibold ${leadPaymentStatusBadgeClass(row.paymentStatus)}`}>
                     {payLabel}
                   </span>

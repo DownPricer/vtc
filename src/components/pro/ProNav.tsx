@@ -11,7 +11,8 @@ const links = [
   { href: "/pro/dashboard", label: "Tableau de bord" },
   { href: "/pro/demandes", label: "Demandes" },
   { href: "/pro/calendrier", label: "Calendrier" },
-  { href: "/pro/paiements", label: "Paiements" },
+  { href: "/pro/transactions", label: "Transactions" },
+  { href: "/pro/paiements", label: "Paiements Stripe" },
   { href: "/pro/parametres", label: "Paramètres" },
 ];
 

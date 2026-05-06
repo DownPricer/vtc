@@ -6,22 +6,22 @@
 export function labelLeadPaymentStatus(raw?: string | null): string {
   switch (raw) {
     case "LINK_SENT":
-      return "Lien envoyé";
+      return "Lien envoyé — attente paiement";
     case "PAID":
-      return "Payé";
+      return "Paiement validé";
     case "FAILED":
-      return "Échec";
+      return "Paiement échoué";
     case "PENDING":
-      return "Préparation";
+      return "Préparation du paiement";
     case "EXPIRED":
-      return "Expiré";
+      return "Lien expiré";
     case "REFUNDED":
       return "Remboursé";
     case "CANCELLED":
-      return "Annulé";
+      return "Lien annulé";
     case "NONE":
     default:
-      return "Non demandé";
+      return "Aucun paiement en ligne";
   }
 }
 

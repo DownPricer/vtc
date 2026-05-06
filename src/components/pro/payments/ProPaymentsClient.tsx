@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ProGuard } from "@/components/pro/ProGuard";
 import { ProNav } from "@/components/pro/ProNav";
@@ -256,8 +257,16 @@ export function ProPaymentsClient() {
         <ProPanel>
           <ProSectionHeader
             eyebrow="Encaissements"
-            title="Paiements"
+            title="Paiements Stripe"
             description="Connectez votre compte Stripe et configurez le paiement en ligne pour vos clients."
+            action={
+              <Link
+                href="/pro/transactions"
+                className="inline-flex rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-2 text-sm font-semibold text-[var(--pro-accent)] hover:bg-[var(--pro-accent-soft)]"
+              >
+                Historique des transactions
+              </Link>
+            }
           />
         </ProPanel>
 

@@ -30,6 +30,8 @@ export interface CalculatorFormProps {
   mode?: "reservation" | "devis";
   /** Adresse complète base / dépôt chauffeur — envoyée à l’API centrale (`vtcBaseAddress`). */
   vtcBaseAddress: string;
+  /** Si le tenant autorise le paiement en ligne — sinon la section choix client est masquée. */
+  paymentOnlineEnabled?: boolean;
 }
 
 /* ─── Composants UI ─── */
@@ -215,7 +217,7 @@ const SERVICE_OPTIONS = [
 const BAGAGES_OPTIONS = Array.from({ length: 9 }, (_, i) => ({ label: i === 0 ? "Aucun" : `${i} bagage${i > 1 ? "s" : ""}`, value: String(i) }));
 
 /* ─── Composant principal ─── */
-export function CalculatorForm({ mode = "reservation", vtcBaseAddress }: CalculatorFormProps) {
+export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOnlineEnabled = false }: CalculatorFormProps) {
   const isDevis = mode === "devis";
 
   const [typeService, setTypeService] = useState<TypeService>("Transfert Aéroport");
@@ -230,6 +232,8 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress }: Calcula
   const [client, setClient] = useState({ nom: "", prenom: "", telephone: "", email: "", nomSociete: "", adresseSociete: "" });
   const [commentaires, setCommentaires] = useState("");
   const [optionsExtras, setOptionsExtras] = useState<string[]>([]);
+  /** Préférence paiement en ligne (formulaires publics PR8). Défaut : sur place. */
+  const [clientWantsOnlinePayment, setClientWantsOnlinePayment] = useState(false);
 
   /* ── Spécificités Transfert Aéroport ── */
   const [departDepuisAeroport, setDepartDepuisAeroport] = useState(false);
@@ -369,6 +373,10 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress }: Calcula
       (payload.madEvenementiel as Record<string, unknown>) = e;
     }
 
+    if (paymentOnlineEnabled) {
+      payload.clientWantsOnlinePayment = clientWantsOnlinePayment;
+    }
+
     return payload;
   }, [
     vtcBaseAddress,
@@ -385,6 +393,8 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress }: Calcula
     aeroportDepartCode,
     taRetourAdresseDifferente,
     tcRetourAdresseDifferente,
+    paymentOnlineEnabled,
+    clientWantsOnlinePayment,
   ]);
 
   const fetchTarif = useCallback(async () => {
@@ -932,6 +942,41 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress }: Calcula
             className="dashboard-input w-full px-4 py-3 rounded-lg text-white placeholder-gray-600 focus:outline-none transition-all text-sm resize-none"
             placeholder="Informations complémentaires, accès difficile, bébé à bord..." />
         </div>
+
+        {paymentOnlineEnabled ? (
+          <div className="mt-5 pt-5 border-t-subtle">
+            <p className="text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-[0.12em]">Mode de paiement souhaité</p>
+            <div className="mb-3">
+              <Annotation type="info">
+                Le paiement en ligne n’est demandé qu’après validation de votre course par le chauffeur.
+              </Annotation>
+            </div>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => setClientWantsOnlinePayment(false)}
+                className={`service-switch text-left px-4 py-3 rounded-xl transition-all ${
+                  !clientWantsOnlinePayment ? "active" : ""
+                }`}
+              >
+                <p className={`text-sm font-semibold leading-snug ${!clientWantsOnlinePayment ? "text-primary" : "text-gray-400"}`}>
+                  Je paierai sur place / directement au chauffeur
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setClientWantsOnlinePayment(true)}
+                className={`service-switch text-left px-4 py-3 rounded-xl transition-all ${
+                  clientWantsOnlinePayment ? "active" : ""
+                }`}
+              >
+                <p className={`text-sm font-semibold leading-snug ${clientWantsOnlinePayment ? "text-primary" : "text-gray-400"}`}>
+                  Je souhaite recevoir un lien de paiement en ligne si ma demande est acceptée
+                </p>
+              </button>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {/* ── BOUTON ENVOI ── */}

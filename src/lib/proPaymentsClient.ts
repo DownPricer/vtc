@@ -118,6 +118,7 @@ export type DemandePaymentLinkPayload = {
   mode: "full" | "deposit";
   sendEmail?: boolean;
   message?: string;
+  forceNewCheckoutSession?: boolean;
 };
 
 export type DemandePaymentLinkData = {
@@ -127,6 +128,7 @@ export type DemandePaymentLinkData = {
   amount: number;
   currency: string;
   applicationFeeAmount: number;
+  reusedExistingCheckout?: boolean;
   emailSent?: boolean;
   emailErrorCode?: string;
 };
@@ -144,9 +146,50 @@ export async function createDemandePaymentLink(
       mode: payload.mode,
       sendEmail: payload.sendEmail ?? false,
       ...(payload.message ? { message: payload.message } : {}),
+      ...(payload.forceNewCheckoutSession ? { forceNewCheckoutSession: true } : {}),
     }),
   });
   return parseProData<DemandePaymentLinkData>(res);
+}
+
+export type ProPaymentsListItem = {
+  id: string;
+  createdAt: string;
+  status: string;
+  mode: string;
+  amount: number;
+  currency: string;
+  stripeReceiptUrl: string | null;
+  leadRequestId: string;
+  clientName: string;
+};
+
+export type ProPaymentsListData = {
+  items: ProPaymentsListItem[];
+  total: number;
+  summary: {
+    paidTotalCents: number;
+    paidCount: number;
+    pendingCheckoutCount: number;
+  };
+};
+
+export async function listProPayments(params: {
+  status?: string;
+  limit?: number;
+  offset?: number;
+  from?: string;
+  to?: string;
+}): Promise<ProPaymentsListData> {
+  const q = new URLSearchParams();
+  if (params.status) q.set("status", params.status);
+  if (params.limit != null) q.set("limit", String(params.limit));
+  if (params.offset != null) q.set("offset", String(params.offset));
+  if (params.from) q.set("from", params.from);
+  if (params.to) q.set("to", params.to);
+  const qs = q.toString();
+  const res = await proAuthenticatedFetch(`/pro/payments${qs ? `?${qs}` : ""}`, { method: "GET" });
+  return parseProData<ProPaymentsListData>(res);
 }
 
 export function mapDemandePaymentLinkErrorToFr(code: string, apiMessage?: string): string {
