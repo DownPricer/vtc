@@ -25,6 +25,13 @@ import {
   translateStatus,
   type PatchStatusResponseMeta,
 } from "@/components/pro/proDisplay";
+import { labelLeadPaymentStatus, leadPaymentStatusBadgeClass } from "@/lib/leadPaymentStatusUi";
+import {
+  createDemandePaymentLink,
+  mapDemandePaymentLinkErrorToFr,
+  mapPaymentLinkEmailErrorCodeToFr,
+  ProPaymentsApiError,
+} from "@/lib/proPaymentsClient";
 import { proApi } from "@/lib/proApi";
 
 type LeadStatus =
@@ -59,6 +66,7 @@ type LeadDetail = {
   operatorNote?: string | null;
   flatPayload: Record<string, unknown>;
   pricingResult?: Record<string, unknown> | null;
+  paymentStatus?: string | null;
   customerDecisionMailSentAt?: string | null;
   customerDecisionMailLastError?: string | null;
   history: HistoryRow[];
@@ -73,6 +81,17 @@ function displayRows(values: Array<{ label: string; value: unknown }>) {
   return values.map((entry) => formatValue(entry.label, entry.value)).filter(Boolean) as { label: string; value: string }[];
 }
 
+function hasValidClientEmail(item: LeadDetail | null): boolean {
+  const e = item?.clientEmail?.trim() ?? "";
+  return e.includes("@");
+}
+
+function formatAmountFromCents(cents: number, currency: string): string {
+  const eur = cents / 100;
+  const cur = currency.toLowerCase() === "eur" ? "EUR" : currency.toUpperCase();
+  return `${eur.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${cur}`;
+}
+
 export default function ProDemandeDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [item, setItem] = useState<LeadDetail | null>(null);
@@ -80,6 +99,26 @@ export default function ProDemandeDetailPage() {
   const [error, setError] = useState("");
   const [banner, setBanner] = useState("");
   const [busy, setBusy] = useState(false);
+  const [paymentModeChoice, setPaymentModeChoice] = useState<"full" | "deposit">("full");
+  const [paymentBusy, setPaymentBusy] = useState(false);
+  const [paymentError, setPaymentError] = useState("");
+  const [sendPaymentEmail, setSendPaymentEmail] = useState(true);
+  const [lastCheckout, setLastCheckout] = useState<{
+    url: string;
+    amountCents: number;
+    currency: string;
+    mode: "full" | "deposit";
+    /** True si l’utilisateur a demandé l’envoi auto (sinon l’API renvoie aussi emailSent: false). */
+    emailDeliveryRequested: boolean;
+    emailSent?: boolean;
+    emailErrorCode?: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const email = item?.clientEmail?.trim() ?? "";
+    if (!item?.id) return;
+    setSendPaymentEmail(email.includes("@"));
+  }, [item?.id, item?.clientEmail]);
 
   async function load() {
     try {
@@ -137,6 +176,47 @@ export default function ProDemandeDetailPage() {
       setError(mapApiErrorToFr((e as Error).message));
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleCreatePaymentLink() {
+    if (!id || !item) return;
+    setPaymentError("");
+    setPaymentBusy(true);
+    try {
+      const wantsEmail = Boolean(item && sendPaymentEmail && hasValidClientEmail(item));
+      const data = await createDemandePaymentLink(String(id), {
+        mode: paymentModeChoice,
+        sendEmail: wantsEmail,
+      });
+      setLastCheckout({
+        url: data.checkoutUrl,
+        amountCents: data.amount,
+        currency: data.currency,
+        mode: paymentModeChoice,
+        emailDeliveryRequested: wantsEmail,
+        emailSent: data.emailSent,
+        emailErrorCode: data.emailErrorCode,
+      });
+      setBanner("Lien créé — copiez-le ou ouvrez-le pour le client.");
+      await load();
+    } catch (e) {
+      if (e instanceof ProPaymentsApiError) {
+        setPaymentError(mapDemandePaymentLinkErrorToFr(e.code, e.message));
+      } else {
+        setPaymentError(mapApiErrorToFr((e as Error).message) || "Impossible de créer le lien de paiement.");
+      }
+    } finally {
+      setPaymentBusy(false);
+    }
+  }
+
+  async function copyCheckoutUrl(url: string) {
+    try {
+      await navigator.clipboard.writeText(url);
+      setBanner("Lien copié dans le presse-papiers.");
+    } catch {
+      setPaymentError("Impossible de copier automatiquement — sélectionnez l’URL manuellement.");
     }
   }
 
@@ -220,6 +300,120 @@ export default function ProDemandeDetailPage() {
                   {item.customerDecisionMailLastError ? <p className="text-rose-700">La demande a été mise à jour, mais l&apos;e-mail client n&apos;a pas pu être envoyé.</p> : null}
                 </div>
               ) : null}
+            </ProPanel>
+
+            <ProPanel>
+              <ProSectionHeader
+                title="Paiement en ligne"
+                description="Créez un lien Stripe Checkout pour permettre au client de régler cette demande en ligne. Vous pouvez envoyer le lien automatiquement par e-mail si une adresse client est disponible."
+              />
+              <div className="mt-5 space-y-4 text-sm text-[var(--pro-text-muted)]">
+                <p>Le paiement s’effectue sur une page sécurisée Stripe.</p>
+                <div className="rounded-[22px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-accent)]">Statut paiement (demande)</p>
+                  <p className="mt-3 inline-flex">
+                    <span
+                      className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${leadPaymentStatusBadgeClass(item.paymentStatus)}`}
+                    >
+                      {labelLeadPaymentStatus(item.paymentStatus)}
+                    </span>
+                  </p>
+                  {item.paymentStatus === "LINK_SENT" && !lastCheckout ? (
+                    <p className="mt-2 text-xs text-[var(--pro-text-soft)]">
+                      Un lien actif peut déjà exister. Cliquez sur « Créer le lien de paiement » pour récupérer l’URL si la session est encore valide
+                      (l’API réutilise le lien ouvert).
+                    </p>
+                  ) : null}
+                </div>
+                {paymentError ? (
+                  <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{paymentError}</p>
+                ) : null}
+                <div className="rounded-[22px] border border-[var(--pro-border)] bg-[var(--pro-panel)] px-4 py-4">
+                  <label className={`flex cursor-pointer items-start gap-3 ${!hasValidClientEmail(item) ? "cursor-not-allowed opacity-80" : ""}`}>
+                    <input
+                      type="checkbox"
+                      className="mt-1 h-4 w-4 shrink-0 rounded border-[var(--pro-border)] disabled:cursor-not-allowed"
+                      checked={sendPaymentEmail && hasValidClientEmail(item)}
+                      disabled={!hasValidClientEmail(item)}
+                      onChange={(e) => setSendPaymentEmail(e.target.checked)}
+                    />
+                    <span>
+                      <span className="font-medium text-[var(--pro-text)]">Envoyer automatiquement le lien par e-mail au client</span>
+                      {!hasValidClientEmail(item) ? (
+                        <span className="mt-1 block text-xs text-[var(--pro-text-soft)]">Aucun e-mail client disponible.</span>
+                      ) : null}
+                    </span>
+                  </label>
+                </div>
+
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                  <div className="flex-1">
+                    <label htmlFor="payment-mode-select" className="block text-xs font-semibold text-[var(--pro-text-soft)]">
+                      Mode de paiement Stripe
+                    </label>
+                    <select
+                      id="payment-mode-select"
+                      value={paymentModeChoice}
+                      onChange={(e) => setPaymentModeChoice(e.target.value as "full" | "deposit")}
+                      className="mt-1 w-full rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel)] px-4 py-3 text-sm text-[var(--pro-text)] focus:border-[var(--pro-accent)] focus:outline-none"
+                    >
+                      <option value="full">Paiement total</option>
+                      <option value="deposit">Acompte</option>
+                    </select>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={paymentBusy || busy}
+                    onClick={() => void handleCreatePaymentLink()}
+                    className={`rounded-xl px-5 py-3 text-sm font-semibold transition disabled:opacity-50 ${actionButtonClass("primary")}`}
+                  >
+                    {paymentBusy ? "Création…" : "Créer le lien de paiement"}
+                  </button>
+                </div>
+                {lastCheckout ? (
+                  <div className="rounded-[22px] border border-emerald-300/30 bg-[var(--pro-panel-muted)] px-4 py-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Lien Checkout</p>
+                    <p className="mt-2 text-sm font-medium text-emerald-900">Lien créé</p>
+                    {lastCheckout.emailDeliveryRequested && lastCheckout.emailSent === true ? (
+                      <p className="mt-2 text-sm text-emerald-800">E-mail envoyé au client.</p>
+                    ) : null}
+                    {lastCheckout.emailDeliveryRequested && lastCheckout.emailSent === false ? (
+                      <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+                        <p className="font-medium">Lien créé, mais e-mail non envoyé</p>
+                        <p className="mt-1 text-amber-900">
+                          {mapPaymentLinkEmailErrorCodeToFr(lastCheckout.emailErrorCode ?? "")}
+                        </p>
+                      </div>
+                    ) : null}
+                    <p className="mt-3 text-sm text-[var(--pro-text)]">
+                      Montant :{" "}
+                      <span className="font-semibold text-[var(--pro-accent)]">
+                        {formatAmountFromCents(lastCheckout.amountCents, lastCheckout.currency)}
+                      </span>{" "}
+                      · Mode :{" "}
+                      <span className="font-medium">{lastCheckout.mode === "full" ? "Paiement total" : "Acompte"}</span>
+                    </p>
+                    <p className="mt-2 break-all font-mono text-xs text-[var(--pro-text-soft)]">{lastCheckout.url}</p>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => void copyCheckoutUrl(lastCheckout.url)}
+                        className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition ${actionButtonClass("neutral")}`}
+                      >
+                        Copier le lien
+                      </button>
+                      <a
+                        href={lastCheckout.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={`inline-flex rounded-xl px-4 py-2.5 text-sm font-semibold transition ${actionButtonClass("primary")}`}
+                      >
+                        Ouvrir le lien
+                      </a>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
             </ProPanel>
 
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.1fr_0.9fr]">

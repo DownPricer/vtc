@@ -16,6 +16,7 @@ import {
   mapApiErrorToFr,
   statusBadgeClass,
 } from "@/components/pro/proDisplay";
+import { labelLeadPaymentStatus, leadPaymentStatusBadgeClass } from "@/lib/leadPaymentStatusUi";
 import { proApi } from "@/lib/proApi";
 
 type LeadRow = {
@@ -29,6 +30,7 @@ type LeadRow = {
   scheduledStart?: string | null;
   flatPayload?: Record<string, unknown>;
   pricingResult?: Record<string, unknown> | null;
+  paymentStatus?: string | null;
 };
 
 const STATUS_FILTERS = [
@@ -131,6 +133,7 @@ export default function ProDemandesPage() {
                   <th className="px-4 py-4 font-semibold">Type</th>
                   <th className="px-4 py-4 font-semibold">Client</th>
                   <th className="px-4 py-4 font-semibold">Statut</th>
+                  <th className="px-4 py-4 font-semibold">Paiement</th>
                   <th className="px-4 py-4 font-semibold">Tarif</th>
                   <th className="px-4 py-4 font-semibold">Action</th>
                 </tr>
@@ -141,6 +144,7 @@ export default function ProDemandesPage() {
                   const tarif = isUsefulValue(row.pricingResult && (row.pricingResult as Record<string, unknown>).tarif)
                     ? formatPrice((row.pricingResult as Record<string, unknown>).tarif)
                     : "";
+                  const payLabel = labelLeadPaymentStatus(row.paymentStatus);
                   return (
                     <tr key={row.id} className="border-b border-[var(--pro-border)]/70 last:border-b-0">
                       <td className="px-4 py-4 align-top">
@@ -157,6 +161,13 @@ export default function ProDemandesPage() {
                       <td className="px-4 py-4 align-top">
                         <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${statusBadgeClass(row.status)}`}>
                           {labelStatus(row.status)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 align-top">
+                        <span
+                          className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${leadPaymentStatusBadgeClass(row.paymentStatus)}`}
+                        >
+                          {payLabel}
                         </span>
                       </td>
                       <td className="px-4 py-4 align-top">
@@ -182,6 +193,7 @@ export default function ProDemandesPage() {
             const tarif = isUsefulValue(row.pricingResult && (row.pricingResult as Record<string, unknown>).tarif)
               ? formatPrice((row.pricingResult as Record<string, unknown>).tarif)
               : "";
+            const payLabel = labelLeadPaymentStatus(row.paymentStatus);
             return (
               <ProPanel key={row.id} className="p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -193,6 +205,12 @@ export default function ProDemandesPage() {
                     {labelStatus(row.status)}
                   </span>
                 </div>
+                <p className="mt-2 text-xs font-medium text-[var(--pro-text-soft)]">
+                  Paiement :{" "}
+                  <span className={`inline-flex rounded-full border px-2 py-0.5 font-semibold ${leadPaymentStatusBadgeClass(row.paymentStatus)}`}>
+                    {payLabel}
+                  </span>
+                </p>
                 {usefulText(row.clientPhone) ? <p className="mt-3 text-sm text-[var(--pro-text-soft)]">{usefulText(row.clientPhone)}</p> : null}
                 {usefulText(row.clientEmail) ? <p className="mt-1 text-sm text-[var(--pro-text-muted)]">{usefulText(row.clientEmail)}</p> : null}
                 <p className="mt-3 text-sm text-[var(--pro-text-muted)]">Création : {formatDateTime(row.createdAt)}</p>
