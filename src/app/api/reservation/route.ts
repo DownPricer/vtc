@@ -42,6 +42,15 @@ export async function POST(request: Request) {
       console.info("[next-api][reservation] pricingConfig injecte cote serveur");
     }
 
+    console.warn("[pricingConfig debug]", {
+      classicTripIsArray: Array.isArray(pricingConfig.classicTrip),
+      classicTripKeys: Object.keys(pricingConfig.classicTrip ?? {}),
+      classicTripLength: Array.isArray(pricingConfig.classicTrip) ? pricingConfig.classicTrip.length : undefined,
+      zoneBandsLength: pricingConfig.classicTrip?.zoneBands?.length,
+      oneWayRulesLength: pricingConfig.classicTrip?.distanceRulesOneWay?.length,
+      roundTripRulesLength: pricingConfig.classicTrip?.distanceRulesRoundTrip?.length,
+    });
+
     const res = await postCentralApiServer("reservation", centralPayload);
     const json = await res.json().catch(() => ({}));
     if (isPricingConfigValidationFailure(res.status, json)) {

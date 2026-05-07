@@ -7,7 +7,6 @@ import {
   MAD_HOURLY_RATES,
   MAJ,
   OUT_OF_PRIMARY_SERVICE_ZONE_MULTIPLIER,
-  PRIMARY_SERVICE_ZONE_COMMUNES,
   PUBLIC_HOLIDAYS,
   TA_TABLE,
   TC_TABLE,
@@ -16,21 +15,11 @@ import {
 import type {
   AirportPriceRule,
   DiscountRule,
-  DistanceRule,
   PricingConfigPayload,
   SurchargeRule,
-  ZoneDistanceBand,
 } from "./pricingConfigPayload";
 
 type PartialPricingSettings = Partial<TenantPricingSettingsV1>;
-
-function buildDistanceBand(key: string): { fromKm?: number; toKm?: number } {
-  const trimmed = key.trim();
-  if (trimmed.startsWith("+")) return { fromKm: Number(trimmed.slice(1)) };
-  const m = /^(\d+)-(\d+)$/.exec(trimmed);
-  if (!m) return {};
-  return { fromKm: Number(m[1]), toKm: Number(m[2]) };
-}
 
 function legacyClassicTripDefaults() {
   return {
@@ -89,46 +78,6 @@ function getPricingWithFallback(tenantSettings: TenantSettingsV1): TenantPricing
     },
     cityRules: source.cityRules ?? [],
   };
-}
-
-function mapZoneBands(minimumPrice: number) {
-  const zones = TC_TABLE.SIMPLE.ZONES;
-  const ids = Object.keys(zones)
-    .map((id) => Number(id))
-    .sort((a, b) => a - b);
-  const zoneStartById: Record<number, number> = { 1: 0, 2: 16, 3: 36, 4: 81, 5: 121 };
-  return ids.map((zoneId, index): ZoneDistanceBand => {
-    const nextZone = ids[index + 1];
-    return {
-      zoneId: String(zoneId),
-      label: `Zone ${zoneId}`,
-      minPrincipalDistanceKm: zoneStartById[zoneId] ?? 0,
-      maxPrincipalDistanceKm: nextZone ? (zoneStartById[nextZone] ?? 0) - 1 : undefined,
-      minimumPrice,
-      enabled: true,
-    };
-  });
-}
-
-function mapDistanceRules(type: "SIMPLE" | "AR", pricePerKm: number): DistanceRule[] {
-  const zones = TC_TABLE[type].ZONES;
-  const ids = Object.keys(zones).map((id) => Number(id)).sort((a, b) => a - b);
-  const out: DistanceRule[] = [];
-  for (const zoneId of ids) {
-    const table = zones[zoneId as keyof typeof zones].tarifsKm;
-    for (const bandKey of Object.keys(table)) {
-      const band = buildDistanceBand(bandKey);
-      out.push({
-        id: `${type.toLowerCase()}-zone-${zoneId}-${bandKey}`,
-        label: `${type} zone ${zoneId} (${bandKey} km)`,
-        fromKm: band.fromKm,
-        toKm: band.toKm,
-        pricePerKm,
-        enabled: true,
-      });
-    }
-  }
-  return out;
 }
 
 function mapAirportRules(pricing: TenantPricingSettingsV1): AirportPriceRule[] {
@@ -199,9 +148,33 @@ export function buildPricingConfigForTenant(tenantSettings: TenantSettingsV1): P
     airportBuffers: { ...AIRPORT_BUFFERS },
     classicTrip: {
       enabled: pricing.classicTrip.enabled,
-      zoneBands: mapZoneBands(pricing.classicTrip.minimumPrice),
-      distanceRulesOneWay: mapDistanceRules("SIMPLE", pricing.classicTrip.oneWayPricePerKm),
-      distanceRulesRoundTrip: mapDistanceRules("AR", pricing.classicTrip.roundTripPricePerKm),
+      zoneBands: [
+        {
+          zoneId: "default",
+          label: "Zone par defaut",
+          minPrincipalDistanceKm: 0,
+          minimumPrice: pricing.classicTrip.minimumPrice,
+          enabled: true,
+        },
+      ],
+      distanceRulesOneWay: [
+        {
+          id: "one-way-default",
+          label: "Trajet aller simple",
+          pricePerKm: pricing.classicTrip.oneWayPricePerKm,
+          minimumPrice: pricing.classicTrip.minimumPrice,
+          enabled: true,
+        },
+      ],
+      distanceRulesRoundTrip: [
+        {
+          id: "round-trip-default",
+          label: "Trajet aller-retour",
+          pricePerKm: pricing.classicTrip.roundTripPricePerKm,
+          minimumPrice: pricing.classicTrip.minimumPrice,
+          enabled: true,
+        },
+      ],
       approach: {
         enabled: true,
         mode: "min_of_approach_or_return_base",
@@ -216,13 +189,6 @@ export function buildPricingConfigForTenant(tenantSettings: TenantSettingsV1): P
         enabled: true,
         mode: "multiplier",
         value: pricing.classicTrip.outOfZoneMultiplier,
-        primaryCities: Array.from(PRIMARY_SERVICE_ZONE_COMMUNES),
-      },
-      supplementShortDistance: {
-        enabled: true,
-        fromKm: 1,
-        toKm: 50,
-        addPricePerKm: 0.2,
       },
     },
     airportTransfers: {
@@ -247,4 +213,3 @@ export function buildPricingConfigForTenant(tenantSettings: TenantSettingsV1): P
     rounding: { classic: "ceil", airport: "ceil_to_5", hourlyHire: "ceil" },
   };
 }
-
