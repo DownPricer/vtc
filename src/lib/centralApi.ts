@@ -18,7 +18,7 @@ export type CentralApiFailure = {
 };
 
 export type CentralApiResult<T> = CentralApiSuccess<T> | CentralApiFailure;
-const LOCAL_NEXT_PROXY_ROUTES: ReadonlySet<CentralBusinessRoute> = new Set([
+const LOCAL_NEXT_PROXY_ROUTES: ReadonlySet<CentralBusinessRoute> = new Set<CentralBusinessRoute>([
   "calculer-tarif",
   "devis",
   "reservation",
