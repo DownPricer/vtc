@@ -18,16 +18,17 @@ export type CentralApiFailure = {
 };
 
 export type CentralApiResult<T> = CentralApiSuccess<T> | CentralApiFailure;
+const LOCAL_NEXT_PROXY_ROUTES: ReadonlySet<CentralBusinessRoute> = new Set([
+  "calculer-tarif",
+  "devis",
+  "reservation",
+]);
 
 function normalizeBaseUrl(raw: string): string {
   return raw.trim().replace(/\/+$/, "");
 }
 
 export function getCentralApiConfig(): { baseUrl: string; tenantId: string } | null {
-  if (typeof window !== "undefined") {
-    // Côté navigateur : forcer le passage par les routes Next locales.
-    return { baseUrl: "", tenantId: "local" };
-  }
   const baseUrl = process.env.NEXT_PUBLIC_API_URL ? normalizeBaseUrl(process.env.NEXT_PUBLIC_API_URL) : "";
   const tenantId = process.env.NEXT_PUBLIC_TENANT_ID?.trim() ?? "";
   if (!baseUrl || !tenantId) return null;
@@ -35,7 +36,6 @@ export function getCentralApiConfig(): { baseUrl: string; tenantId: string } | n
 }
 
 export function getCentralApiMissingEnvMessage(): string {
-  if (typeof window !== "undefined") return "";
   const missing: string[] = [];
   if (!process.env.NEXT_PUBLIC_API_URL?.trim()) missing.push("NEXT_PUBLIC_API_URL");
   if (!process.env.NEXT_PUBLIC_TENANT_ID?.trim()) missing.push("NEXT_PUBLIC_TENANT_ID");
@@ -63,7 +63,7 @@ export async function postCentralApi<T = Record<string, unknown>>(
   route: CentralBusinessRoute,
   body: unknown
 ): Promise<CentralApiResult<T>> {
-  if (typeof window !== "undefined") {
+  if (typeof window !== "undefined" && LOCAL_NEXT_PROXY_ROUTES.has(route)) {
     try {
       const res = await fetch(`/api/${route}`, {
         method: "POST",
