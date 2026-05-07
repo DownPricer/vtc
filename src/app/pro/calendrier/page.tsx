@@ -82,6 +82,15 @@ export default function ProCalendrierPage() {
       .catch((e) => setError(mapApiErrorToFr((e as Error).message)));
   }, [monthCursor]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.location.hash !== "#pro-cal-upcoming") return;
+    const t = window.setTimeout(() => {
+      document.getElementById("pro-cal-upcoming")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+    return () => window.clearTimeout(t);
+  }, [monthCursor, items.length]);
+
   const monthLabel = useMemo(
     () => monthCursor.toLocaleDateString("fr-FR", { month: "long", year: "numeric" }),
     [monthCursor]
@@ -94,7 +103,7 @@ export default function ProCalendrierPage() {
       <ProShell>
         <ProNav />
 
-        <ProPanel>
+        <ProPanel id="pro-cal-upcoming">
           <ProSectionHeader
             title="Calendrier"
             description="Vue mensuelle des réservations acceptées et planifiées."

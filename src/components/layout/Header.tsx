@@ -62,9 +62,6 @@ export function Header({ runtimeSite }: HeaderProps) {
       { href: "/", label: "Accueil", icon: iconHome },
       { href: "/tarifs", label: "Tarifs", icon: iconTarifs },
       { href: "/services", label: "Services", icon: iconServices },
-      { href: "/a-propos", label: "À propos", icon: iconAbout },
-      { href: "/faq", label: "FAQ", icon: iconFaq },
-      { href: "/contact", label: "Contact", icon: iconContact },
     ];
     if (site.features.miniGame) {
       base.push({ href: "/jeu", label: "Mini-jeu", icon: iconBolt });
@@ -76,6 +73,15 @@ export function Header({ runtimeSite }: HeaderProps) {
     }
     return base;
   }, [site.features.miniGame, site.features.radioHomeSection, site.features.radioPage]);
+
+  const navLinksSecondary = useMemo(
+    (): NavItem[] => [
+      { href: "/a-propos", label: "À propos", icon: iconAbout },
+      { href: "/faq", label: "FAQ", icon: iconFaq },
+      { href: "/contact", label: "Contact", icon: iconContact },
+    ],
+    []
+  );
 
   useEffect(() => {
     setMobileOpen(false);
@@ -99,8 +105,8 @@ export function Header({ runtimeSite }: HeaderProps) {
     <>
       <header className="sticky top-0 z-50 bg-dark/95 backdrop-blur-md border-b border-white/8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between gap-3 h-16 min-h-16">
-            <Link href="/" className="flex items-center gap-2.5 shrink-0 min-w-0">
+          <div className="flex items-center justify-between gap-3 min-h-16 py-2 lg:h-16 lg:py-0">
+            <Link href="/" className="flex items-center gap-2.5 shrink-0 min-w-0 self-center">
               <div className="relative w-9 h-9">
                 <Image
                   src={site.branding.logoSrc}
@@ -116,18 +122,34 @@ export function Header({ runtimeSite }: HeaderProps) {
               </div>
             </Link>
 
-            <nav className="hidden lg:flex flex-nowrap items-center justify-center gap-3 xl:gap-4 min-w-0">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`shrink-0 whitespace-nowrap inline-flex items-center h-10 text-sm font-medium leading-none transition-colors ${
-                    pathname === link.href ? "text-primary" : "text-gray-400 hover:text-white"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
+            <nav className="hidden min-w-0 flex-1 items-center justify-center gap-1 px-2 lg:flex xl:gap-0">
+              <div className="flex flex-nowrap items-center justify-center gap-2 xl:gap-3">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-lg px-2.5 text-sm font-medium transition-colors xl:px-3 ${
+                      pathname === link.href ? "text-primary" : "text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+              <span className="mx-1 hidden h-5 w-px shrink-0 bg-white/15 lg:mx-2 lg:block" aria-hidden="true" />
+              <div className="flex flex-nowrap items-center justify-center gap-2 xl:gap-3">
+                {navLinksSecondary.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-lg px-2.5 text-sm font-medium transition-colors xl:px-3 ${
+                      pathname === link.href ? "text-primary" : "text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
             </nav>
 
             <div className="hidden lg:flex items-center shrink-0 gap-1.5 xl:gap-2">
@@ -179,20 +201,20 @@ export function Header({ runtimeSite }: HeaderProps) {
           } overflow-y-auto`}
         >
           <nav className="px-4 pt-4 pb-2">
-            {navLinks.map((link) => (
+            {[...navLinks, ...navLinksSecondary].map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
-                className={`flex items-center gap-4 py-4 px-4 rounded-xl mb-1 transition-colors ${
+                className={`mb-1 flex items-center gap-4 rounded-xl px-4 py-4 transition-colors ${
                   pathname === link.href
                     ? "bg-primary/10 text-primary"
                     : "text-gray-300 hover:bg-white/5 hover:text-white"
                 }`}
               >
                 <span className={pathname === link.href ? "text-primary" : "text-gray-500"}>{link.icon}</span>
-                <span className="font-medium text-base">{link.label}</span>
-                {pathname === link.href && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />}
+                <span className="text-base font-medium">{link.label}</span>
+                {pathname === link.href ? <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" /> : null}
               </Link>
             ))}
           </nav>

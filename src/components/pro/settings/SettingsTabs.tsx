@@ -41,7 +41,7 @@ type SettingsTabsProps = {
 
 export function SettingsTabs({ active, onChange }: SettingsTabsProps) {
   return (
-    <div className="flex flex-wrap gap-2 border-b border-[var(--pro-border)] pb-4">
+    <div className="-mx-1 flex gap-2 overflow-x-auto overflow-y-hidden border-b border-[var(--pro-border)] px-1 pb-4 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]">
       {SETTINGS_TAB_IDS.map((id) => {
         const isActive = id === active;
         return (
@@ -49,7 +49,7 @@ export function SettingsTabs({ active, onChange }: SettingsTabsProps) {
             key={id}
             type="button"
             onClick={() => onChange(id)}
-            className={`rounded-xl px-3.5 py-2 text-sm font-medium transition ${
+            className={`shrink-0 rounded-xl px-3.5 py-2 text-sm font-medium transition ${
               isActive
                 ? "border border-[var(--pro-accent)] bg-[var(--pro-accent-soft)] text-[var(--pro-accent)]"
                 : "border border-transparent text-[var(--pro-text-muted)] hover:border-[var(--pro-border)] hover:bg-[var(--pro-panel-muted)] hover:text-[var(--pro-text)]"

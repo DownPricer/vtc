@@ -326,9 +326,9 @@ export default function ProDemandeDetailPage() {
     const paymentStatusRaw = String(raw.paymentStatus ?? "");
     const paymentStatus = isUsefulValue(paymentStatusRaw) ? translateStatus(paymentStatusRaw) : "";
     return displayRows([
-      { label: "Tarif total", value: raw.tarif ? formatPrice(raw.tarif) : "" },
-      { label: "Mode de paiement", value: paymentMethod },
-      { label: "Statut paiement", value: paymentStatus },
+      { label: "Montant annoncé (TTC)", value: raw.tarif ? formatPrice(raw.tarif) : "" },
+      { label: "Règlement indiqué par le client", value: paymentMethod },
+      { label: "État saisi sur le formulaire", value: paymentStatus },
     ]);
   }, [item]);
 
@@ -344,8 +344,8 @@ export default function ProDemandeDetailPage() {
         <ProPanel>
           <ProSectionHeader
             eyebrow="Fiche demande"
-            title={item ? labelKind(item.kind) : "Demande"}
-            description="Consultez les informations client, mettez à jour le statut et suivez l'historique."
+            title={item ? `${labelKind(item.kind)} — ${getDisplayName(item.clientName)}` : "Demande"}
+            description="Vue structurée : client, trajet, encaissement Stripe et actions."
             action={
               <Link
                 href="/pro/demandes"
@@ -374,32 +374,78 @@ export default function ProDemandeDetailPage() {
         ) : (
           <>
             <ProPanel>
-              <ProSectionHeader title="Actions" description="Choisissez une action operateur pour cette demande." />
-              <div className="mt-5 flex flex-wrap gap-3">
-                {actions.map((action) => (
-                  <button
-                    key={action.nextStatus}
-                    type="button"
-                    disabled={busy}
-                    onClick={() => patchStatus(action.nextStatus as LeadStatus)}
-                    className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50 ${actionButtonClass(action.intent)}`}
+              <ProSectionHeader title="Client" description="Identité et contacts directs." />
+              <div className="mt-5 space-y-3 text-sm">
+                <p className="text-lg font-semibold text-[var(--pro-text)]">{getDisplayName(item.clientName)}</p>
+                {isUsefulValue(item.clientPhone) ? (
+                  <a
+                    href={`tel:${String(item.clientPhone).replace(/\s/g, "")}`}
+                    className="block font-medium text-[var(--pro-accent)] hover:brightness-110"
                   >
-                    {translateAction(action.action)}
-                  </button>
-                ))}
+                    {item.clientPhone}
+                  </a>
+                ) : null}
+                {isUsefulValue(item.clientEmail) ? (
+                  <a href={`mailto:${item.clientEmail}`} className="block text-[var(--pro-text-soft)] hover:text-[var(--pro-accent)]">
+                    {item.clientEmail}
+                  </a>
+                ) : null}
               </div>
-              {(kind === "devis" || kind === "reservation") && (item.customerDecisionMailSentAt || item.customerDecisionMailLastError) ? (
-                <div className="mt-4 rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm text-[var(--pro-text-soft)]">
-                  {item.customerDecisionMailSentAt ? <p>Le client a été notifié par e-mail le {formatDateTime(item.customerDecisionMailSentAt)}.</p> : null}
-                  {item.customerDecisionMailLastError ? <p className="text-rose-700">La demande a été mise à jour, mais l&apos;e-mail client n&apos;a pas pu être envoyé.</p> : null}
+            </ProPanel>
+
+            {extrasClient.length ? (
+              <ProPanel>
+                <ProSectionHeader title="Coordonnées complémentaires" description="Société, organisation ou précisions laissées par le client." />
+                <div className="mt-5 space-y-3">
+                  {extrasClient.map((row) => (
+                    <div key={row.label} className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--pro-text-muted)]">{row.label}</p>
+                      <p className="mt-1 text-[var(--pro-text)]">{row.value}</p>
+                    </div>
+                  ))}
                 </div>
-              ) : null}
+              </ProPanel>
+            ) : null}
+
+            <ProPanel>
+              <ProSectionHeader title="Trajet et prestation" description="Détail du service demandé." />
+              {prestation.length ? (
+                <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  {prestation.map((row) => (
+                    <div key={row.label} className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--pro-text-muted)]">{row.label}</p>
+                      <p className="mt-1 text-sm text-[var(--pro-text)]">{row.value}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <EmptyState message="Aucune information de prestation disponible." />
+              )}
+            </ProPanel>
+
+            <ProPanel>
+              <ProSectionHeader title="Tarif et règlement (formulaire)" description="Montants et préférences indiqués par le client lors de la demande." />
+              <div className="mt-5 space-y-3">
+                {pricing.map((row) => (
+                  <div key={row.label} className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--pro-text-muted)]">{row.label}</p>
+                    <p className="mt-1 text-[var(--pro-text)]">{row.value}</p>
+                  </div>
+                ))}
+                {paiementFlat.map((row) => (
+                  <div key={row.label} className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--pro-text-muted)]">{row.label}</p>
+                    <p className="mt-1 text-[var(--pro-text)]">{row.value}</p>
+                  </div>
+                ))}
+                {!pricing.length && !paiementFlat.length ? <EmptyState message="Aucune information tarifaire sur la demande." /> : null}
+              </div>
             </ProPanel>
 
             <ProPanel>
               <ProSectionHeader
-                title="Paiement en ligne"
-                description="Stripe Checkout — le client paie sur une page sécurisée. La confirmation définitive est traitée par le webhook Stripe ; cet écran reflète l’état en base."
+                title="Paiement en ligne (Stripe)"
+                description="Paiement sécurisé par carte. L’état affiché est synchronisé avec votre compte Stripe."
               />
 
               <div className="mt-5 flex flex-wrap items-center gap-2">
@@ -418,7 +464,7 @@ export default function ProDemandeDetailPage() {
                 <p>Les paiements en ligne transitent par Stripe ; aucune carte n&apos;est saisie sur votre site.</p>
 
                 <div className="rounded-[22px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-accent)]">Statut paiement (demande)</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-accent)]">État du paiement en ligne</p>
                   <p className="mt-3 inline-flex">
                     <span
                       className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${leadPaymentStatusBadgeClass(item.paymentStatus)}`}
@@ -607,68 +653,68 @@ export default function ProDemandeDetailPage() {
               </div>
             </ProPanel>
 
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-              <ProPanel>
-                <ProSectionHeader title="Client" description="Coordonnées et informations de contact." />
-                <div className="mt-5 space-y-3 text-sm">
-                  <p className="text-base font-semibold text-[var(--pro-text)]">{getDisplayName(item.clientName)}</p>
-                  {isUsefulValue(item.clientPhone) ? (
-                    <a href={`tel:${String(item.clientPhone).replace(/\s/g, "")}`} className="block font-medium text-[var(--pro-accent)] hover:brightness-110">
-                      {item.clientPhone}
-                    </a>
-                  ) : null}
-                  {isUsefulValue(item.clientEmail) ? (
-                    <a href={`mailto:${item.clientEmail}`} className="block text-[var(--pro-text-soft)] hover:text-[var(--pro-accent)]">
-                      {item.clientEmail}
-                    </a>
-                  ) : null}
-                  {extrasClient.map((row) => (
-                    <div key={row.label} className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--pro-text-muted)]">{row.label}</p>
-                      <p className="mt-1 text-[var(--pro-text)]">{row.value}</p>
-                    </div>
-                  ))}
-                </div>
-              </ProPanel>
-
-              <ProPanel>
-                <ProSectionHeader title="Tarif et paiement" description="Montant, mode de paiement et suivi." />
-                <div className="mt-5 space-y-3">
-                  {pricing.map((row) => (
-                    <div key={row.label} className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--pro-text-muted)]">{row.label}</p>
-                      <p className="mt-1 text-[var(--pro-text)]">{row.value}</p>
-                    </div>
-                  ))}
-                  {paiementFlat.map((row) => (
-                    <div key={row.label} className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--pro-text-muted)]">{row.label}</p>
-                      <p className="mt-1 text-[var(--pro-text)]">{row.value}</p>
-                    </div>
-                  ))}
-                  {!pricing.length && !paiementFlat.length ? <EmptyState message="Aucune information de paiement disponible." /> : null}
-                </div>
-              </ProPanel>
-            </div>
-
             <ProPanel>
-              <ProSectionHeader title="Prestation et trajet" description="Informations utiles pour organiser la course." />
-              {prestation.length ? (
-                <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-                  {prestation.map((row) => (
-                    <div key={row.label} className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--pro-text-muted)]">{row.label}</p>
-                      <p className="mt-1 text-sm text-[var(--pro-text)]">{row.value}</p>
-                    </div>
-                  ))}
+              <ProSectionHeader
+                title="Actions sur la demande"
+                description="Accepter ou refuser une proposition, clôturer le dossier ou l’archiver. Un e-mail peut être envoyé au client selon le cas."
+              />
+              <div className="mt-5 flex flex-wrap gap-3">
+                {actions.map((action) => (
+                  <button
+                    key={action.nextStatus}
+                    type="button"
+                    disabled={busy}
+                    onClick={() => patchStatus(action.nextStatus as LeadStatus)}
+                    className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50 ${actionButtonClass(action.intent)}`}
+                  >
+                    {translateAction(action.action)}
+                  </button>
+                ))}
+              </div>
+              {(kind === "devis" || kind === "reservation") && (item.customerDecisionMailSentAt || item.customerDecisionMailLastError) ? (
+                <div className="mt-4 rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm text-[var(--pro-text-soft)]">
+                  {item.customerDecisionMailSentAt ? <p>Le client a été notifié par e-mail le {formatDateTime(item.customerDecisionMailSentAt)}.</p> : null}
+                  {item.customerDecisionMailLastError ? <p className="text-rose-700">La demande a été mise à jour, mais l&apos;e-mail client n&apos;a pas pu être envoyé.</p> : null}
                 </div>
-              ) : (
-                <EmptyState message="Aucune information de prestation disponible." />
-              )}
+              ) : null}
             </ProPanel>
 
             <ProPanel>
-              <ProSectionHeader title="Note interne" description="Visible uniquement dans l'espace professionnel." />
+              <ProSectionHeader title="Historique" description="Chronologie des statuts et actions sur ce dossier." />
+              <div className="mt-5 space-y-3">
+                {item.history.map((row) => (
+                  <div key={row.id} className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
+                    <p className="text-sm text-[var(--pro-text-soft)]">
+                      <span className="font-medium text-[var(--pro-text-muted)]">{formatDateTime(row.createdAt)}</span>
+                      {" · "}
+                      {row.previousStatus ? `${labelStatus(row.previousStatus)} → ` : "Création → "}
+                      {labelStatus(row.newStatus)}
+                    </p>
+                    {row.changedByUser?.email ? <p className="mt-2 text-xs text-[var(--pro-text-muted)]">Opérateur : {row.changedByUser.email}</p> : null}
+                    {isUsefulValue(row.note) ? <p className="mt-2 text-sm text-[var(--pro-text-soft)]">{row.note}</p> : null}
+                  </div>
+                ))}
+                {!item.history.length ? <EmptyState message="Aucun historique disponible." /> : null}
+              </div>
+            </ProPanel>
+
+            <ProPanel>
+              <ProSectionHeader
+                title="Devis et documents"
+                description="Document professionnel A4, prêt à imprimer ou enregistrer en PDF (via la boîte d’impression du navigateur)."
+              />
+              <div className="mt-5 flex flex-wrap gap-3">
+                <Link
+                  href={`/pro/demandes/${item.id}/devis`}
+                  className={`inline-flex rounded-xl px-5 py-3 text-sm font-semibold transition ${actionButtonClass("primary")}`}
+                >
+                  Générer / télécharger le devis (PDF)
+                </Link>
+              </div>
+            </ProPanel>
+
+            <ProPanel>
+              <ProSectionHeader title="Note interne" description="Visible uniquement dans l’espace professionnel." />
               <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
@@ -679,25 +725,6 @@ export default function ProDemandeDetailPage() {
               <button type="button" disabled={busy} onClick={saveNote} className={`mt-4 rounded-xl px-5 py-2.5 text-sm font-semibold transition disabled:opacity-50 ${actionButtonClass("primary")}`}>
                 Enregistrer la note
               </button>
-            </ProPanel>
-
-            <ProPanel>
-              <ProSectionHeader title="Historique" description="Suivi des changements effectués sur cette demande." />
-              <div className="mt-5 space-y-3">
-                {item.history.map((row) => (
-                  <div key={row.id} className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
-                    <p className="text-sm text-[var(--pro-text-soft)]">
-                      <span className="font-medium text-[var(--pro-text-muted)]">{formatDateTime(row.createdAt)}</span>
-                      {" · "}
-                      {row.previousStatus ? `${labelStatus(row.previousStatus)} -> ` : "Création -> "}
-                      {labelStatus(row.newStatus)}
-                    </p>
-                    {row.changedByUser?.email ? <p className="mt-2 text-xs text-[var(--pro-text-muted)]">Opérateur : {row.changedByUser.email}</p> : null}
-                    {isUsefulValue(row.note) ? <p className="mt-2 text-sm text-[var(--pro-text-soft)]">{row.note}</p> : null}
-                  </div>
-                ))}
-                {!item.history.length ? <EmptyState message="Aucun historique disponible." /> : null}
-              </div>
             </ProPanel>
           </>
         )}

@@ -171,7 +171,10 @@ export type ProPaymentsListData = {
     paidTotalCents: number;
     paidCount: number;
     pendingCheckoutCount: number;
+    failedCount?: number;
+    expiredCount?: number;
   };
+  monthlyPaid?: Array<{ monthKey: string; monthLabel: string; totalCents: number }>;
 };
 
 export async function listProPayments(params: {

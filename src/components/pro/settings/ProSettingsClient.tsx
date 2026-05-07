@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { SiteConfig } from "@/config/site.config";
 import type { TenantSettingsV1 } from "@/config/tenant-settings.types";
@@ -117,6 +118,23 @@ export function ProSettingsClient({ tenant, mailMeta, siteFeatures }: ProSetting
       <SiteDraftPreviewModal open={previewOpen} onClose={() => setPreviewOpen(false)} draft={draft} />
       <ProShell>
         <ProNav />
+        <ProPanel>
+          <div className="flex flex-col gap-4 rounded-[22px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/50 p-5 md:flex-row md:items-center md:justify-between">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--pro-accent)]">Paiement Stripe</p>
+              <p className="mt-1 text-base font-semibold text-[var(--pro-text)]">Compte connecté et encaissements</p>
+              <p className="mt-2 max-w-xl text-sm text-[var(--pro-text-muted)]">
+                Activez Stripe Connect, l’acompte et les liens de paiement. C’est un réglage de compte, distinct de la mise en forme du site.
+              </p>
+            </div>
+            <Link
+              href="/pro/paiements"
+              className="inline-flex shrink-0 items-center justify-center rounded-xl bg-[var(--pro-accent)] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:brightness-105"
+            >
+              Ouvrir les réglages Stripe
+            </Link>
+          </div>
+        </ProPanel>
         <ProPanel>
           <ProSectionHeader
             eyebrow="Configuration"

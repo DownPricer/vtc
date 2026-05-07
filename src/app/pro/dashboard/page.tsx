@@ -34,7 +34,10 @@ type Summary = {
   acceptedToday: number;
   upcomingReservationCount: number;
   recentDevisWeekCount: number;
+  stripePaymentsPendingCount: number;
 };
+
+const DASHBOARD_EXCLUDED = new Set(["archived", "completed", "cancelled", "refused", "expired"]);
 
 function tarifValue(item: LeadRow): string {
   const raw = item.pricingResult && (item.pricingResult as Record<string, unknown>).tarif;
@@ -46,7 +49,6 @@ export default function ProDashboardPage() {
   const [latestRequests, setLatestRequests] = useState<LeadRow[]>([]);
   const [upcoming, setUpcoming] = useState<LeadRow[]>([]);
   const [recentDevis, setRecentDevis] = useState<LeadRow[]>([]);
-  const [totalRequests, setTotalRequests] = useState(0);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -59,12 +61,14 @@ export default function ProDashboardPage() {
           acceptedToday: summary.acceptedToday ?? 0,
           upcomingReservationCount: summary.upcomingReservationCount ?? 0,
           recentDevisWeekCount: summary.recentDevisWeekCount ?? 0,
+          stripePaymentsPendingCount: summary.stripePaymentsPendingCount ?? 0,
         });
-        setTotalRequests(requests.length);
+        const sorted = requests
+          .slice()
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         setLatestRequests(
-          requests
-            .slice()
-            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          sorted
+            .filter((row) => !DASHBOARD_EXCLUDED.has(row.status))
             .slice(0, 6)
         );
         setUpcoming(
@@ -89,27 +93,47 @@ export default function ProDashboardPage() {
         <ProNav />
 
         <ProPanel>
-          <ProSectionHeader
-            eyebrow="Pilotage"
-            title="Tableau de bord"
-            description="Suivez vos demandes, devis et réservations."
-          />
+          <ProSectionHeader eyebrow="Pilotage" title="Tableau de bord" description="Suivez vos demandes, devis et réservations." />
         </ProPanel>
 
         {error ? <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
-          <ProStatCard title="Demandes en attente" value={data?.pendingCount ?? 0} hint="Demandes nouvelles ou en attente de traitement." tone="orange" />
-          <ProStatCard title="Réservations à venir" value={data?.upcomingReservationCount ?? 0} hint="Réservations acceptées ou planifiées." tone="green" />
-          <ProStatCard title="Devis récents" value={data?.recentDevisWeekCount ?? 0} hint="Devis créés sur les 7 derniers jours." tone="blue" />
-          <ProStatCard title="Demandes totales" value={totalRequests} hint="Demandes chargees dans le tableau de bord." tone="slate" />
+          <ProStatCard
+            title="Demandes en attente"
+            value={data?.pendingCount ?? 0}
+            hint="Nouvelles demandes ou en attente de traitement."
+            tone="orange"
+            href="/pro/demandes?status=pending"
+          />
+          <ProStatCard
+            title="Réservations à venir"
+            value={data?.upcomingReservationCount ?? 0}
+            hint="Réservations acceptées ou planifiées (14 jours)."
+            tone="green"
+            href="/pro/calendrier#pro-cal-upcoming"
+          />
+          <ProStatCard
+            title="Devis récents"
+            value={data?.recentDevisWeekCount ?? 0}
+            hint="Devis créés sur les 7 derniers jours."
+            tone="blue"
+            href="/pro/devis"
+          />
+          <ProStatCard
+            title="Paiements en attente"
+            value={data?.stripePaymentsPendingCount ?? 0}
+            hint="Liens Stripe en cours ou envoyés au client."
+            tone="slate"
+            href="/pro/transactions?status=LINK_SENT"
+          />
         </div>
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.3fr_1fr]">
           <ProPanel>
             <ProSectionHeader
               title="Dernières demandes"
-              description="Retrouvez les derniers contacts, devis et réservations."
+              description="Contacts, devis et réservations actifs (hors archivés / terminés / annulés)."
               action={
                 <Link href="/pro/demandes" className="text-sm font-semibold text-[var(--pro-accent)] hover:brightness-110">
                   Voir toutes les demandes
@@ -140,12 +164,12 @@ export default function ProDashboardPage() {
                     <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[var(--pro-text-soft)]">
                       {journey ? <span>{journey}</span> : null}
                       {tarif ? <span className="font-semibold text-[var(--pro-accent)]">{tarif}</span> : null}
-                      <span className="font-medium text-[var(--pro-accent)]">Voir</span>
+                      <span className="font-medium text-[var(--pro-accent)]">Ouvrir</span>
                     </div>
                   </Link>
                 );
               })}
-              {!latestRequests.length ? <EmptyState message="Aucune demande pour le moment." /> : null}
+              {!latestRequests.length ? <EmptyState message="Aucune demande active récente." /> : null}
             </div>
           </ProPanel>
 
@@ -180,9 +204,9 @@ export default function ProDashboardPage() {
             title="Devis récents"
             description="Accédez rapidement aux derniers devis à suivre."
             action={
-                <Link href="/pro/demandes?kind=devis" className="text-sm font-semibold text-[var(--pro-accent)] hover:brightness-110">
-                  Ouvrir les devis
-                </Link>
+              <Link href="/pro/devis" className="text-sm font-semibold text-[var(--pro-accent)] hover:brightness-110">
+                Tous les devis
+              </Link>
             }
           />
           <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">

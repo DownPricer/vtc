@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import Link from "next/link";
 
 export function ProShell({ children }: { children: ReactNode }) {
   return <div className="space-y-6">{children}</div>;
@@ -9,12 +10,15 @@ export function ProShell({ children }: { children: ReactNode }) {
 export function ProPanel({
   children,
   className = "",
+  id,
 }: {
   children: ReactNode;
   className?: string;
+  id?: string;
 }) {
   return (
     <section
+      id={id}
       className={`rounded-[28px] border border-[var(--pro-border)] bg-[var(--pro-panel)] p-5 shadow-[var(--pro-shadow)] backdrop-blur md:p-7 ${className}`}
     >
       {children}
@@ -50,11 +54,14 @@ export function ProStatCard({
   value,
   hint,
   tone,
+  href,
 }: {
   title: string;
   value: string | number;
   hint?: string;
   tone: "orange" | "green" | "blue" | "slate";
+  /** Si défini, toute la carte devient un lien (navigation rapide). */
+  href?: string;
 }) {
   const toneClass =
     tone === "orange"
@@ -65,13 +72,27 @@ export function ProStatCard({
           ? "border-sky-300/25 bg-[linear-gradient(135deg,rgba(14,165,233,0.22),rgba(14,165,233,0.05))]"
           : "border-[var(--pro-border)] bg-[var(--pro-panel-muted)]";
 
-  return (
-    <article className={`rounded-[24px] border p-5 shadow-sm ${toneClass}`}>
+  const inner = (
+    <>
       <p className="text-sm font-medium text-[var(--pro-text-soft)]">{title}</p>
       <p className="mt-3 text-4xl font-semibold tracking-tight text-[var(--pro-text)]">{value}</p>
       {hint ? <p className="mt-2 text-xs leading-5 text-[var(--pro-text-muted)]">{hint}</p> : null}
-    </article>
+      {href ? <p className="mt-3 text-xs font-semibold text-[var(--pro-accent)]">Ouvrir →</p> : null}
+    </>
   );
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className={`block rounded-[24px] border p-5 shadow-sm transition hover:brightness-[1.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--pro-accent)] ${toneClass}`}
+      >
+        {inner}
+      </Link>
+    );
+  }
+
+  return <article className={`rounded-[24px] border p-5 shadow-sm ${toneClass}`}>{inner}</article>;
 }
 
 export function EmptyState({ message }: { message: string }) {
