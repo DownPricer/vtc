@@ -192,6 +192,58 @@ export type TenantCalculatorDisplayV1 = {
   extrasOptions: CalculatorExtraOptionDisplay[];
 };
 
+export type TenantPricingAirport = {
+  code: string;
+  name: string;
+  address: string;
+  oneWayMinimumPrice: number;
+  roundTripMinimumPrice: number;
+  pricePerKm: number;
+  enabled: boolean;
+};
+
+export type TenantPricingCityRule = {
+  id: string;
+  city: string;
+  postalCode?: string;
+  type: "discount" | "fixed_price" | "surcharge" | "excluded";
+  value?: number;
+  enabled: boolean;
+  note?: string;
+};
+
+export type TenantPricingSettingsV1 = {
+  classicTrip: {
+    enabled: boolean;
+    oneWayPricePerKm: number;
+    roundTripPricePerKm: number;
+    minimumPrice: number;
+    approachPricePerKm: number;
+    returnToBaseEnabled: boolean;
+    outOfZoneMultiplier: number;
+  };
+  airportTransfers: {
+    enabled: boolean;
+    airports: TenantPricingAirport[];
+  };
+  hourlyHire: {
+    enabled: boolean;
+    hourlyRate: number;
+    minimumTotal: number;
+  };
+  surcharges: {
+    nightPercent: number;
+    eveningPercent: number;
+    weekendPercent: number;
+    holidayPercent: number;
+    minimumAmount: number;
+  };
+  discounts: {
+    roundTripEnabled: boolean;
+  };
+  cityRules: TenantPricingCityRule[];
+};
+
 export type TenantSettingsV1 = {
   general: {
     commercialName: string;
@@ -452,6 +504,8 @@ export type TenantSettingsV1 = {
 
   /** Référentiel d’affichage du calculateur (limites, listes) — ne pilote pas le moteur pricing. */
   calculatorDisplay: TenantCalculatorDisplayV1;
+  /** Réglages tarifaires utilisés côté serveur pour construire `pricingConfig`. */
+  pricing: TenantPricingSettingsV1;
 
   /**
    * Paiement en ligne activé pour ce tenant (injecté par `meta` sur GET public tenant-settings, hors JSON persisté).

@@ -53,6 +53,11 @@ function formatAddress(a: TenantSettingsV1["contact"]["address"]): string {
   return line.join(", ");
 }
 
+function truncateReceiptUrl(url: string, maxLength = 72): string {
+  if (url.length <= maxLength) return url;
+  return `${url.slice(0, maxLength - 1)}…`;
+}
+
 export default function ProDevisPrintPage() {
   const { id } = useParams<{ id: string }>();
   const [item, setItem] = useState<LeadDetail | null>(null);
@@ -81,6 +86,7 @@ export default function ProDevisPrintPage() {
   const flat = useMemo(() => (item?.flatPayload ?? {}) as Record<string, unknown>, [item]);
   const prestation = useMemo(() => prestationRowsFromFlat(flat), [flat]);
   const paid = useMemo(() => item?.payments?.find((p) => p.status === "PAID"), [item?.payments]);
+  const paidReceiptUrl = paid?.stripeReceiptUrl?.trim() ?? "";
 
   const quoteRef = item ? `DEV-${pickReference(flat, item.id)}` : "";
   const issueDate = item ? formatDateTime(item.createdAt) : "";
@@ -120,16 +126,16 @@ export default function ProDevisPrintPage() {
         {item ? (
           <div
             id="devis-print-root"
-            className="mx-auto mt-8 max-w-[210mm] bg-white px-8 py-10 text-slate-900 shadow-lg print:mt-0 print:max-w-none print:bg-white print:p-0 print:shadow-none"
+            className="mx-auto mt-8 max-w-[210mm] overflow-hidden bg-white px-8 py-10 text-slate-900 shadow-lg print:mt-0 print:max-w-none print:bg-white print:p-0 print:shadow-none"
             style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
           >
             <style
               dangerouslySetInnerHTML={{
-                __html: `@media print{body{background:#fff!important}.no-print{display:none!important}#devis-print-root{box-shadow:none!important;margin:0!important;max-width:none!important;padding:12mm!important}}@page{size:A4;margin:14mm}`,
+                __html: `@page{size:A4;margin:12mm}@media print{html,body{background:#fff!important;color:#0f172a!important}body *{-webkit-print-color-adjust:exact;print-color-adjust:exact}a,a:visited{color:#1e3a8a!important;text-decoration:underline}header,nav,[data-pro-nav],[data-dashboard-header],.no-print{display:none!important}#devis-print-root{box-shadow:none!important;margin:0 auto!important;max-width:186mm!important;width:186mm!important;padding:0!important;border:none!important}#devis-print-root .print-card{break-inside:avoid-page;page-break-inside:avoid}#devis-print-root .print-long-text{overflow-wrap:anywhere;word-break:break-word}#devis-print-root *{max-width:100%!important}}`,
               }}
             />
 
-            <header className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-6">
+            <header className="print-card flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-6">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Devis</p>
                 <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">{tenant.general.commercialName}</h1>
@@ -152,15 +158,21 @@ export default function ProDevisPrintPage() {
               </div>
             </header>
 
-            <section className="mt-8 grid gap-6 border-b border-slate-200 pb-6 md:grid-cols-2">
+            <section className="print-card mt-8 grid gap-6 border-b border-slate-200 pb-6 md:grid-cols-2">
+              <div>
+                <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">Émetteur VTC</h2>
+                <p className="mt-2 text-sm font-semibold text-slate-900">{tenant.general.commercialName}</p>
+                <p className="print-long-text mt-1 text-sm text-slate-600">{formatAddress(tenant.contact.address)}</p>
+                {tenant.contact.emailPublic ? <p className="print-long-text mt-1 text-sm text-slate-600">{tenant.contact.emailPublic}</p> : null}
+              </div>
               <div>
                 <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">Client</h2>
                 <p className="mt-2 text-lg font-semibold text-slate-900">{getDisplayName(item.clientName)}</p>
-                {isUsefulValue(item.clientPhone) ? <p className="mt-1 text-sm">{item.clientPhone}</p> : null}
-                {isUsefulValue(item.clientEmail) ? <p className="mt-1 text-sm">{item.clientEmail}</p> : null}
+                {isUsefulValue(item.clientPhone) ? <p className="print-long-text mt-1 text-sm">{item.clientPhone}</p> : null}
+                {isUsefulValue(item.clientEmail) ? <p className="print-long-text mt-1 text-sm">{item.clientEmail}</p> : null}
               </div>
-              <div>
-                <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">Demande</h2>
+              <div className="md:col-span-2">
+                <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">Trajet / prestation</h2>
                 <p className="mt-2 text-sm">
                   <span className="font-semibold">Type :</span> {labelKind(item.kind)}
                 </p>
@@ -170,15 +182,15 @@ export default function ProDevisPrintPage() {
               </div>
             </section>
 
-            <section className="mt-8">
-              <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">Prestation</h2>
+            <section className="print-card mt-8">
+              <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">Détail prestation</h2>
               {prestation.length ? (
                 <table className="mt-4 w-full border-collapse text-sm">
                   <tbody>
                     {prestation.map((row) => (
                       <tr key={row.label} className="border-b border-slate-100">
                         <td className="py-2 pr-4 align-top font-medium text-slate-600">{row.label}</td>
-                        <td className="py-2 align-top text-slate-900">{row.value}</td>
+                        <td className="print-long-text py-2 align-top text-slate-900">{row.value}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -188,8 +200,8 @@ export default function ProDevisPrintPage() {
               )}
             </section>
 
-            <section className="mt-8 border-t border-slate-200 pt-6">
-              <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">Montants</h2>
+            <section className="print-card mt-8 border-t border-slate-200 pt-6">
+              <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">Prix</h2>
               <div className="mt-4 flex flex-wrap items-baseline justify-between gap-4">
                 <p className="text-2xl font-bold text-slate-900">{tarifTtc} TTC</p>
                 <p className="max-w-md text-xs leading-relaxed text-slate-500">
@@ -205,13 +217,18 @@ export default function ProDevisPrintPage() {
                     Montant encaissé : <strong>{formatAmountFromCents(paid.amount, paid.currency)}</strong>
                     {paid.paidAt ? ` — le ${formatDateTime(paid.paidAt)}` : null}
                   </p>
-                  {paid.stripeReceiptUrl?.trim() ? (
-                    <p className="mt-2">
-                      Reçu Stripe :{" "}
-                      <a href={paid.stripeReceiptUrl.trim()} className="font-semibold text-emerald-800 underline">
-                        {paid.stripeReceiptUrl.trim()}
+                  <p className="mt-2">
+                    Statut : <strong>Payé</strong>
+                  </p>
+                  {paidReceiptUrl ? (
+                    <div className="mt-2">
+                      <a href={paidReceiptUrl} className="inline-flex items-center font-semibold text-emerald-800 underline">
+                        Voir le reçu Stripe
                       </a>
-                    </p>
+                      <p className="print-long-text mt-1 text-[11px] text-emerald-900/80">
+                        {truncateReceiptUrl(paidReceiptUrl)}
+                      </p>
+                    </div>
                   ) : null}
                 </div>
               ) : item.clientWantsOnlinePayment === false ? (
@@ -220,8 +237,8 @@ export default function ProDevisPrintPage() {
                 </p>
               ) : (
                 <p className="mt-4 text-sm text-slate-600">
-                  Acompte ou solde en ligne : à convenir. Les conditions de paiement (virement, espèces, lien sécurisé) sont fixées lors de l’acceptation du
-                  devis.
+                  Paiement non encore reçu. Acompte ou solde en ligne : à convenir. Les conditions de paiement (virement, espèces, lien sécurisé) sont fixées
+                  lors de l’acceptation du devis.
                 </p>
               )}
 
@@ -232,7 +249,7 @@ export default function ProDevisPrintPage() {
               ) : null}
             </section>
 
-            <section className="mt-10 border-t border-slate-200 pt-6 text-sm text-slate-600">
+            <section className="print-card mt-10 border-t border-slate-200 pt-6 text-sm text-slate-600">
               <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">Conditions</h2>
               <ul className="mt-3 list-disc space-y-2 pl-5">
                 <li>Devis gratuit, sans engagement jusqu’à la date de validité indiquée.</li>
@@ -241,7 +258,7 @@ export default function ProDevisPrintPage() {
               </ul>
             </section>
 
-            <footer className="mt-12 border-t border-slate-300 pt-8 text-center text-sm text-slate-600">
+            <footer className="print-card mt-12 border-t border-slate-300 pt-8 text-center text-sm text-slate-600">
               <p className="font-semibold text-slate-800">Bon pour accord</p>
               <p className="mt-6">Date et signature du client</p>
               <div className="mx-auto mt-10 max-w-md border-b border-slate-400" />

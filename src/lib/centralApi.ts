@@ -24,6 +24,10 @@ function normalizeBaseUrl(raw: string): string {
 }
 
 export function getCentralApiConfig(): { baseUrl: string; tenantId: string } | null {
+  if (typeof window !== "undefined") {
+    // Côté navigateur : forcer le passage par les routes Next locales.
+    return { baseUrl: "", tenantId: "local" };
+  }
   const baseUrl = process.env.NEXT_PUBLIC_API_URL ? normalizeBaseUrl(process.env.NEXT_PUBLIC_API_URL) : "";
   const tenantId = process.env.NEXT_PUBLIC_TENANT_ID?.trim() ?? "";
   if (!baseUrl || !tenantId) return null;
@@ -31,6 +35,7 @@ export function getCentralApiConfig(): { baseUrl: string; tenantId: string } | n
 }
 
 export function getCentralApiMissingEnvMessage(): string {
+  if (typeof window !== "undefined") return "";
   const missing: string[] = [];
   if (!process.env.NEXT_PUBLIC_API_URL?.trim()) missing.push("NEXT_PUBLIC_API_URL");
   if (!process.env.NEXT_PUBLIC_TENANT_ID?.trim()) missing.push("NEXT_PUBLIC_TENANT_ID");
@@ -58,6 +63,34 @@ export async function postCentralApi<T = Record<string, unknown>>(
   route: CentralBusinessRoute,
   body: unknown
 ): Promise<CentralApiResult<T>> {
+  if (typeof window !== "undefined") {
+    try {
+      const res = await fetch(`/api/${route}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      let json: unknown;
+      try {
+        json = await res.json();
+      } catch {
+        return { ok: false, status: res.status, message: "Impossible de lire la réponse du serveur" };
+      }
+      if (!res.ok) return { ok: false, status: res.status, message: extractErrorMessage(json) };
+      if (json && typeof json === "object" && "success" in json && (json as { success: boolean }).success === true) {
+        const j = json as { success: true; data?: T; meta?: Record<string, unknown> };
+        return { ok: true, data: j.data as T, meta: j.meta };
+      }
+      return { ok: false, status: res.status, message: extractErrorMessage(json) };
+    } catch {
+      return {
+        ok: false,
+        status: 0,
+        message: "Service temporairement indisponible. Vérifiez votre connexion ou réessayez plus tard.",
+      };
+    }
+  }
+
   const cfg = getCentralApiConfig();
   if (!cfg) {
     return {

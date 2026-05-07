@@ -708,7 +708,7 @@ export default function ProDemandeDetailPage() {
                   href={`/pro/demandes/${item.id}/devis`}
                   className={`inline-flex rounded-xl px-5 py-3 text-sm font-semibold transition ${actionButtonClass("primary")}`}
                 >
-                  Générer / télécharger le devis (PDF)
+                  Imprimer / télécharger en PDF
                 </Link>
               </div>
             </ProPanel>

@@ -1,4 +1,14 @@
 import type { TenantSettingsV1 } from "./tenant-settings.types";
+import {
+  AIRPORTS,
+  APPLY_AR_DISCOUNT,
+  MAD_EVENT_MINIMUM_TOTAL,
+  MAD_HOURLY_RATES,
+  MAJ,
+  OUT_OF_PRIMARY_SERVICE_ZONE_MULTIPLIER,
+  TA_TABLE,
+  TC_TABLE,
+} from "./pricing.config";
 
 /**
  * Configuration centrale (valeurs par défaut) — doit reproduire le rendu actuel.
@@ -198,6 +208,46 @@ export const defaultTenantSettings: TenantSettingsV1 = {
       { id: "fauteuil-roulant", label: "Fauteuil roulant", enabled: true },
       { id: "acces-difficile", label: "Accès difficile", enabled: true },
     ],
+  },
+
+  pricing: {
+    classicTrip: {
+      enabled: true,
+      oneWayPricePerKm: TC_TABLE.SIMPLE.ZONES[1].tarifsKm["1-50"],
+      roundTripPricePerKm: TC_TABLE.AR.ZONES[1].tarifsKm["1-50"],
+      minimumPrice: TC_TABLE.SIMPLE.ZONES[1].min,
+      approachPricePerKm: TC_TABLE.SIMPLE.APPROCHE,
+      returnToBaseEnabled: true,
+      outOfZoneMultiplier: OUT_OF_PRIMARY_SERVICE_ZONE_MULTIPLIER,
+    },
+    airportTransfers: {
+      enabled: true,
+      airports: Object.keys(TA_TABLE).map((code) => ({
+        code,
+        name: code,
+        address: AIRPORTS[code]?.address ?? code,
+        oneWayMinimumPrice: TA_TABLE[code].SIMPLE["1-2"].min,
+        roundTripMinimumPrice: TA_TABLE[code].ALLER_RETOUR["1-2"].min,
+        pricePerKm: TA_TABLE[code].SIMPLE["1-2"].tarifKm,
+        enabled: true,
+      })),
+    },
+    hourlyHire: {
+      enabled: true,
+      hourlyRate: MAD_HOURLY_RATES.default,
+      minimumTotal: MAD_EVENT_MINIMUM_TOTAL,
+    },
+    surcharges: {
+      nightPercent: MAJ.pctNight * 100,
+      eveningPercent: MAJ.pctEvening * 100,
+      weekendPercent: MAJ.pctWE * 100,
+      holidayPercent: MAJ.pctFerie * 100,
+      minimumAmount: MAJ.minEuros,
+    },
+    discounts: {
+      roundTripEnabled: APPLY_AR_DISCOUNT,
+    },
+    cityRules: [],
   },
 
   home: {
