@@ -221,6 +221,8 @@ export type TenantPricingSettingsV1 = {
     approachPricePerKm: number;
     returnToBaseEnabled: boolean;
     outOfZoneMultiplier: number;
+    /** Jeu de communes côté API (ex. fr-76). Si absent, le builder utilise PRIMARY_SERVICE_ZONE_SET_ID. */
+    primaryServiceZoneSetId?: string;
   };
   airportTransfers: {
     enabled: boolean;

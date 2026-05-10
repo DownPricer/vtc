@@ -7,6 +7,7 @@ import {
   MAD_HOURLY_RATES,
   MAJ,
   OUT_OF_PRIMARY_SERVICE_ZONE_MULTIPLIER,
+  PRIMARY_SERVICE_ZONE_SET_ID,
   PUBLIC_HOLIDAYS,
   TA_TABLE,
   TC_TABLE,
@@ -30,6 +31,7 @@ function legacyClassicTripDefaults() {
     approachPricePerKm: TC_TABLE.SIMPLE.APPROCHE,
     returnToBaseEnabled: true,
     outOfZoneMultiplier: OUT_OF_PRIMARY_SERVICE_ZONE_MULTIPLIER,
+    primaryServiceZoneSetId: PRIMARY_SERVICE_ZONE_SET_ID,
   };
 }
 
@@ -56,6 +58,8 @@ function getPricingWithFallback(tenantSettings: TenantSettingsV1): TenantPricing
       approachPricePerKm: source.classicTrip?.approachPricePerKm ?? legacyClassic.approachPricePerKm,
       returnToBaseEnabled: source.classicTrip?.returnToBaseEnabled ?? legacyClassic.returnToBaseEnabled,
       outOfZoneMultiplier: source.classicTrip?.outOfZoneMultiplier ?? legacyClassic.outOfZoneMultiplier,
+      primaryServiceZoneSetId:
+        source.classicTrip?.primaryServiceZoneSetId ?? legacyClassic.primaryServiceZoneSetId,
     },
     airportTransfers: {
       enabled: source.airportTransfers?.enabled ?? true,
@@ -177,18 +181,22 @@ export function buildPricingConfigForTenant(tenantSettings: TenantSettingsV1): P
       ],
       approach: {
         enabled: true,
-        mode: "min_of_approach_or_return_base",
+        /** Aligné sur le calculateur : approche base→prise en charge toujours facturée (€/km APPROCHE). */
+        mode: "always_approach",
         pricePerKm: pricing.classicTrip.approachPricePerKm,
       },
       returnToBase: {
         enabled: pricing.classicTrip.returnToBaseEnabled,
-        mode: "min_of_approach_or_return_base",
+        /** Retour destination→base : facturé au même €/km que l’approche lorsque activé dans les paramètres. */
+        mode: pricing.classicTrip.returnToBaseEnabled ? "always_return_base" : "none",
         pricePerKm: pricing.classicTrip.approachPricePerKm,
       },
       outOfPrimaryZone: {
         enabled: true,
         mode: "multiplier",
         value: pricing.classicTrip.outOfZoneMultiplier,
+        /** Même jeu que le moteur JSON legacy (registry API). */
+        zoneSetId: pricing.classicTrip.primaryServiceZoneSetId ?? PRIMARY_SERVICE_ZONE_SET_ID,
       },
     },
     airportTransfers: {

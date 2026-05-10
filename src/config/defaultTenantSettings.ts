@@ -6,6 +6,7 @@ import {
   MAD_HOURLY_RATES,
   MAJ,
   OUT_OF_PRIMARY_SERVICE_ZONE_MULTIPLIER,
+  PRIMARY_SERVICE_ZONE_SET_ID,
   TA_TABLE,
   TC_TABLE,
 } from "./pricing.config";
@@ -219,6 +220,7 @@ export const defaultTenantSettings: TenantSettingsV1 = {
       approachPricePerKm: TC_TABLE.SIMPLE.APPROCHE,
       returnToBaseEnabled: true,
       outOfZoneMultiplier: OUT_OF_PRIMARY_SERVICE_ZONE_MULTIPLIER,
+      primaryServiceZoneSetId: PRIMARY_SERVICE_ZONE_SET_ID,
     },
     airportTransfers: {
       enabled: true,

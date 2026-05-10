@@ -131,6 +131,8 @@ export type PricingConfigPayload = {
   classicTrip: {
     enabled: boolean;
     zoneBands: ZoneDistanceBand[];
+    /** Bandeaux pour minimums AR (tcTable.AR) — optionnel, voir API */
+    zoneBandsRoundTrip?: ZoneDistanceBand[];
     distanceRulesOneWay: DistanceRule[];
     distanceRulesRoundTrip: DistanceRule[];
     approach: ApproachConfig;

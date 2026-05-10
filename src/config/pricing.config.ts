@@ -137,6 +137,12 @@ export const MAJORATION_HORS_76 = OUT_OF_PRIMARY_SERVICE_ZONE_MULTIPLIER;
  */
 export const PRIMARY_SERVICE_ZONE_COMMUNES = COMMUNES_76;
 
+/**
+ * Identifiant du jeu de communes côté API (`zoneSets/registry`) — doit correspondre à la liste ci-dessus.
+ * Aligné sur `default.engine.json` / moteur locataire « default ».
+ */
+export const PRIMARY_SERVICE_ZONE_SET_ID = "fr-76";
+
 /** Tarifs horaires MAD « classique » / soir / nuit & WE+férié (€/h) — ajustez par client. */
 export const MAD_HOURLY_RATES = {
   default: 80,
