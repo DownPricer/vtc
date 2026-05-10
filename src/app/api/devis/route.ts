@@ -54,14 +54,10 @@ export async function POST(request: Request) {
     const res = await postCentralApiServer("devis", centralPayload);
     const json = await res.json().catch(() => ({}));
     if (isPricingConfigValidationFailure(res.status, json)) {
-      // Fallback temporaire: si pricingConfig est rejeté par le validateur central, on réessaie sans pricingConfig.
-      console.warn(
-        "[next-api][devis] pricingConfig invalide, fallback sans pricingConfig",
+      console.error(
+        "[next-api][devis] pricingConfig rejeté par l’API — pas de repli silencieux (évite un tarif différent avec tenant_engine)",
         JSON.stringify({ status: res.status, apiResponse: json }, null, 2)
       );
-      const fallbackRes = await postCentralApiServer("devis", clientPayload);
-      const fallbackJson = await fallbackRes.json().catch(() => ({}));
-      return NextResponse.json(fallbackJson, { status: fallbackRes.status });
     }
     return NextResponse.json(json, { status: res.status });
   } catch (e) {

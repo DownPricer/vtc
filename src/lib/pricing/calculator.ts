@@ -332,31 +332,21 @@ export async function calculerTarif(
     const tct = normalizeTCtrajet(t?.TCtrajet);
     const isAR = tct === "Aller/Retour" || tct === AR_MAD_CANON;
 
-    const dBaseDepart = Math.min(
-      distances.aller.approche.km ?? 0,
-      distances.aller.retourBase.km ?? 0
-    );
-    const dBaseArrivee = Math.min(
-      (distances.aller.trajet.km ?? 0) + (distances.aller.retourBase.km ?? 0),
-      (distances.aller.approche.km ?? 0) + (distances.aller.trajet.km ?? 0)
-    );
-    const dPrincipal = Math.min(dBaseDepart, dBaseArrivee);
-    const zone = zoneFromDistance(dPrincipal);
-    const tKmAller = kmTarifClassique(distances.aller.trajet.km ?? 0, zone, isAR);
+    const trajetKm = distances.aller.trajet.km ?? 0;
+    const trajetRetourKm = distances.retour.trajet.km ?? 0;
+    const zoneKm = isAR ? Math.max(trajetKm, trajetRetourKm) : trajetKm;
+    const zone = zoneFromDistance(zoneKm);
+    const tKmAller = kmTarifClassique(trajetKm, zone, isAR);
     const apCoef = isAR ? TC_TABLE.AR.APPROCHE : TC_TABLE.SIMPLE.APPROCHE;
 
     const approcheKm = distances.aller.approche.km ?? 0;
     const retourBaseKm = distances.aller.retourBase.km ?? 0;
-    const distanceMin = Math.min(approcheKm, retourBaseKm);
 
-    (tarifs.aller as Record<string, number>).approche =
-      approcheKm === distanceMin ? approcheKm * apCoef : 0;
-    const trajetKm = distances.aller.trajet.km ?? 0;
     const supplementTrajet = trajetKm >= 1 && trajetKm <= 50 ? 0.2 : 0.1;
+    (tarifs.aller as Record<string, number>).approche = approcheKm * apCoef;
     (tarifs.aller as Record<string, number>).trajet =
       trajetKm * (tKmAller + supplementTrajet);
-    (tarifs.aller as Record<string, number>).retourBase =
-      retourBaseKm === distanceMin ? retourBaseKm * apCoef : 0;
+    (tarifs.aller as Record<string, number>).retourBase = retourBaseKm * apCoef;
     (tarifs.aller as Record<string, number>).total =
       fmt((tarifs.aller as Record<string, number>).approche) +
       fmt((tarifs.aller as Record<string, number>).trajet) +
@@ -365,27 +355,16 @@ export async function calculerTarif(
     let total = (tarifs.aller as Record<string, number>).total;
 
     if (isAR) {
-      const tKmRetour = kmTarifClassique(
-        distances.retour.trajet.km ?? 0,
-        zone,
-        true
-      );
+      const tKmRetour = kmTarifClassique(trajetRetourKm, zone, true);
       const approcheRetourKm = distances.retour.approche.km ?? 0;
       const retourBaseRetourKm = distances.retour.retourBase.km ?? 0;
-      const distanceMinRetour = Math.min(approcheRetourKm, retourBaseRetourKm);
+      const apCoefAr = TC_TABLE.AR.APPROCHE;
 
-      (tarifs.retour as Record<string, number>).approche =
-        approcheRetourKm === distanceMinRetour
-          ? approcheRetourKm * TC_TABLE.AR.APPROCHE
-          : 0;
-      const trajetRetourKm = distances.retour.trajet.km ?? 0;
+      (tarifs.retour as Record<string, number>).approche = approcheRetourKm * apCoefAr;
       const supplementRetour = trajetRetourKm >= 1 && trajetRetourKm <= 50 ? 0.2 : 0.1;
       (tarifs.retour as Record<string, number>).trajet =
         trajetRetourKm * (tKmRetour + supplementRetour);
-      (tarifs.retour as Record<string, number>).retourBase =
-        retourBaseRetourKm === distanceMinRetour
-          ? retourBaseRetourKm * TC_TABLE.AR.APPROCHE
-          : 0;
+      (tarifs.retour as Record<string, number>).retourBase = retourBaseRetourKm * apCoefAr;
       (tarifs.retour as Record<string, number>).total =
         fmt((tarifs.retour as Record<string, number>).approche) +
         fmt((tarifs.retour as Record<string, number>).trajet) +
@@ -393,26 +372,6 @@ export async function calculerTarif(
       total += (tarifs.retour as Record<string, number>).total;
 
       if (tct === AR_MAD_CANON) {
-        const approcheAllerKm = distances.aller.approche.km ?? 0;
-        const retourBaseRetourKmMAD = distances.retour.retourBase.km ?? 0;
-        const distanceMinAR = Math.min(approcheAllerKm, retourBaseRetourKmMAD);
-
-        (tarifs.aller as Record<string, number>).approche =
-          approcheAllerKm === distanceMinAR ? approcheAllerKm * apCoef : 0;
-        (tarifs.aller as Record<string, number>).total =
-          fmt((tarifs.aller as Record<string, number>).approche) +
-          fmt((tarifs.aller as Record<string, number>).trajet);
-        (tarifs.retour as Record<string, number>).retourBase =
-          retourBaseRetourKmMAD === distanceMinAR
-            ? retourBaseRetourKmMAD * TC_TABLE.AR.APPROCHE
-            : 0;
-        (tarifs.retour as Record<string, number>).total =
-          fmt((tarifs.retour as Record<string, number>).trajet) +
-          fmt((tarifs.retour as Record<string, number>).retourBase);
-        total =
-          (tarifs.aller as Record<string, number>).total +
-          (tarifs.retour as Record<string, number>).total;
-
         const dtAllerMAD = parseDT(t?.TCallerdate, t?.TCallerheure);
         let tarifHoraireMAD: number = MAD_HOURLY_RATES.default;
         if (dtAllerMAD?.isValid) {
@@ -428,7 +387,7 @@ export async function calculerTarif(
           else if (nuit || soiree) tarifHoraireMAD = MAD_HOURLY_RATES.eveningOrNight;
         }
         tarifs.miseADisposition =
-          tarifHoraireMAD * (parseFloat(t.HeureMADClassique) || 0);
+          tarifHoraireMAD * (parseFloat(t?.HeureMADClassique ?? "0") || 0);
         total += tarifs.miseADisposition as number;
       }
       if (APPLY_AR_DISCOUNT) total = total * 0.95;
