@@ -154,8 +154,8 @@ export function buildPricingConfigForTenant(tenantSettings: TenantSettingsV1): P
       enabled: pricing.classicTrip.enabled,
       zoneBands: [
         {
-          zoneId: "default",
-          label: "Zone par defaut",
+          zoneId: "1",
+          label: "Zone 1",
           minPrincipalDistanceKm: 0,
           minimumPrice: pricing.classicTrip.minimumPrice,
           enabled: true,
@@ -163,8 +163,8 @@ export function buildPricingConfigForTenant(tenantSettings: TenantSettingsV1): P
       ],
       distanceRulesOneWay: [
         {
-          id: "one-way-default",
-          label: "Trajet aller simple",
+          id: "zone-1-one-way",
+          label: "Trajet aller simple zone 1",
           pricePerKm: pricing.classicTrip.oneWayPricePerKm,
           minimumPrice: pricing.classicTrip.minimumPrice,
           enabled: true,
@@ -172,8 +172,8 @@ export function buildPricingConfigForTenant(tenantSettings: TenantSettingsV1): P
       ],
       distanceRulesRoundTrip: [
         {
-          id: "round-trip-default",
-          label: "Trajet aller-retour",
+          id: "zone-1-round-trip",
+          label: "Trajet aller-retour zone 1",
           pricePerKm: pricing.classicTrip.roundTripPricePerKm,
           minimumPrice: pricing.classicTrip.minimumPrice,
           enabled: true,

@@ -376,6 +376,10 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
               }
               editing={editing}
             />
+            <p className="text-sm text-[var(--pro-text-soft)]">
+              Applique une remise de 5&nbsp;% sur le trajet classique aller-retour (avant majorations et minimum).
+              Les transferts aéroport ne sont pas concernés. Le pourcentage n’est pas encore réglable ici (activation oui/non uniquement).
+            </p>
           </CollapsibleSettingsCard>
 
           <CollapsibleSettingsCard

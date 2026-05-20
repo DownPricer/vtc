@@ -321,7 +321,7 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
     };
 
     if (typeService === "Trajet Classique") {
-      const t = { ...trajetClassique };
+      const t = { ...trajetClassique, TCtrajet: typeTrajet };
       t.TCallerpriseencharge = getAddr(t.TCallerpriseencharge);
       t.TCallerDestination = getAddr(t.TCallerDestination);
       t.TCallerdate = toFrDate(t.TCallerdate) || t.TCallerdate;
@@ -712,7 +712,13 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
                   { value: "Aller/Retour", label: "Aller / Retour", icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg> },
                   { value: "A/R + Mise à disposition", label: "A/R + MAD", icon: <IconStar /> },
                 ]}
-                onChange={(v) => { setTypeTrajet(v as TypeTrajet); setTarif(null); setTarifResult(null); setTcRetourAdresseDifferente(false); }}
+                onChange={(v) => {
+                  setTypeTrajet(v as TypeTrajet);
+                  setTrajetClassique((t) => ({ ...t, TCtrajet: v as TypeTrajet }));
+                  setTarif(null);
+                  setTarifResult(null);
+                  setTcRetourAdresseDifferente(false);
+                }}
               />
             </div>
 
@@ -786,6 +792,7 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
                   <div className="grid grid-cols-2 gap-3">
                     <div><FieldLabel required>Date (retour)</FieldLabel>
                       <StyledInput icon={<IconCalendar />} required type="date" value={trajetClassique.TCretourdate}
+                        min={trajetClassique.TCallerdate || undefined}
                         onChange={(e) => setTrajetClassique(t => ({ ...t, TCretourdate: e.target.value }))} /></div>
                     <div><FieldLabel required>Heure (retour)</FieldLabel>
                       <StyledInput icon={<IconClock />} required type="time" value={trajetClassique.TCretourheure}
