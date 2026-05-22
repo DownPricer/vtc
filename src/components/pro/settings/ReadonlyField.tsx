@@ -7,6 +7,7 @@ type ReadonlyFieldProps = {
   hint?: string;
   mono?: boolean;
   action?: ReactNode;
+  suffix?: string;
 };
 
 function formatValue(value: ReadonlyFieldProps["value"]): string {
@@ -15,7 +16,7 @@ function formatValue(value: ReadonlyFieldProps["value"]): string {
   return String(value);
 }
 
-export function ReadonlyField({ label, value, hint, mono, action }: ReadonlyFieldProps) {
+export function ReadonlyField({ label, value, hint, mono, action, suffix }: ReadonlyFieldProps) {
   return (
     <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel)] px-4 py-3">
       <div className="flex items-start justify-between gap-2">
@@ -25,11 +26,10 @@ export function ReadonlyField({ label, value, hint, mono, action }: ReadonlyFiel
           {action}
         </div>
       </div>
-      <p
-        className={`mt-1.5 text-sm font-medium text-[var(--pro-text)] break-words ${mono ? "font-mono text-[13px]" : ""}`}
-      >
-        {formatValue(value)}
-      </p>
+      <div className="mt-1.5 flex items-center justify-between gap-3">
+        <p className={`text-sm font-medium text-[var(--pro-text)] break-words ${mono ? "font-mono text-[13px]" : ""}`}>{formatValue(value)}</p>
+        {suffix ? <span className="shrink-0 text-xs font-semibold text-[var(--pro-text-muted)]">{suffix}</span> : null}
+      </div>
     </div>
   );
 }
