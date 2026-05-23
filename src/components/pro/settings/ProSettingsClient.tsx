@@ -119,7 +119,7 @@ export function ProSettingsClient({ tenant, mailMeta, siteFeatures }: ProSetting
       <ProShell>
         <ProNav />
         <ProPanel>
-          <div className="flex flex-col gap-4 rounded-[22px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/50 p-5 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-4 rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/50 p-5 md:flex-row md:items-center md:justify-between xl:px-6 xl:py-6">
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--pro-accent)]">Paiement Stripe</p>
               <p className="mt-1 text-base font-semibold text-[var(--pro-text)]">Compte connecté et encaissements</p>
@@ -179,7 +179,7 @@ export function ProSettingsClient({ tenant, mailMeta, siteFeatures }: ProSetting
           </div>
           <div className={`mt-6 space-y-5 ${loadState === "loading" ? "pointer-events-none opacity-50" : ""}`}>
             <SettingsTabs active={tab} onChange={setTab} />
-            <div className="rounded-[22px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/40 p-4 md:p-6">
+            <div className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/40 p-4 md:p-6 xl:p-7">
               <SettingsTabPanels
                 tab={tab}
                 draft={draft}

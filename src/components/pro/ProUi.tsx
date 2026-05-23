@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 
 export function ProShell({ children }: { children: ReactNode }) {
-  return <div className="space-y-6">{children}</div>;
+  return <div className="space-y-5 xl:space-y-7">{children}</div>;
 }
 
 export function ProPanel({
@@ -19,7 +19,7 @@ export function ProPanel({
   return (
     <section
       id={id}
-      className={`rounded-[28px] border border-[var(--pro-border)] bg-[var(--pro-panel)] p-5 shadow-[var(--pro-shadow)] backdrop-blur md:p-7 ${className}`}
+      className={`rounded-[30px] border border-[var(--pro-border)] bg-[var(--pro-panel)] p-5 shadow-[var(--pro-shadow)] backdrop-blur md:p-7 xl:p-8 ${className}`}
     >
       {children}
     </section>
@@ -38,13 +38,13 @@ export function ProSectionHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+    <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
       <div className="min-w-0">
         {eyebrow ? <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--pro-accent)]">{eyebrow}</p> : null}
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-[var(--pro-text)] md:text-3xl">{title}</h1>
-        {description ? <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--pro-text-muted)]">{description}</p> : null}
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-[var(--pro-text)] md:text-3xl xl:text-[2rem]">{title}</h1>
+        {description ? <p className="mt-2 max-w-4xl text-sm leading-6 text-[var(--pro-text-muted)] md:text-[15px]">{description}</p> : null}
       </div>
-      {action ? <div className="shrink-0">{action}</div> : null}
+      {action ? <div className="shrink-0 lg:self-start">{action}</div> : null}
     </div>
   );
 }
@@ -60,7 +60,6 @@ export function ProStatCard({
   value: string | number;
   hint?: string;
   tone: "orange" | "green" | "blue" | "slate";
-  /** Si défini, toute la carte devient un lien (navigation rapide). */
   href?: string;
 }) {
   const toneClass =
@@ -75,9 +74,9 @@ export function ProStatCard({
   const inner = (
     <>
       <p className="text-sm font-medium text-[var(--pro-text-soft)]">{title}</p>
-      <p className="mt-3 text-4xl font-semibold tracking-tight text-[var(--pro-text)]">{value}</p>
-      {hint ? <p className="mt-2 text-xs leading-5 text-[var(--pro-text-muted)]">{hint}</p> : null}
-      {href ? <p className="mt-3 text-xs font-semibold text-[var(--pro-accent)]">Ouvrir →</p> : null}
+      <p className="mt-4 text-3xl font-semibold tracking-tight text-[var(--pro-text)] sm:text-4xl">{value}</p>
+      {hint ? <p className="mt-3 text-xs leading-5 text-[var(--pro-text-muted)] sm:text-sm">{hint}</p> : null}
+      {href ? <p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--pro-accent)]">Ouvrir</p> : null}
     </>
   );
 
@@ -85,7 +84,7 @@ export function ProStatCard({
     return (
       <Link
         href={href}
-        className={`block rounded-[24px] border p-5 shadow-sm transition hover:brightness-[1.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--pro-accent)] ${toneClass}`}
+        className={`block rounded-[24px] border p-5 shadow-sm transition hover:-translate-y-0.5 hover:brightness-[1.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--pro-accent)] ${toneClass}`}
       >
         {inner}
       </Link>
@@ -97,7 +96,7 @@ export function ProStatCard({
 
 export function EmptyState({ message }: { message: string }) {
   return (
-    <p className="rounded-[20px] border border-dashed border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-8 text-center text-sm text-[var(--pro-text-muted)]">
+    <p className="rounded-[22px] border border-dashed border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-10 text-center text-sm text-[var(--pro-text-muted)]">
       {message}
     </p>
   );

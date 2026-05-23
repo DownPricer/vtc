@@ -48,8 +48,8 @@ export function ProNav() {
   }, []);
 
   return (
-    <div className="mb-6 overflow-hidden rounded-[28px] border border-[var(--pro-border)] bg-[var(--pro-panel)] shadow-[var(--pro-shadow)]">
-      <div className="flex flex-col gap-4 border-b border-[var(--pro-border)] px-5 py-5 md:flex-row md:items-center md:justify-between md:px-7">
+    <div className="mb-5 overflow-hidden rounded-[30px] border border-[var(--pro-border)] bg-[var(--pro-panel)] shadow-[var(--pro-shadow)] xl:mb-7">
+      <div className="flex flex-col gap-4 border-b border-[var(--pro-border)] px-5 py-5 md:flex-row md:items-center md:justify-between md:px-7 xl:px-8">
         <div className="flex min-w-0 items-start justify-between gap-3 md:block">
           <div className="min-w-0">
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--pro-accent)]">Espace professionnel</p>
@@ -85,7 +85,7 @@ export function ProNav() {
           </button>
         </div>
       </div>
-      <nav className="flex items-center gap-2 px-5 pb-5 pt-4 md:px-7">
+      <nav className="flex items-center gap-2 px-5 pb-5 pt-4 md:px-7 xl:px-8">
         <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto pb-0.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]">
           {mainLinks.map((link) => {
             const active =
@@ -98,7 +98,7 @@ export function ProNav() {
                 href={link.href}
                 className={`shrink-0 rounded-xl px-4 py-2.5 text-sm font-medium transition-all ${
                   active
-                    ? "border border-[var(--pro-accent)] bg-[var(--pro-accent-soft)] text-[var(--pro-accent)]"
+                    ? "border border-[var(--pro-accent)] bg-[var(--pro-accent-soft)] text-[var(--pro-accent)] shadow-sm"
                     : "border border-transparent text-[var(--pro-text-muted)] hover:border-[var(--pro-border)] hover:bg-[var(--pro-panel-muted)] hover:text-[var(--pro-text)]"
                 }`}
               >

@@ -63,14 +63,8 @@ export default function ProDashboardPage() {
           recentDevisWeekCount: summary.recentDevisWeekCount ?? 0,
           stripePaymentsPendingCount: summary.stripePaymentsPendingCount ?? 0,
         });
-        const sorted = requests
-          .slice()
-          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        setLatestRequests(
-          sorted
-            .filter((row) => !DASHBOARD_EXCLUDED.has(row.status))
-            .slice(0, 6)
-        );
+        const sorted = requests.slice().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setLatestRequests(sorted.filter((row) => !DASHBOARD_EXCLUDED.has(row.status)).slice(0, 6));
         setUpcoming(
           requests
             .filter((row) => row.kind === "reservation" && row.scheduledStart && ["accepted", "scheduled"].includes(row.status))
@@ -93,12 +87,16 @@ export default function ProDashboardPage() {
         <ProNav />
 
         <ProPanel>
-          <ProSectionHeader eyebrow="Pilotage" title="Tableau de bord" description="Suivez vos demandes, devis et réservations." />
+          <ProSectionHeader
+            eyebrow="Pilotage"
+            title="Tableau de bord"
+            description="Suivez vos demandes, devis et réservations dans un espace plus lisible, mieux structuré et plus agréable à parcourir."
+          />
         </ProPanel>
 
         {error ? <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-4">
           <ProStatCard
             title="Demandes en attente"
             value={data?.pendingCount ?? 0}
@@ -109,7 +107,7 @@ export default function ProDashboardPage() {
           <ProStatCard
             title="Réservations à venir"
             value={data?.upcomingReservationCount ?? 0}
-            hint="Réservations acceptées ou planifiées (14 jours)."
+            hint="Réservations acceptées ou planifiées sur les prochains jours."
             tone="green"
             href="/pro/calendrier#pro-cal-upcoming"
           />
@@ -123,24 +121,24 @@ export default function ProDashboardPage() {
           <ProStatCard
             title="Paiements en attente"
             value={data?.stripePaymentsPendingCount ?? 0}
-            hint="Liens Stripe en cours ou envoyés au client."
+            hint="Liens Stripe en cours ou déjà envoyés au client."
             tone="slate"
             href="/pro/transactions?status=LINK_SENT"
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.3fr_1fr]">
+        <div className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,0.95fr)]">
           <ProPanel>
             <ProSectionHeader
               title="Dernières demandes"
-              description="Contacts, devis et réservations actifs (hors archivés / terminés / annulés)."
+              description="Contacts, devis et réservations actifs, présentés avec plus d’air et des actions plus évidentes."
               action={
                 <Link href="/pro/demandes" className="text-sm font-semibold text-[var(--pro-accent)] hover:brightness-110">
                   Voir toutes les demandes
                 </Link>
               }
             />
-            <div className="mt-5 space-y-3">
+            <div className="mt-6 grid grid-cols-1 gap-3 xl:gap-4">
               {latestRequests.map((item) => {
                 const journey = getJourneySummary(item.flatPayload);
                 const tarif = tarifValue(item);
@@ -148,7 +146,7 @@ export default function ProDashboardPage() {
                   <Link
                     key={item.id}
                     href={`/pro/demandes/${item.id}`}
-                    className="block rounded-[22px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4 transition hover:border-orange-300/40 hover:bg-[var(--pro-accent-soft)]"
+                    className="block rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4 transition hover:border-orange-300/40 hover:bg-[var(--pro-accent-soft)] xl:px-5 xl:py-5"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -161,7 +159,7 @@ export default function ProDashboardPage() {
                         {labelStatus(item.status)}
                       </span>
                     </div>
-                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[var(--pro-text-soft)]">
+                    <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[var(--pro-text-soft)]">
                       {journey ? <span>{journey}</span> : null}
                       {tarif ? <span className="font-semibold text-[var(--pro-accent)]">{tarif}</span> : null}
                       <span className="font-medium text-[var(--pro-accent)]">Ouvrir</span>
@@ -174,13 +172,13 @@ export default function ProDashboardPage() {
           </ProPanel>
 
           <ProPanel>
-            <ProSectionHeader title="Prochaines réservations" description="Les réservations à surveiller en priorité." />
-            <div className="mt-5 space-y-3">
+            <ProSectionHeader title="Prochaines réservations" description="Les dossiers à surveiller en priorité, avec une lecture plus directe." />
+            <div className="mt-6 space-y-3">
               {upcoming.map((item) => (
                 <Link
                   key={item.id}
                   href={`/pro/demandes/${item.id}`}
-                  className="block rounded-[22px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4 transition hover:border-emerald-300/40 hover:bg-[var(--pro-accent-soft)]"
+                  className="block rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4 transition hover:border-emerald-300/40 hover:bg-[var(--pro-accent-soft)] xl:px-5 xl:py-5"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
@@ -209,12 +207,12 @@ export default function ProDashboardPage() {
               </Link>
             }
           />
-          <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-4">
             {recentDevis.map((item) => (
               <Link
                 key={item.id}
                 href={`/pro/demandes/${item.id}`}
-                className="rounded-[22px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4 transition hover:border-orange-300/40 hover:bg-[var(--pro-accent-soft)]"
+                className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4 transition hover:border-orange-300/40 hover:bg-[var(--pro-accent-soft)] xl:px-5 xl:py-5"
               >
                 <div className="flex items-start justify-between gap-3">
                   <p className="font-semibold text-[var(--pro-text)]">{getDisplayName(item.clientName)}</p>

@@ -298,7 +298,7 @@ export function ProPaymentsClient() {
                   <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-rose-800">{stripeCardError}</p>
                 ) : null}
 
-                <div className="rounded-[22px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
+                <div className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-5 py-5">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-accent)]">Statut</p>
                     {isReadyToCharge(stripeUi) ? (
@@ -309,7 +309,7 @@ export function ProPaymentsClient() {
                   </div>
                   <p className="mt-2 text-lg font-semibold text-[var(--pro-text)]">{stripeHeadline.title}</p>
                   <p className="mt-1 text-sm text-[var(--pro-text-muted)]">{stripeHeadline.hint}</p>
-                  <dl className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <dl className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     <div>
                       <dt className="text-xs text-[var(--pro-text-soft)]">Paiements par carte</dt>
                       <dd className="font-medium text-[var(--pro-text)]">{stripeUi.chargesEnabled ? "Oui" : "Non"}</dd>
@@ -406,7 +406,7 @@ export function ProPaymentsClient() {
                 </fieldset>
 
                 {paymentMode === "DEPOSIT" ? (
-                  <div className="space-y-4 rounded-[22px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
+                  <div className="space-y-4 rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-5 py-5">
                     <p className="text-sm font-medium text-[var(--pro-text)]">Type d’acompte</p>
                     <label className="flex items-center gap-2">
                       <input

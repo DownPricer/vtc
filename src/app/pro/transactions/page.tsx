@@ -156,7 +156,7 @@ function ProTransactionsContent() {
         {error ? <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
 
         <ProPanel>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-4">
             <div className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Total encaissé</p>
               <p className="mt-2 text-lg font-bold text-[var(--pro-text)]">
@@ -173,7 +173,7 @@ function ProTransactionsContent() {
               <p className="mt-2 text-lg font-bold text-[var(--pro-text)]">{data?.summary.pendingCheckoutCount ?? "—"}</p>
               <p className="mt-1 text-[11px] text-[var(--pro-text-soft)]">Lien envoyé ou en cours</p>
             </div>
-            <div className="col-span-2 rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4 lg:col-span-1">
+            <div className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Échecs / expirés</p>
               <p className="mt-2 text-lg font-bold text-[var(--pro-text)]">
                 {data ? (data.summary.failedCount ?? 0) + (data.summary.expiredCount ?? 0) : "—"}
@@ -205,7 +205,7 @@ function ProTransactionsContent() {
             </div>
           </div>
 
-          <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12">
+          <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-12">
             <select
               value={status}
               onChange={(e) => {
@@ -213,7 +213,7 @@ function ProTransactionsContent() {
                 setStatus(v);
                 pushQuery({ status: v, from, to });
               }}
-              className="min-w-0 rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel)] px-4 py-3 text-sm text-[var(--pro-text)] lg:col-span-4"
+              className="min-w-0 rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel)] px-4 py-3 text-sm text-[var(--pro-text)] xl:col-span-4"
             >
               {STATUS_OPTIONS.map((o) => (
                 <option key={o.value || "all"} value={o.value}>
@@ -229,7 +229,7 @@ function ProTransactionsContent() {
                 setFrom(v);
                 pushQuery({ status, from: v, to });
               }}
-              className="min-w-0 rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel)] px-4 py-3 text-sm text-[var(--pro-text)] lg:col-span-4"
+              className="min-w-0 rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel)] px-4 py-3 text-sm text-[var(--pro-text)] xl:col-span-4"
             />
             <input
               type="date"
@@ -239,7 +239,7 @@ function ProTransactionsContent() {
                 setTo(v);
                 pushQuery({ status, from, to: v });
               }}
-              className="min-w-0 rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel)] px-4 py-3 text-sm text-[var(--pro-text)] lg:col-span-4"
+              className="min-w-0 rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel)] px-4 py-3 text-sm text-[var(--pro-text)] xl:col-span-4"
             />
           </div>
         </ProPanel>
@@ -249,7 +249,7 @@ function ProTransactionsContent() {
           {!busy && !items.length ? <EmptyState message="Aucun paiement pour ces filtres." /> : null}
           {!busy && items.length > 0 ? (
             <>
-              <div className="hidden md:block min-w-0 overflow-hidden">
+              <div className="hidden xl:block min-w-0 overflow-hidden">
                 <table className="w-full min-w-0 table-fixed border-collapse text-left text-sm">
                   <thead className="border-b border-[var(--pro-border)] text-xs uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">
                     <tr>
@@ -298,7 +298,7 @@ function ProTransactionsContent() {
                 </table>
               </div>
 
-              <div className="space-y-3 md:hidden">
+              <div className="grid grid-cols-1 gap-3 xl:hidden 2xl:grid-cols-2">
                 {items.map((p) => (
                   <div key={p.id} className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
                     <div className="flex flex-wrap items-start justify-between gap-2">

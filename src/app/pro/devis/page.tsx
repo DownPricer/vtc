@@ -65,7 +65,7 @@ export default function ProDevisListPage() {
         <ProPanel>
           <ProSectionHeader
             title="Devis"
-            description="Demandes de devis uniquement — ouvrez la fiche ou générez le document PDF."
+            description="Demandes de devis uniquement, avec des actions plus visibles pour ouvrir la fiche ou générer le document PDF."
             action={
               <Link href="/pro/demandes?kind=devis" className="text-sm font-semibold text-[var(--pro-accent)] hover:brightness-110">
                 Vue liste classique
@@ -102,7 +102,7 @@ export default function ProDevisListPage() {
             return (
               <div
                 key={row.id}
-                className="flex flex-col gap-4 rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-4 rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4 sm:flex-row sm:items-center sm:justify-between xl:px-5 xl:py-5"
               >
                 <div className="min-w-0">
                   <p className="font-semibold text-[var(--pro-text)]">{getDisplayName(row.clientName)}</p>

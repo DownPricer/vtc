@@ -356,7 +356,7 @@ export default function ProDemandeDetailPage() {
             }
           />
           {item ? (
-            <div className="mt-5 flex flex-wrap items-center gap-3">
+            <div className="mt-6 flex flex-wrap items-center gap-3">
               <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${statusBadgeClass(item.status)}`}>
                 {labelStatus(item.status)}
               </span>
@@ -372,7 +372,8 @@ export default function ProDemandeDetailPage() {
         {!item ? (
           <EmptyState message="Chargement de la demande..." />
         ) : (
-          <>
+          <div className="grid grid-cols-1 gap-5 2xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
+            <div className="space-y-5">
             <ProPanel>
               <ProSectionHeader title="Client" description="Identité et contacts directs." />
               <div className="mt-5 space-y-3 text-sm">
@@ -653,6 +654,8 @@ export default function ProDemandeDetailPage() {
               </div>
             </ProPanel>
 
+            </div>
+            <div className="space-y-5">
             <ProPanel>
               <ProSectionHeader
                 title="Actions sur la demande"
@@ -726,7 +729,8 @@ export default function ProDemandeDetailPage() {
                 Enregistrer la note
               </button>
             </ProPanel>
-          </>
+            </div>
+          </div>
         )}
       </ProShell>
     </ProGuard>

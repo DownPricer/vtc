@@ -62,8 +62,8 @@ export function SettingsTabs({ active, onChange }: SettingsTabsProps) {
         <p className="mt-2 text-xs text-[var(--pro-text-muted)]">Section active : {activeLabel}</p>
       </div>
 
-      <div className="hidden rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/40 p-3 md:block">
-        <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
+      <div className="hidden rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/40 p-3 md:block">
+        <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
           {SETTINGS_TAB_IDS.map((id) => {
             const isActive = id === active;
             return (

@@ -108,7 +108,7 @@ export default function ProCalendrierPage() {
             title="Calendrier"
             description="Vue mensuelle des réservations acceptées et planifiées."
           />
-          <div className="mt-5 flex items-center justify-between gap-3">
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <button
               type="button"
               onClick={() => setMonthCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
@@ -133,7 +133,7 @@ export default function ProCalendrierPage() {
           {!items.length ? <EmptyState message="Aucune réservation planifiée." /> : null}
           {items.length ? (
             <>
-              <div className="hidden grid-cols-7 gap-2 md:grid">
+              <div className="hidden grid-cols-7 gap-3 xl:grid">
                 {weekDays.map((day) => (
                   <div key={day} className="rounded-xl bg-[var(--pro-panel-muted)] px-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.14em] text-[var(--pro-text-muted)]">
                     {day}
@@ -169,7 +169,7 @@ export default function ProCalendrierPage() {
                 ))}
               </div>
 
-              <div className="space-y-3 md:hidden">
+              <div className="grid grid-cols-1 gap-3 xl:hidden 2xl:grid-cols-2">
                 {grid
                   .filter((day) => day.items.length > 0)
                   .map((day) => (

@@ -93,20 +93,20 @@ export default function ProDemandesPage() {
         <ProPanel>
           <ProSectionHeader
             title="Demandes"
-            description="Filtrez vos contacts, devis et réservations puis ouvrez chaque fiche pour agir rapidement."
+            description="Filtrez vos contacts, devis et réservations, puis ouvrez chaque fiche dans une vue plus claire et plus confortable."
           />
 
-          <div className="mt-6 grid grid-cols-1 gap-3 lg:grid-cols-12">
+          <div className="mt-6 grid grid-cols-1 gap-3 xl:grid-cols-12">
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Rechercher par nom, e-mail ou téléphone"
-              className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm text-[var(--pro-text)] placeholder:text-[var(--pro-text-muted)] focus:border-[var(--pro-accent)] focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 lg:col-span-5"
+              className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm text-[var(--pro-text)] placeholder:text-[var(--pro-text-muted)] focus:border-[var(--pro-accent)] focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 xl:col-span-5"
             />
             <select
               value={kind}
               onChange={(e) => setKind(e.target.value)}
-              className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm text-[var(--pro-text)] focus:border-[var(--pro-accent)] focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 lg:col-span-3"
+              className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm text-[var(--pro-text)] focus:border-[var(--pro-accent)] focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 xl:col-span-3"
             >
               <option value="">Toutes</option>
               <option value="contact">Contacts</option>
@@ -116,7 +116,7 @@ export default function ProDemandesPage() {
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm text-[var(--pro-text)] focus:border-[var(--pro-accent)] focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 lg:col-span-4"
+              className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm text-[var(--pro-text)] focus:border-[var(--pro-accent)] focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 xl:col-span-4"
             >
               {STATUS_FILTERS.map((item) => (
                 <option key={item.value || "all"} value={item.value}>
@@ -129,7 +129,7 @@ export default function ProDemandesPage() {
 
         {error ? <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
 
-        <ProPanel className="hidden overflow-hidden md:block">
+        <ProPanel className="hidden overflow-hidden xl:block">
           <div className="overflow-x-auto">
             <table className="min-w-full text-left text-sm">
               <thead className="border-b border-[var(--pro-border)] text-xs uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">
@@ -152,43 +152,41 @@ export default function ProDemandesPage() {
                     : "";
                   const payLabel = labelLeadPaymentStatus(row.paymentStatus);
                   return (
-                    <tr key={row.id} className="border-b border-[var(--pro-border)]/70 last:border-b-0">
-                      <td className="px-4 py-4 align-top">
+                    <tr key={row.id} className="border-b border-[var(--pro-border)]/70 align-top last:border-b-0">
+                      <td className="px-4 py-5 align-top">
                         <p className="text-[var(--pro-text-muted)]">{formatDateTime(row.createdAt)}</p>
                       </td>
-                      <td className="px-4 py-4 align-top">
+                      <td className="px-4 py-5 align-top">
                         <p className="font-semibold text-[var(--pro-text)]">{labelKind(row.kind)}</p>
                       </td>
-                      <td className="px-4 py-4 align-top">
+                      <td className="px-4 py-5 align-top">
                         <p className="font-semibold text-[var(--pro-text)]">{getDisplayName(row.clientName)}</p>
                         {usefulText(row.clientPhone) ? <p className="mt-1 text-[var(--pro-text-soft)]">{usefulText(row.clientPhone)}</p> : null}
                         {usefulText(row.clientEmail) ? <p className="text-[var(--pro-text-muted)]">{usefulText(row.clientEmail)}</p> : null}
                       </td>
-                      <td className="px-4 py-4 align-top">
+                      <td className="px-4 py-5 align-top">
                         <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${statusBadgeClass(row.status)}`}>
                           {labelStatus(row.status)}
                         </span>
                       </td>
-                      <td className="px-4 py-4 align-top">
+                      <td className="px-4 py-5 align-top">
                         <span
                           className={`inline-flex max-w-[11rem] rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-tight ${clientOnlinePaymentPreferenceBadgeClass(row.clientWantsOnlinePayment)}`}
                         >
                           {labelClientOnlinePaymentPreference(row.clientWantsOnlinePayment)}
                         </span>
                       </td>
-                      <td className="px-4 py-4 align-top">
-                        <span
-                          className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${leadPaymentStatusBadgeClass(row.paymentStatus)}`}
-                        >
+                      <td className="px-4 py-5 align-top">
+                        <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${leadPaymentStatusBadgeClass(row.paymentStatus)}`}>
                           {payLabel}
                         </span>
                       </td>
-                      <td className="px-4 py-4 align-top">
+                      <td className="px-4 py-5 align-top">
                         {tarif ? <p className="font-semibold text-[var(--pro-accent)]">{tarif}</p> : <span className="text-[var(--pro-text-muted)]">—</span>}
                         {journey ? <p className="mt-1 text-xs text-[var(--pro-text-muted)]">{journey}</p> : null}
                       </td>
-                      <td className="px-4 py-4 align-top">
-                        <Link href={`/pro/demandes/${row.id}`} className="font-semibold text-[var(--pro-accent)] hover:brightness-110">
+                      <td className="px-4 py-5 align-top">
+                        <Link href={`/pro/demandes/${row.id}`} className="inline-flex rounded-xl bg-[var(--pro-accent-soft)] px-3 py-2 font-semibold text-[var(--pro-accent)] hover:brightness-110">
                           Ouvrir
                         </Link>
                       </td>
@@ -201,14 +199,14 @@ export default function ProDemandesPage() {
           </div>
         </ProPanel>
 
-        <div className="space-y-3 md:hidden">
+        <div className="grid grid-cols-1 gap-4 xl:hidden 2xl:grid-cols-2">
           {rows.map((row) => {
             const tarif = isUsefulValue(row.pricingResult && (row.pricingResult as Record<string, unknown>).tarif)
               ? formatPrice((row.pricingResult as Record<string, unknown>).tarif)
               : "";
             const payLabel = labelLeadPaymentStatus(row.paymentStatus);
             return (
-              <ProPanel key={row.id} className="p-4">
+              <ProPanel key={row.id} className="p-4 sm:p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="font-semibold text-[var(--pro-text)]">{getDisplayName(row.clientName)}</p>
@@ -235,8 +233,8 @@ export default function ProDemandesPage() {
                 {formatDateTime(row.scheduledStart) ? <p className="mt-1 text-sm text-[var(--pro-text-soft)]">Prévue : {formatDateTime(row.scheduledStart)}</p> : null}
                 {getJourneySummary(row.flatPayload) ? <p className="mt-2 text-sm text-[var(--pro-text-soft)]">{getJourneySummary(row.flatPayload)}</p> : null}
                 <div className="mt-4 flex items-center justify-between gap-3">
-                  <span className="text-sm font-semibold text-[var(--pro-accent)]">{tarif}</span>
-                  <Link href={`/pro/demandes/${row.id}`} className="text-sm font-semibold text-[var(--pro-accent)]">
+                  <span className="text-sm font-semibold text-[var(--pro-accent)]">{tarif || "—"}</span>
+                  <Link href={`/pro/demandes/${row.id}`} className="rounded-xl bg-[var(--pro-accent-soft)] px-3 py-2 text-sm font-semibold text-[var(--pro-accent)]">
                     Ouvrir
                   </Link>
                 </div>
