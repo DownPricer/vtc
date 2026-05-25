@@ -576,31 +576,35 @@ select.dashboard-input option,
 }
 
 .pro-theme-light {
-  --pro-bg: #f4f7fb;
-  --pro-bg-strong: #fff7ed;
-  --pro-panel: rgba(255, 255, 255, 0.96);
-  --pro-panel-muted: rgba(248, 250, 252, 0.9);
-  --pro-border: rgba(148, 163, 184, 0.22);
-  --pro-text: #0f172a;
+  --pro-bg: #edf3fb;
+  --pro-bg-strong: #fff4e8;
+  --pro-panel: rgba(255, 255, 255, 0.92);
+  --pro-panel-muted: rgba(244, 248, 252, 0.86);
+  --pro-panel-strong: rgba(236, 242, 249, 0.98);
+  --pro-border: rgba(148, 163, 184, 0.18);
+  --pro-border-strong: rgba(100, 116, 139, 0.24);
+  --pro-text: #102036;
   --pro-text-soft: #334155;
-  --pro-text-muted: #64748b;
-  --pro-accent: #ea580c;
-  --pro-accent-soft: rgba(249, 115, 22, 0.12);
-  --pro-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+  --pro-text-muted: #5f7086;
+  --pro-accent: #d97706;
+  --pro-accent-soft: rgba(217, 119, 6, 0.12);
+  --pro-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
 }
 
 .pro-theme-dark {
-  --pro-bg: #08111f;
+  --pro-bg: #07111f;
   --pro-bg-strong: #1a2333;
-  --pro-panel: rgba(9, 18, 33, 0.88);
-  --pro-panel-muted: rgba(15, 23, 42, 0.76);
+  --pro-panel: rgba(10, 18, 32, 0.88);
+  --pro-panel-muted: rgba(14, 24, 39, 0.82);
+  --pro-panel-strong: rgba(20, 31, 49, 0.96);
   --pro-border: rgba(148, 163, 184, 0.18);
+  --pro-border-strong: rgba(148, 163, 184, 0.28);
   --pro-text: #f8fafc;
   --pro-text-soft: #dbe4f0;
   --pro-text-muted: #94a3b8;
   --pro-accent: #fb923c;
   --pro-accent-soft: rgba(251, 146, 60, 0.16);
-  --pro-shadow: 0 24px 80px rgba(2, 6, 23, 0.38);
+  --pro-shadow: 0 24px 80px rgba(2, 6, 23, 0.4);
 }
 
 .chrome-switch-shell {

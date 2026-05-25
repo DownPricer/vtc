@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { clientRowsFromFlat, paiementRowsFromFlat, prestationRowsFromFlat } from "@/components/pro/flatPresentation";
 import { ProGuard } from "@/components/pro/ProGuard";
 import { ProNav } from "@/components/pro/ProNav";
-import { EmptyState, ProPanel, ProSectionHeader, ProShell } from "@/components/pro/ProUi";
+import { EmptyState, ProActionLink, ProAlert, ProPanel, ProSectionHeader, ProShell } from "@/components/pro/ProUi";
 import {
   actionButtonClass,
   buildStatusActionBanner,
@@ -116,21 +116,21 @@ function formatAmountFromCents(cents: number, currency: string): string {
 function paymentStatusExplanation(ps?: string | null): string {
   switch (ps) {
     case "NONE":
-      return "Aucun lien de paiement créé pour cette demande.";
+      return "Aucun lien de paiement cree pour cette demande.";
     case "PENDING":
-      return "Préparation du paiement : session en cours de création.";
+      return "Preparation du paiement : session en cours de creation.";
     case "LINK_SENT":
-      return "Lien de paiement envoyé — paiement en attente côté client.";
+      return "Lien de paiement envoye, paiement en attente cote client.";
     case "PAID":
-      return "Paiement validé.";
+      return "Paiement valide.";
     case "FAILED":
-      return "Paiement échoué.";
+      return "Paiement echoue.";
     case "EXPIRED":
-      return "Lien expiré.";
+      return "Lien expire.";
     case "CANCELLED":
-      return "Lien annulé.";
+      return "Lien annule.";
     case "REFUNDED":
-      return "Remboursé.";
+      return "Paiement rembourse.";
     default:
       return "";
   }
@@ -138,17 +138,48 @@ function paymentStatusExplanation(ps?: string | null): string {
 
 function bannerForPaymentLink(data: DemandePaymentLinkData, wantsEmail: boolean): string {
   const reused = data.reusedExistingCheckout === true;
-  const base = reused ? "Lien existant récupéré" : "Nouveau lien de paiement créé";
+  const base = reused ? "Lien existant recupere" : "Nouveau lien de paiement cree";
   if (wantsEmail && data.emailSent === true) {
-    return `${base} — e-mail envoyé au client.`;
+    return `${base}. E-mail envoye au client.`;
   }
   if (wantsEmail && data.emailSent === false) {
-    return `${base} — l’e-mail n’a pas pu être envoyé (${mapPaymentLinkEmailErrorCodeToFr(data.emailErrorCode ?? "")}).`;
+    return `${base}. L'e-mail n'a pas pu etre envoye (${mapPaymentLinkEmailErrorCodeToFr(data.emailErrorCode ?? "")}).`;
   }
   if (!wantsEmail) {
     return reused ? `${base}. Partagez le lien manuellement.` : `${base}.`;
   }
   return base;
+}
+
+function commentFromFlat(flat: Record<string, unknown>): string {
+  const raw = flat.Commentaires ?? flat.Observations;
+  return isUsefulValue(raw) ? String(raw).trim() : "";
+}
+
+function shouldConfirmStatus(next: LeadStatus): boolean {
+  return ["refused", "cancelled", "archived"].includes(next);
+}
+
+function confirmMessage(next: LeadStatus): string {
+  switch (next) {
+    case "refused":
+      return "Confirmer le refus de cette demande ?";
+    case "cancelled":
+      return "Confirmer l'annulation de cette demande ?";
+    case "archived":
+      return "Confirmer l'archivage de cette demande ?";
+    default:
+      return "Confirmer cette action ?";
+  }
+}
+
+function DetailCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">{label}</p>
+      <p className="mt-2 text-sm leading-6 text-[var(--pro-text)]">{value}</p>
+    </div>
+  );
 }
 
 export default function ProDemandeDetailPage() {
@@ -162,14 +193,12 @@ export default function ProDemandeDetailPage() {
   const [paymentBusy, setPaymentBusy] = useState(false);
   const [paymentError, setPaymentError] = useState("");
   const [sendPaymentEmail, setSendPaymentEmail] = useState(true);
-  /** Si le client a choisi « sur place », permet tout de même d’afficher les contrôles de lien. */
   const [allowPaymentLinkDespitePreference, setAllowPaymentLinkDespitePreference] = useState(false);
   const [lastCheckout, setLastCheckout] = useState<{
     url: string;
     amountCents: number;
     currency: string;
     mode: "full" | "deposit";
-    /** True si l’utilisateur a demandé l’envoi auto (sinon l’API renvoie aussi emailSent: false). */
     emailDeliveryRequested: boolean;
     emailSent?: boolean;
     emailErrorCode?: string;
@@ -206,12 +235,13 @@ export default function ProDemandeDetailPage() {
 
   useEffect(() => {
     if (!banner) return;
-    const timer = window.setTimeout(() => setBanner(""), 4500);
+    const timer = window.setTimeout(() => setBanner(""), 5000);
     return () => window.clearTimeout(timer);
   }, [banner]);
 
   async function patchStatus(next: LeadStatus) {
     if (!item) return;
+    if (shouldConfirmStatus(next) && !window.confirm(confirmMessage(next))) return;
     setBusy(true);
     setError("");
     try {
@@ -223,7 +253,7 @@ export default function ProDemandeDetailPage() {
       setBanner(buildStatusActionBanner(next, item.kind, meta));
       await load();
     } catch (e) {
-      setError(mapApiErrorToFr((e as Error).message) || "Impossible de mettre à jour la demande pour le moment.");
+      setError(mapApiErrorToFr((e as Error).message) || "Impossible de mettre a jour la demande pour le moment.");
     } finally {
       setBusy(false);
     }
@@ -237,7 +267,7 @@ export default function ProDemandeDetailPage() {
         method: "PATCH",
         body: JSON.stringify({ note }),
       });
-      setBanner("Note enregistrée.");
+      setBanner("Note enregistree.");
       await load();
     } catch (e) {
       setError(mapApiErrorToFr((e as Error).message));
@@ -248,9 +278,9 @@ export default function ProDemandeDetailPage() {
 
   async function handlePaymentLinkAction(forceNew: boolean) {
     if (!id || !item) return;
-    const blockedByPreference =
-      item.clientWantsOnlinePayment === false && !allowPaymentLinkDespitePreference && !forceNew;
+    const blockedByPreference = item.clientWantsOnlinePayment === false && !allowPaymentLinkDespitePreference && !forceNew;
     if (blockedByPreference) return;
+
     setPaymentError("");
     setPaymentBusy(true);
     try {
@@ -276,7 +306,7 @@ export default function ProDemandeDetailPage() {
       if (e instanceof ProPaymentsApiError) {
         setPaymentError(mapDemandePaymentLinkErrorToFr(e.code, e.message));
       } else {
-        setPaymentError(mapApiErrorToFr((e as Error).message) || "Impossible de créer le lien de paiement.");
+        setPaymentError(mapApiErrorToFr((e as Error).message) || "Impossible de creer le lien de paiement.");
       }
     } finally {
       setPaymentBusy(false);
@@ -284,11 +314,7 @@ export default function ProDemandeDetailPage() {
   }
 
   async function handleRecreatePaymentLink() {
-    if (
-      !confirm(
-        "Créer une nouvelle session de paiement Stripe ? Le client devra utiliser le nouveau lien ; les anciennes sessions ouvertes peuvent être invalidées."
-      )
-    ) {
+    if (!window.confirm("Creer une nouvelle session de paiement Stripe ? Le client devra utiliser le nouveau lien.")) {
       return;
     }
     setAllowPaymentLinkDespitePreference(true);
@@ -298,19 +324,24 @@ export default function ProDemandeDetailPage() {
   async function copyCheckoutUrl(url: string) {
     try {
       await navigator.clipboard.writeText(url);
-      setBanner("Lien copié dans le presse-papiers.");
+      setBanner("Lien copie dans le presse-papiers.");
     } catch {
-      setPaymentError("Impossible de copier automatiquement — sélectionnez l’URL manuellement.");
+      setPaymentError("Impossible de copier automatiquement le lien.");
     }
   }
 
   const flatPayload = useMemo(() => (item?.flatPayload ?? {}) as Record<string, unknown>, [item?.flatPayload]);
   const extrasClient = useMemo(() => clientRowsFromFlat(flatPayload), [flatPayload]);
-  const prestation = useMemo(() => prestationRowsFromFlat(flatPayload), [flatPayload]);
-  const paiementFlat = useMemo(() => paiementRowsFromFlat(flatPayload), [flatPayload]);
+  const prestationRows = useMemo(() => prestationRowsFromFlat(flatPayload), [flatPayload]);
+  const paymentFlatRows = useMemo(() => paiementRowsFromFlat(flatPayload), [flatPayload]);
+  const clientComment = useMemo(() => commentFromFlat(flatPayload), [flatPayload]);
+
+  const prestation = useMemo(
+    () => prestationRows.filter((row) => row.label !== "Commentaire client"),
+    [prestationRows]
+  );
 
   const paidPayment = useMemo(() => item?.payments?.find((p) => p.status === "PAID"), [item?.payments]);
-
   const pendingLinkPayment = useMemo(
     () => item?.payments?.find((p) => p.status === "LINK_SENT" || p.status === "PENDING"),
     [item?.payments]
@@ -326,411 +357,412 @@ export default function ProDemandeDetailPage() {
     const paymentStatusRaw = String(raw.paymentStatus ?? "");
     const paymentStatus = isUsefulValue(paymentStatusRaw) ? translateStatus(paymentStatusRaw) : "";
     return displayRows([
-      { label: "Montant annoncé (TTC)", value: raw.tarif ? formatPrice(raw.tarif) : "" },
-      { label: "Règlement indiqué par le client", value: paymentMethod },
-      { label: "État saisi sur le formulaire", value: paymentStatus },
+      { label: "Montant annonce", value: raw.tarif ? formatPrice(raw.tarif) : "" },
+      { label: "Reglement choisi", value: paymentMethod },
+      { label: "Etat saisi sur le formulaire", value: paymentStatus },
     ]);
   }, [item]);
 
-  const kind = item?.kind ?? "";
-  const status = item?.status ?? "";
-  const actions = statusActionList(status, kind);
+  const summaryCards = useMemo(
+    () => [
+      { label: "Type", value: item ? labelKind(item.kind) : "" },
+      { label: "Statut", value: item ? labelStatus(item.status) : "" },
+      { label: "Montant", value: pricing[0]?.value || "Aucun montant" },
+      { label: "Paiement", value: item ? labelLeadPaymentStatus(item.paymentStatus) : "" },
+    ],
+    [item, pricing]
+  );
+
+  const latestHistory = item?.history?.[0] ?? null;
+  const actions = statusActionList(item?.status ?? "", item?.kind ?? "");
 
   return (
     <ProGuard>
       <ProShell>
         <ProNav />
 
-        <ProPanel>
-          <ProSectionHeader
-            eyebrow="Fiche demande"
-            title={item ? `${labelKind(item.kind)} — ${getDisplayName(item.clientName)}` : "Demande"}
-            description="Vue structurée : client, trajet, encaissement Stripe et actions."
-            action={
-              <Link
-                href="/pro/demandes"
-                className="inline-flex rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-2 text-sm font-medium text-[var(--pro-text-soft)] hover:bg-[var(--pro-accent-soft)]"
-              >
-                Retour
-              </Link>
-            }
-          />
-          {item ? (
-            <div className="mt-6 flex flex-wrap items-center gap-3">
-              <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${statusBadgeClass(item.status)}`}>
-                {labelStatus(item.status)}
-              </span>
-              <span className="text-sm text-[var(--pro-text-muted)]">Référence : {pickReference(flatPayload, item.id)}</span>
-              <span className="text-sm text-[var(--pro-text-muted)]">Créée le {formatDateTime(item.createdAt)}</span>
-            </div>
-          ) : null}
-        </ProPanel>
-
-        {banner ? <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{banner}</p> : null}
-        {error ? <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
-
         {!item ? (
-          <EmptyState message="Chargement de la demande..." />
+          <>
+            {error ? <ProAlert tone="error">{error}</ProAlert> : null}
+            <EmptyState message="Chargement de la demande..." />
+          </>
         ) : (
-          <div className="grid grid-cols-1 gap-5 2xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
-            <div className="space-y-5">
-            <ProPanel>
-              <ProSectionHeader title="Client" description="Identité et contacts directs." />
-              <div className="mt-5 space-y-3 text-sm">
-                <p className="text-lg font-semibold text-[var(--pro-text)]">{getDisplayName(item.clientName)}</p>
-                {isUsefulValue(item.clientPhone) ? (
-                  <a
-                    href={`tel:${String(item.clientPhone).replace(/\s/g, "")}`}
-                    className="block font-medium text-[var(--pro-accent)] hover:brightness-110"
-                  >
-                    {item.clientPhone}
-                  </a>
-                ) : null}
-                {isUsefulValue(item.clientEmail) ? (
-                  <a href={`mailto:${item.clientEmail}`} className="block text-[var(--pro-text-soft)] hover:text-[var(--pro-accent)]">
-                    {item.clientEmail}
-                  </a>
-                ) : null}
-              </div>
-            </ProPanel>
-
-            {extrasClient.length ? (
-              <ProPanel>
-                <ProSectionHeader title="Coordonnées complémentaires" description="Société, organisation ou précisions laissées par le client." />
-                <div className="mt-5 space-y-3">
-                  {extrasClient.map((row) => (
-                    <div key={row.label} className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--pro-text-muted)]">{row.label}</p>
-                      <p className="mt-1 text-[var(--pro-text)]">{row.value}</p>
-                    </div>
-                  ))}
-                </div>
-              </ProPanel>
-            ) : null}
-
-            <ProPanel>
-              <ProSectionHeader title="Trajet et prestation" description="Détail du service demandé." />
-              {prestation.length ? (
-                <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-                  {prestation.map((row) => (
-                    <div key={row.label} className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--pro-text-muted)]">{row.label}</p>
-                      <p className="mt-1 text-sm text-[var(--pro-text)]">{row.value}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <EmptyState message="Aucune information de prestation disponible." />
-              )}
-            </ProPanel>
-
-            <ProPanel>
-              <ProSectionHeader title="Tarif et règlement (formulaire)" description="Montants et préférences indiqués par le client lors de la demande." />
-              <div className="mt-5 space-y-3">
-                {pricing.map((row) => (
-                  <div key={row.label} className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--pro-text-muted)]">{row.label}</p>
-                    <p className="mt-1 text-[var(--pro-text)]">{row.value}</p>
-                  </div>
-                ))}
-                {paiementFlat.map((row) => (
-                  <div key={row.label} className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--pro-text-muted)]">{row.label}</p>
-                    <p className="mt-1 text-[var(--pro-text)]">{row.value}</p>
-                  </div>
-                ))}
-                {!pricing.length && !paiementFlat.length ? <EmptyState message="Aucune information tarifaire sur la demande." /> : null}
-              </div>
-            </ProPanel>
-
+          <>
             <ProPanel>
               <ProSectionHeader
-                title="Paiement en ligne (Stripe)"
-                description="Paiement sécurisé par carte. L’état affiché est synchronisé avec votre compte Stripe."
+                eyebrow="Fiche demande"
+                title={`${labelKind(item.kind)} · ${getDisplayName(item.clientName)}`}
+                description="Vue operateur restructuree pour lire rapidement le dossier, agir sur le statut et suivre le paiement."
+                action={<ProActionLink href="/pro/demandes">Retour aux demandes</ProActionLink>}
               />
 
-              <div className="mt-5 flex flex-wrap items-center gap-2">
-                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Préférence client</span>
-                <span
-                  className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${clientOnlinePaymentPreferenceBadgeClass(item.clientWantsOnlinePayment)}`}
-                >
-                  {labelClientOnlinePaymentPreference(item.clientWantsOnlinePayment)}
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${statusBadgeClass(item.status)}`}>
+                  {labelStatus(item.status)}
                 </span>
-                {item.clientWantsOnlinePayment === true ? (
-                  <span className="text-xs text-[var(--pro-text-soft)]">Le client a demandé un lien s&apos;il souhaite payer en ligne après accord.</span>
-                ) : null}
+                <span className="rounded-full border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-3 py-1 text-xs font-semibold text-[var(--pro-text-soft)]">
+                  Reference : {pickReference(flatPayload, item.id)}
+                </span>
+                <span className="rounded-full border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-3 py-1 text-xs font-semibold text-[var(--pro-text-soft)]">
+                  Creee le {formatDateTime(item.createdAt)}
+                </span>
               </div>
 
-              <div className="mt-5 space-y-4 text-sm text-[var(--pro-text-muted)]">
-                <p>Les paiements en ligne transitent par Stripe ; aucune carte n&apos;est saisie sur votre site.</p>
-
-                <div className="rounded-[22px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-accent)]">État du paiement en ligne</p>
-                  <p className="mt-3 inline-flex">
-                    <span
-                      className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${leadPaymentStatusBadgeClass(item.paymentStatus)}`}
-                    >
-                      {labelLeadPaymentStatus(item.paymentStatus)}
-                    </span>
-                  </p>
-                  {paymentStatusExplanation(item.paymentStatus) ? (
-                    <p className="mt-3 text-xs text-[var(--pro-text-soft)]">{paymentStatusExplanation(item.paymentStatus)}</p>
-                  ) : null}
-                </div>
-
-                {item.paymentStatus === "PAID" && paidPayment ? (
-                  <div className="rounded-[22px] border border-emerald-200 bg-emerald-50 px-4 py-4 text-emerald-950">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">Paiement validé</p>
-                    <p className="mt-2 text-sm">
-                      Montant encaissé :{" "}
-                      <span className="font-semibold">{formatAmountFromCents(paidPayment.amount, paidPayment.currency)}</span>
-                    </p>
-                    {paidPayment.stripeReceiptUrl?.trim() ? (
-                      <a
-                        href={paidPayment.stripeReceiptUrl.trim()}
-                        target="_blank"
-                        rel="noreferrer"
-                        className={`mt-4 inline-flex rounded-xl px-4 py-2.5 text-sm font-semibold ${actionButtonClass("primary")}`}
-                      >
-                        Voir le reçu Stripe
-                      </a>
-                    ) : (
-                      <p className="mt-2 text-xs text-emerald-800">Le reçu Stripe sera disponible dès qu&apos;il est émis par Stripe.</p>
-                    )}
-                  </div>
-                ) : (
-                  <>
-                    {item.clientWantsOnlinePayment === false ? (
-                      <div className="rounded-[22px] border border-amber-200 bg-amber-50 px-4 py-4 text-amber-950">
-                        <p className="font-semibold">Paiement en ligne non demandé par le client</p>
-                        <p className="mt-2 text-sm text-amber-900">
-                          La création de lien est masquée par défaut. Cochez l&apos;option ci-dessous uniquement si vous l&apos;avez convenu avec le client.
-                        </p>
-                        <label className="mt-4 flex cursor-pointer items-start gap-3">
-                          <input
-                            type="checkbox"
-                            className="mt-1 h-4 w-4 shrink-0 rounded border-[var(--pro-border)]"
-                            checked={allowPaymentLinkDespitePreference}
-                            onChange={(e) => setAllowPaymentLinkDespitePreference(e.target.checked)}
-                          />
-                          <span className="text-sm font-medium">Créer quand même un lien de paiement en ligne</span>
-                        </label>
-                      </div>
-                    ) : null}
-
-                    {item.clientWantsOnlinePayment === false && !allowPaymentLinkDespitePreference ? null : (
-                      <>
-                        {paymentError ? (
-                          <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{paymentError}</p>
-                        ) : null}
-
-                        <div className="rounded-[22px] border border-[var(--pro-border)] bg-[var(--pro-panel)] px-4 py-4">
-                          <label className={`flex cursor-pointer items-start gap-3 ${!hasValidClientEmail(item) ? "cursor-not-allowed opacity-80" : ""}`}>
-                            <input
-                              type="checkbox"
-                              className="mt-1 h-4 w-4 shrink-0 rounded border-[var(--pro-border)] disabled:cursor-not-allowed"
-                              checked={sendPaymentEmail && hasValidClientEmail(item)}
-                              disabled={!hasValidClientEmail(item)}
-                              onChange={(e) => setSendPaymentEmail(e.target.checked)}
-                            />
-                            <span>
-                              <span className="font-medium text-[var(--pro-text)]">Envoyer automatiquement le lien par e-mail au client</span>
-                              {!hasValidClientEmail(item) ? (
-                                <span className="mt-1 block text-xs text-[var(--pro-text-soft)]">Aucun e-mail client disponible.</span>
-                              ) : null}
-                            </span>
-                          </label>
-                        </div>
-
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-                          <div className="flex-1">
-                            <label htmlFor="payment-mode-select" className="block text-xs font-semibold text-[var(--pro-text-soft)]">
-                              Mode de paiement Stripe
-                            </label>
-                            <select
-                              id="payment-mode-select"
-                              value={paymentModeChoice}
-                              onChange={(e) => setPaymentModeChoice(e.target.value as "full" | "deposit")}
-                              className="mt-1 w-full rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel)] px-4 py-3 text-sm text-[var(--pro-text)] focus:border-[var(--pro-accent)] focus:outline-none"
-                            >
-                              <option value="full">Paiement total</option>
-                              <option value="deposit">Acompte</option>
-                            </select>
-                          </div>
-                          <button
-                            type="button"
-                            disabled={
-                              paymentBusy ||
-                              busy ||
-                              (item.clientWantsOnlinePayment === false && !allowPaymentLinkDespitePreference)
-                            }
-                            onClick={() => void handlePaymentLinkAction(false)}
-                            className={`rounded-xl px-5 py-3 text-sm font-semibold transition disabled:opacity-50 ${actionButtonClass("primary")}`}
-                          >
-                            {paymentBusy
-                              ? checkoutUrlToShow
-                                ? "Récupération…"
-                                : "Création…"
-                              : checkoutUrlToShow
-                                ? "Récupérer / ouvrir le lien"
-                                : "Créer le lien de paiement"}
-                          </button>
-                        </div>
-
-                        {checkoutUrlToShow ? (
-                          <div className="rounded-[22px] border border-emerald-300/30 bg-[var(--pro-panel-muted)] px-4 py-4">
-                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                              {item.paymentStatus === "LINK_SENT"
-                                ? "Lien envoyé / paiement en attente"
-                                : lastCheckout?.reusedExistingCheckout === false
-                                  ? "Lien Checkout"
-                                  : "Lien Checkout"}
-                            </p>
-                            <p className="mt-2 text-sm font-medium text-emerald-900">
-                              {lastCheckout?.reusedExistingCheckout === true
-                                ? "Lien existant récupéré — aucune nouvelle session créée."
-                                : lastCheckout?.reusedExistingCheckout === false
-                                  ? "Nouvelle session Stripe générée."
-                                  : "Session Stripe disponible pour cette demande."}
-                            </p>
-
-                            {lastCheckout?.emailDeliveryRequested && lastCheckout.emailSent === true ? (
-                              <p className="mt-2 text-sm text-emerald-800">E-mail envoyé au client.</p>
-                            ) : null}
-                            {lastCheckout?.emailDeliveryRequested && lastCheckout.emailSent === false ? (
-                              <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
-                                <p className="font-medium">Lien disponible, mais e-mail non envoyé</p>
-                                <p className="mt-1 text-amber-900">{mapPaymentLinkEmailErrorCodeToFr(lastCheckout.emailErrorCode ?? "")}</p>
-                              </div>
-                            ) : null}
-
-                            <p className="mt-3 text-sm text-[var(--pro-text)]">
-                              Montant :{" "}
-                              <span className="font-semibold text-[var(--pro-accent)]">
-                                {formatAmountFromCents(
-                                  lastCheckout?.amountCents ?? pendingLinkPayment?.amount ?? 0,
-                                  lastCheckout?.currency ?? pendingLinkPayment?.currency ?? "eur"
-                                )}
-                              </span>{" "}
-                              · Mode :{" "}
-                              <span className="font-medium">
-                                {lastCheckout?.mode === "deposit" || pendingLinkPayment?.mode === "DEPOSIT"
-                                  ? "Acompte"
-                                  : "Paiement total"}
-                              </span>
-                            </p>
-                            <p className="mt-2 break-all font-mono text-xs text-[var(--pro-text-soft)]">{checkoutUrlToShow}</p>
-                            <div className="mt-4 flex flex-wrap gap-2">
-                              <button
-                                type="button"
-                                onClick={() => void copyCheckoutUrl(checkoutUrlToShow)}
-                                className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition ${actionButtonClass("neutral")}`}
-                              >
-                                Copier le lien
-                              </button>
-                              <a
-                                href={checkoutUrlToShow}
-                                target="_blank"
-                                rel="noreferrer"
-                                className={`inline-flex rounded-xl px-4 py-2.5 text-sm font-semibold transition ${actionButtonClass("primary")}`}
-                              >
-                                Ouvrir le lien
-                              </a>
-                              <button
-                                type="button"
-                                disabled={paymentBusy || busy}
-                                onClick={() => void handleRecreatePaymentLink()}
-                                className={`rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel)] px-4 py-2.5 text-sm font-semibold text-[var(--pro-text-soft)] transition hover:bg-[var(--pro-accent-soft)] disabled:opacity-50`}
-                              >
-                                Recréer un lien
-                              </button>
-                            </div>
-                          </div>
-                        ) : null}
-                      </>
-                    )}
-                  </>
-                )}
-              </div>
-            </ProPanel>
-
-            </div>
-            <div className="space-y-5">
-            <ProPanel>
-              <ProSectionHeader
-                title="Actions sur la demande"
-                description="Accepter ou refuser une proposition, clôturer le dossier ou l’archiver. Un e-mail peut être envoyé au client selon le cas."
-              />
-              <div className="mt-5 flex flex-wrap gap-3">
+              <div className="mt-6 flex flex-wrap gap-3">
                 {actions.map((action) => (
                   <button
                     key={action.nextStatus}
                     type="button"
                     disabled={busy}
-                    onClick={() => patchStatus(action.nextStatus as LeadStatus)}
-                    className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50 ${actionButtonClass(action.intent)}`}
+                    onClick={() => void patchStatus(action.nextStatus as LeadStatus)}
+                    className={`rounded-2xl px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50 ${actionButtonClass(action.intent)}`}
                   >
                     {translateAction(action.action)}
                   </button>
                 ))}
               </div>
-              {(kind === "devis" || kind === "reservation") && (item.customerDecisionMailSentAt || item.customerDecisionMailLastError) ? (
-                <div className="mt-4 rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm text-[var(--pro-text-soft)]">
-                  {item.customerDecisionMailSentAt ? <p>Le client a été notifié par e-mail le {formatDateTime(item.customerDecisionMailSentAt)}.</p> : null}
-                  {item.customerDecisionMailLastError ? <p className="text-rose-700">La demande a été mise à jour, mais l&apos;e-mail client n&apos;a pas pu être envoyé.</p> : null}
-                </div>
-              ) : null}
             </ProPanel>
 
-            <ProPanel>
-              <ProSectionHeader title="Historique" description="Chronologie des statuts et actions sur ce dossier." />
-              <div className="mt-5 space-y-3">
-                {item.history.map((row) => (
-                  <div key={row.id} className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
-                    <p className="text-sm text-[var(--pro-text-soft)]">
-                      <span className="font-medium text-[var(--pro-text-muted)]">{formatDateTime(row.createdAt)}</span>
-                      {" · "}
-                      {row.previousStatus ? `${labelStatus(row.previousStatus)} → ` : "Création → "}
-                      {labelStatus(row.newStatus)}
-                    </p>
-                    {row.changedByUser?.email ? <p className="mt-2 text-xs text-[var(--pro-text-muted)]">Opérateur : {row.changedByUser.email}</p> : null}
-                    {isUsefulValue(row.note) ? <p className="mt-2 text-sm text-[var(--pro-text-soft)]">{row.note}</p> : null}
+            {banner ? <ProAlert tone="success">{banner}</ProAlert> : null}
+            {error ? <ProAlert tone="error">{error}</ProAlert> : null}
+
+            <div className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,1.32fr)_380px]">
+              <div className="space-y-6">
+                <ProPanel>
+                  <ProSectionHeader title="Resume operationnel" description="Les informations essentielles a lire en premier." />
+                  <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    {summaryCards.map((card) => (
+                      <DetailCard key={card.label} label={card.label} value={card.value} />
+                    ))}
                   </div>
-                ))}
-                {!item.history.length ? <EmptyState message="Aucun historique disponible." /> : null}
-              </div>
-            </ProPanel>
+                </ProPanel>
 
-            <ProPanel>
-              <ProSectionHeader
-                title="Devis et documents"
-                description="Document professionnel A4, prêt à imprimer ou enregistrer en PDF (via la boîte d’impression du navigateur)."
-              />
-              <div className="mt-5 flex flex-wrap gap-3">
-                <Link
-                  href={`/pro/demandes/${item.id}/devis`}
-                  className={`inline-flex rounded-xl px-5 py-3 text-sm font-semibold transition ${actionButtonClass("primary")}`}
-                >
-                  Imprimer / télécharger en PDF
-                </Link>
-              </div>
-            </ProPanel>
+                <ProPanel>
+                  <ProSectionHeader title="Trajet et prestation" description="Details du service demande, organises de facon plus lisible." />
+                  {prestation.length ? (
+                    <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+                      {prestation.map((row) => (
+                        <DetailCard key={`${row.label}-${row.value}`} label={row.label} value={row.value} />
+                      ))}
+                    </div>
+                  ) : (
+                    <EmptyState message="Aucune information de prestation disponible." />
+                  )}
+                </ProPanel>
 
-            <ProPanel>
-              <ProSectionHeader title="Note interne" description="Visible uniquement dans l’espace professionnel." />
-              <textarea
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                rows={5}
-                placeholder="Ajoutez une note utile pour votre équipe."
-                className="mt-5 w-full rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm text-[var(--pro-text)] placeholder:text-[var(--pro-text-muted)] focus:border-[var(--pro-accent)] focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
-              />
-              <button type="button" disabled={busy} onClick={saveNote} className={`mt-4 rounded-xl px-5 py-2.5 text-sm font-semibold transition disabled:opacity-50 ${actionButtonClass("primary")}`}>
-                Enregistrer la note
-              </button>
-            </ProPanel>
+                {clientComment ? (
+                  <ProPanel>
+                    <ProSectionHeader title="Commentaire client" description="Message libre laisse au moment de la demande." />
+                    <div className="mt-6 rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-5 py-5 text-sm leading-7 text-[var(--pro-text-soft)]">
+                      {clientComment}
+                    </div>
+                  </ProPanel>
+                ) : null}
+
+                <ProPanel>
+                  <ProSectionHeader
+                    title="Tarif et paiement"
+                    description="Montants annonces, preference du client et pilotage du paiement en ligne."
+                  />
+
+                  <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-2">
+                    <div className="space-y-4">
+                      {pricing.map((row) => (
+                        <DetailCard key={row.label} label={row.label} value={row.value} />
+                      ))}
+                      {paymentFlatRows.map((row) => (
+                        <DetailCard key={row.label} label={row.label} value={row.value} />
+                      ))}
+                      {!pricing.length && !paymentFlatRows.length ? <EmptyState message="Aucune information tarifaire disponible." /> : null}
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-5 py-5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Preference client</span>
+                          <span
+                            className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${clientOnlinePaymentPreferenceBadgeClass(item.clientWantsOnlinePayment)}`}
+                          >
+                            {labelClientOnlinePaymentPreference(item.clientWantsOnlinePayment)}
+                          </span>
+                        </div>
+                        <div className="mt-4">
+                          <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${leadPaymentStatusBadgeClass(item.paymentStatus)}`}>
+                            {labelLeadPaymentStatus(item.paymentStatus)}
+                          </span>
+                          {paymentStatusExplanation(item.paymentStatus) ? (
+                            <p className="mt-3 text-sm leading-6 text-[var(--pro-text-soft)]">{paymentStatusExplanation(item.paymentStatus)}</p>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      {item.paymentStatus === "PAID" && paidPayment ? (
+                        <div className="rounded-[24px] border border-emerald-200 bg-emerald-50 px-5 py-5 text-emerald-950">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">Paiement valide</p>
+                          <p className="mt-3 text-sm">
+                            Montant encaisse : <span className="font-semibold">{formatAmountFromCents(paidPayment.amount, paidPayment.currency)}</span>
+                          </p>
+                          {paidPayment.stripeReceiptUrl?.trim() ? (
+                            <a
+                              href={paidPayment.stripeReceiptUrl.trim()}
+                              target="_blank"
+                              rel="noreferrer"
+                              className={`mt-4 inline-flex rounded-2xl px-4 py-2.5 text-sm font-semibold ${actionButtonClass("primary")}`}
+                            >
+                              Voir le recu Stripe
+                            </a>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <>
+                          {item.clientWantsOnlinePayment === false ? (
+                            <div className="rounded-[24px] border border-amber-200 bg-amber-50 px-5 py-5 text-amber-950">
+                              <p className="font-semibold">Paiement en ligne non demande par le client</p>
+                              <p className="mt-2 text-sm leading-6 text-amber-900">
+                                Le lien de paiement est masque par defaut. Activez-le seulement si cela a ete convenu avec le client.
+                              </p>
+                              <label className="mt-4 flex cursor-pointer items-start gap-3">
+                                <input
+                                  type="checkbox"
+                                  className="mt-1 h-4 w-4 shrink-0 rounded border-[var(--pro-border)]"
+                                  checked={allowPaymentLinkDespitePreference}
+                                  onChange={(e) => setAllowPaymentLinkDespitePreference(e.target.checked)}
+                                />
+                                <span className="text-sm font-medium">Afficher quand meme le paiement en ligne</span>
+                              </label>
+                            </div>
+                          ) : null}
+
+                          {item.clientWantsOnlinePayment === false && !allowPaymentLinkDespitePreference ? null : (
+                            <>
+                              {paymentError ? <ProAlert tone="error">{paymentError}</ProAlert> : null}
+
+                              <div className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-5 py-5">
+                                <label className={`flex cursor-pointer items-start gap-3 ${!hasValidClientEmail(item) ? "cursor-not-allowed opacity-70" : ""}`}>
+                                  <input
+                                    type="checkbox"
+                                    className="mt-1 h-4 w-4 shrink-0 rounded border-[var(--pro-border)]"
+                                    checked={sendPaymentEmail && hasValidClientEmail(item)}
+                                    disabled={!hasValidClientEmail(item)}
+                                    onChange={(e) => setSendPaymentEmail(e.target.checked)}
+                                  />
+                                    <span>
+                                      <span className="font-medium text-[var(--pro-text)]">Envoyer automatiquement le lien par e-mail</span>
+                                    {!hasValidClientEmail(item) ? (
+                                      <span className="mt-1 block text-xs text-[var(--pro-text-soft)]">Aucun e-mail client valide disponible.</span>
+                                    ) : null}
+                                  </span>
+                                </label>
+
+                                <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end">
+                                  <div className="flex-1">
+                                    <label htmlFor="payment-mode-select" className="block text-xs font-semibold uppercase tracking-[0.16em] text-[var(--pro-text-muted)]">
+                                      Mode de paiement Stripe
+                                    </label>
+                                    <select
+                                      id="payment-mode-select"
+                                      value={paymentModeChoice}
+                                      onChange={(e) => setPaymentModeChoice(e.target.value as "full" | "deposit")}
+                                      className="mt-2 w-full rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel)] px-4 py-3 text-sm text-[var(--pro-text)] focus:border-[var(--pro-accent)] focus:outline-none"
+                                    >
+                                      <option value="full">Paiement total</option>
+                                      <option value="deposit">Acompte</option>
+                                    </select>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    disabled={paymentBusy || busy || (item.clientWantsOnlinePayment === false && !allowPaymentLinkDespitePreference)}
+                                    onClick={() => void handlePaymentLinkAction(false)}
+                                    className={`rounded-2xl px-5 py-3 text-sm font-semibold transition disabled:opacity-50 ${actionButtonClass("primary")}`}
+                                  >
+                                    {paymentBusy
+                                      ? checkoutUrlToShow
+                                        ? "Recuperation..."
+                                        : "Creation..."
+                                      : checkoutUrlToShow
+                                        ? "Recuperer ou ouvrir le lien"
+                                        : "Creer le lien de paiement"}
+                                  </button>
+                                </div>
+                              </div>
+
+                              {checkoutUrlToShow ? (
+                                <div className="rounded-[24px] border border-emerald-300/40 bg-emerald-50 px-5 py-5 text-emerald-950">
+                                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">
+                                    {item.paymentStatus === "LINK_SENT" ? "Lien envoye ou paiement en attente" : "Lien Stripe disponible"}
+                                  </p>
+                                  <p className="mt-3 text-sm leading-6">
+                                    Montant :{" "}
+                                    <span className="font-semibold">
+                                      {formatAmountFromCents(
+                                        lastCheckout?.amountCents ?? pendingLinkPayment?.amount ?? 0,
+                                        lastCheckout?.currency ?? pendingLinkPayment?.currency ?? "eur"
+                                      )}
+                                    </span>
+                                    {" · "}
+                                    <span className="font-medium">
+                                      {lastCheckout?.mode === "deposit" || pendingLinkPayment?.mode === "DEPOSIT" ? "Acompte" : "Paiement total"}
+                                    </span>
+                                  </p>
+
+                                  {lastCheckout?.emailDeliveryRequested && lastCheckout.emailSent === true ? (
+                                    <p className="mt-2 text-sm">E-mail envoye au client.</p>
+                                  ) : null}
+                                  {lastCheckout?.emailDeliveryRequested && lastCheckout.emailSent === false ? (
+                                    <p className="mt-2 text-sm">{mapPaymentLinkEmailErrorCodeToFr(lastCheckout.emailErrorCode ?? "")}</p>
+                                  ) : null}
+
+                                  <p className="mt-3 break-all rounded-2xl bg-white/80 px-3 py-3 font-mono text-xs text-emerald-900">{checkoutUrlToShow}</p>
+
+                                  <div className="mt-4 flex flex-wrap gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => void copyCheckoutUrl(checkoutUrlToShow)}
+                                      className={`rounded-2xl px-4 py-2.5 text-sm font-semibold ${actionButtonClass("neutral")}`}
+                                    >
+                                      Copier le lien
+                                    </button>
+                                    <a
+                                      href={checkoutUrlToShow}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className={`inline-flex rounded-2xl px-4 py-2.5 text-sm font-semibold ${actionButtonClass("primary")}`}
+                                    >
+                                      Ouvrir le lien
+                                    </a>
+                                    <button
+                                      type="button"
+                                      disabled={paymentBusy || busy}
+                                      onClick={() => void handleRecreatePaymentLink()}
+                                      className="rounded-2xl border border-emerald-300 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-900 transition hover:bg-emerald-100 disabled:opacity-50"
+                                    >
+                                      Recreer un lien
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : null}
+                            </>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </ProPanel>
+
+                <ProPanel>
+                  <ProSectionHeader title="Historique" description="Chronologie des actions et changements de statut." />
+                  <div className="mt-6 space-y-4">
+                    {item.history.map((row) => (
+                      <div key={row.id} className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-5 py-5">
+                        <p className="text-sm text-[var(--pro-text-soft)]">
+                          <span className="font-semibold text-[var(--pro-text)]">{formatDateTime(row.createdAt)}</span>
+                          {" · "}
+                          {row.previousStatus ? `${labelStatus(row.previousStatus)} -> ` : "Creation -> "}
+                          {labelStatus(row.newStatus)}
+                        </p>
+                        {row.changedByUser?.email ? <p className="mt-2 text-xs text-[var(--pro-text-muted)]">Operateur : {row.changedByUser.email}</p> : null}
+                        {isUsefulValue(row.note) ? <p className="mt-3 text-sm leading-6 text-[var(--pro-text-soft)]">{row.note}</p> : null}
+                      </div>
+                    ))}
+                    {!item.history.length ? <EmptyState message="Aucun historique disponible." /> : null}
+                  </div>
+                </ProPanel>
+
+                <ProPanel>
+                  <ProSectionHeader
+                    title="Documents"
+                    description="Acces rapide au devis imprimable ou telechargeable en PDF via le navigateur."
+                  />
+                  <div className="mt-6 flex flex-wrap gap-3">
+                    <Link
+                      href={`/pro/demandes/${item.id}/devis`}
+                      className={`inline-flex rounded-2xl px-5 py-3 text-sm font-semibold transition ${actionButtonClass("primary")}`}
+                    >
+                      Imprimer ou telecharger le PDF
+                    </Link>
+                  </div>
+                </ProPanel>
+              </div>
+
+              <div className="space-y-6 2xl:sticky 2xl:top-28 2xl:self-start">
+                <ProPanel>
+                  <ProSectionHeader title="Client" description="Coordonnees et contact rapide." />
+                  <div className="mt-6 space-y-4">
+                    <div>
+                      <p className="text-xl font-semibold text-[var(--pro-text)]">{getDisplayName(item.clientName)}</p>
+                      <p className="mt-2 text-sm text-[var(--pro-text-muted)]">{labelKind(item.kind)}</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3">
+                      {isUsefulValue(item.clientPhone) ? (
+                        <a
+                          href={`tel:${String(item.clientPhone).replace(/\s/g, "")}`}
+                          className="inline-flex items-center justify-center rounded-2xl border border-[var(--pro-border-strong)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm font-semibold text-[var(--pro-text)] transition hover:bg-[var(--pro-panel-strong)]"
+                        >
+                          Appeler · {item.clientPhone}
+                        </a>
+                      ) : null}
+                      {isUsefulValue(item.clientEmail) ? (
+                        <a
+                          href={`mailto:${item.clientEmail}`}
+                          className="inline-flex items-center justify-center rounded-2xl border border-[var(--pro-border-strong)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm font-semibold text-[var(--pro-text)] transition hover:bg-[var(--pro-panel-strong)]"
+                        >
+                          Envoyer un e-mail
+                        </a>
+                      ) : null}
+                    </div>
+
+                    {extrasClient.length ? (
+                      <div className="space-y-3">
+                        {extrasClient.map((row) => (
+                          <DetailCard key={row.label} label={row.label} value={row.value} />
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                </ProPanel>
+
+                <ProPanel>
+                  <ProSectionHeader title="Suivi du dossier" description="Statut actuel, derniere action et notifications envoyees." />
+                  <div className="mt-6 space-y-4">
+                    <DetailCard label="Statut actuel" value={labelStatus(item.status)} />
+                    <DetailCard label="Paiement en ligne" value={labelLeadPaymentStatus(item.paymentStatus)} />
+                    <DetailCard
+                      label="Preference paiement"
+                      value={labelClientOnlinePaymentPreference(item.clientWantsOnlinePayment)}
+                    />
+                    {latestHistory ? <DetailCard label="Derniere action" value={`${labelStatus(latestHistory.newStatus)} · ${formatDateTime(latestHistory.createdAt)}`} /> : null}
+
+                    {(item.customerDecisionMailSentAt || item.customerDecisionMailLastError) ? (
+                      <div className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4 text-sm text-[var(--pro-text-soft)]">
+                        {item.customerDecisionMailSentAt ? <p>Notification client envoyee le {formatDateTime(item.customerDecisionMailSentAt)}.</p> : null}
+                        {item.customerDecisionMailLastError ? <p className="mt-2 text-rose-700">La mise a jour a ete faite, mais le message client reste non envoye.</p> : null}
+                      </div>
+                    ) : null}
+                  </div>
+                </ProPanel>
+
+                <ProPanel>
+                  <ProSectionHeader title="Note interne" description="Visible uniquement dans l'espace professionnel." />
+                  <textarea
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    rows={6}
+                    placeholder="Ajoutez une note utile pour votre equipe."
+                    className="mt-6 w-full rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm text-[var(--pro-text)] placeholder:text-[var(--pro-text-muted)] focus:border-[var(--pro-accent)] focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void saveNote()}
+                    className={`mt-4 rounded-2xl px-5 py-3 text-sm font-semibold transition disabled:opacity-50 ${actionButtonClass("primary")}`}
+                  >
+                    Enregistrer la note
+                  </button>
+                </ProPanel>
+              </div>
             </div>
-          </div>
+          </>
         )}
       </ProShell>
     </ProGuard>

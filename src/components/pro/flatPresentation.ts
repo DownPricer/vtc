@@ -3,12 +3,12 @@ import { isUsefulValue, translatePayField, translatePaymentMethod } from "./proD
 const LABELS: Record<string, string> = {
   TypeService: "Type de service",
   TypeTrajet: "Type de trajet",
-  "RésuméTrajet": "Résumé du trajet",
-  ResumeTrajet: "Résumé du trajet",
-  AdresseDepart_1: "Départ",
-  AdresseArrivee_1: "Arrivée",
-  AdresseDepart_2: "Départ (retour)",
-  AdresseArrivee_2: "Arrivée (retour)",
+  ResumeTrajet: "Resume du trajet",
+  "RésuméTrajet": "Resume du trajet",
+  AdresseDepart_1: "Depart",
+  AdresseArrivee_1: "Arrivee",
+  AdresseDepart_2: "Depart retour",
+  AdresseArrivee_2: "Arrivee retour",
   DateAller: "Date aller",
   HeureAller: "Heure aller",
   DateRetour: "Date retour",
@@ -32,6 +32,7 @@ const LABELS: Record<string, string> = {
   NomSociete: "Societe",
   Societe: "Societe",
   TarifTotal: "Tarif total",
+  "Paye": "Paiement recu",
   "Payé": "Paiement recu",
   PaymentMethode: "Mode de paiement",
 };
@@ -73,7 +74,7 @@ function row(key: string, flat: Record<string, unknown>): UiRow | null {
   if (!isUsefulValue(raw)) return null;
   const label = LABELS[key] ?? "Information complementaire";
   let value = String(raw).trim();
-  if (key === "Payé") value = translatePayField(value);
+  if (key === "Paye" || key === "Payé") value = translatePayField(value);
   if (key === "PaymentMethode") value = translatePaymentMethod(value);
   if (!isUsefulValue(value)) return null;
   return { label, value };
@@ -93,5 +94,5 @@ export function prestationRowsFromFlat(flat: Record<string, unknown>): UiRow[] {
 }
 
 export function paiementRowsFromFlat(flat: Record<string, unknown>): UiRow[] {
-  return ["Payé", "PaymentMethode", "TarifTotal"].map((key) => row(key, flat)).filter(Boolean) as UiRow[];
+  return ["Payé", "Paye", "PaymentMethode", "TarifTotal"].map((key) => row(key, flat)).filter(Boolean) as UiRow[];
 }

@@ -1,9 +1,7 @@
-/** Libellés badges préférence paiement client (formulaires publics PR8). */
-
 export function labelClientOnlinePaymentPreference(v: unknown): string {
-  if (v === true) return "En ligne demandé";
-  if (v === false) return "Sur place";
-  return "Non renseigné";
+  if (v === true) return "Paiement en ligne demande";
+  if (v === false) return "Paiement sur place";
+  return "Non renseigne";
 }
 
 export function clientOnlinePaymentPreferenceBadgeClass(v: unknown): string {

@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ProGuard } from "@/components/pro/ProGuard";
 import { ProNav } from "@/components/pro/ProNav";
-import { EmptyState, ProPanel, ProSectionHeader, ProShell, ProStatCard } from "@/components/pro/ProUi";
+import { EmptyState, ProActionLink, ProAlert, ProPanel, ProSectionHeader, ProShell, ProStatCard } from "@/components/pro/ProUi";
 import {
   formatDateTime,
   formatPrice,
@@ -44,18 +44,48 @@ function tarifValue(item: LeadRow): string {
   return isUsefulValue(raw) ? formatPrice(raw) : "";
 }
 
+function RequestCard({ item, compact = false }: { item: LeadRow; compact?: boolean }) {
+  const journey = getJourneySummary(item.flatPayload);
+  const tarif = tarifValue(item);
+
+  return (
+    <Link
+      href={`/pro/demandes/${item.id}`}
+      className={`block rounded-[28px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] transition hover:border-[var(--pro-border-strong)] hover:bg-[var(--pro-panel-strong)] ${
+        compact ? "px-4 py-4" : "px-5 py-5"
+      }`}
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-semibold text-[var(--pro-text)]">{getDisplayName(item.clientName)}</p>
+          <p className="mt-1 text-sm text-[var(--pro-text-muted)]">
+            {labelKind(item.kind)} · {formatDateTime(item.createdAt)}
+          </p>
+        </div>
+        <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${statusBadgeClass(item.status)}`}>
+          {labelStatus(item.status)}
+        </span>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[var(--pro-text-soft)]">
+        {journey ? <span className="min-w-0 flex-1">{journey}</span> : null}
+        {tarif ? <span className="font-semibold text-[var(--pro-accent)]">{tarif}</span> : null}
+        <span className="font-semibold text-[var(--pro-accent)]">Ouvrir</span>
+      </div>
+    </Link>
+  );
+}
+
 export default function ProDashboardPage() {
   const [data, setData] = useState<Summary | null>(null);
-  const [latestRequests, setLatestRequests] = useState<LeadRow[]>([]);
-  const [upcoming, setUpcoming] = useState<LeadRow[]>([]);
-  const [recentDevis, setRecentDevis] = useState<LeadRow[]>([]);
+  const [requests, setRequests] = useState<LeadRow[]>([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
     Promise.all([proApi("/dashboard/summary"), proApi("/requests")])
       .then(([summaryJson, requestsJson]) => {
         const summary = summaryJson.data as Summary;
-        const requests = ((requestsJson.data as LeadRow[]) || []).slice(0, 150);
+        const rows = ((requestsJson.data as LeadRow[]) || []).slice(0, 150);
         setData({
           pendingCount: summary.pendingCount ?? 0,
           acceptedToday: summary.acceptedToday ?? 0,
@@ -63,23 +93,26 @@ export default function ProDashboardPage() {
           recentDevisWeekCount: summary.recentDevisWeekCount ?? 0,
           stripePaymentsPendingCount: summary.stripePaymentsPendingCount ?? 0,
         });
-        const sorted = requests.slice().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        setLatestRequests(sorted.filter((row) => !DASHBOARD_EXCLUDED.has(row.status)).slice(0, 6));
-        setUpcoming(
-          requests
-            .filter((row) => row.kind === "reservation" && row.scheduledStart && ["accepted", "scheduled"].includes(row.status))
-            .sort((a, b) => new Date(a.scheduledStart || "").getTime() - new Date(b.scheduledStart || "").getTime())
-            .slice(0, 6)
-        );
-        setRecentDevis(
-          requests
-            .filter((row) => row.kind === "devis")
-            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-            .slice(0, 4)
-        );
+        setRequests(rows);
       })
       .catch((e) => setError(mapApiErrorToFr((e as Error).message)));
   }, []);
+
+  const sorted = useMemo(
+    () => requests.slice().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    [requests]
+  );
+  const newCount = useMemo(() => requests.filter((row) => row.status === "new").length, [requests]);
+  const urgent = useMemo(() => sorted.filter((row) => ["new", "pending"].includes(row.status)).slice(0, 5), [sorted]);
+  const latestActive = useMemo(() => sorted.filter((row) => !DASHBOARD_EXCLUDED.has(row.status)).slice(0, 6), [sorted]);
+  const upcoming = useMemo(
+    () =>
+      requests
+        .filter((row) => row.kind === "reservation" && row.scheduledStart && ["accepted", "scheduled"].includes(row.status))
+        .sort((a, b) => new Date(a.scheduledStart || "").getTime() - new Date(b.scheduledStart || "").getTime())
+        .slice(0, 6),
+    [requests]
+  );
 
   return (
     <ProGuard>
@@ -90,143 +123,102 @@ export default function ProDashboardPage() {
           <ProSectionHeader
             eyebrow="Pilotage"
             title="Tableau de bord"
-            description="Suivez vos demandes, devis et réservations dans un espace plus lisible, mieux structuré et plus agréable à parcourir."
+            description="En quelques secondes, visualisez ce qui arrive, ce qui attend une action et les dossiers prioritaires a ouvrir."
+            action={<ProActionLink href="/pro/demandes">Voir toutes les demandes</ProActionLink>}
           />
+
+          <div className="mt-6 flex flex-wrap gap-3">
+            <span className="rounded-full border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-3 py-1.5 text-sm text-[var(--pro-text-soft)]">
+              {newCount} nouvelle(s) demande(s)
+            </span>
+            <span className="rounded-full border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-3 py-1.5 text-sm text-[var(--pro-text-soft)]">
+              {data?.acceptedToday ?? 0} acceptee(s) ce jour
+            </span>
+            <span className="rounded-full border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-3 py-1.5 text-sm text-[var(--pro-text-soft)]">
+              {data?.stripePaymentsPendingCount ?? 0} paiement(s) en attente
+            </span>
+          </div>
         </ProPanel>
 
-        {error ? <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
+        {error ? <ProAlert tone="error">{error}</ProAlert> : null}
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-4">
+          <ProStatCard title="Nouvelles demandes" value={newCount} hint="Demandes fraiches a traiter en premier." tone="orange" href="/pro/demandes?status=new" />
+          <ProStatCard title="En attente" value={data?.pendingCount ?? 0} hint="Dossiers encore ouverts ou non finalises." tone="orange" href="/pro/demandes?status=pending" />
           <ProStatCard
-            title="Demandes en attente"
-            value={data?.pendingCount ?? 0}
-            hint="Nouvelles demandes ou en attente de traitement."
-            tone="orange"
-            href="/pro/demandes?status=pending"
-          />
-          <ProStatCard
-            title="Réservations à venir"
+            title="Reservations a venir"
             value={data?.upcomingReservationCount ?? 0}
-            hint="Réservations acceptées ou planifiées sur les prochains jours."
+            hint="Courses acceptees ou planifiees sur les prochains jours."
             tone="green"
             href="/pro/calendrier#pro-cal-upcoming"
           />
-          <ProStatCard
-            title="Devis récents"
-            value={data?.recentDevisWeekCount ?? 0}
-            hint="Devis créés sur les 7 derniers jours."
-            tone="blue"
-            href="/pro/devis"
-          />
-          <ProStatCard
-            title="Paiements en attente"
-            value={data?.stripePaymentsPendingCount ?? 0}
-            hint="Liens Stripe en cours ou déjà envoyés au client."
-            tone="slate"
-            href="/pro/transactions?status=LINK_SENT"
-          />
+          <ProStatCard title="Devis recents" value={data?.recentDevisWeekCount ?? 0} hint="Devis crees sur les 7 derniers jours." tone="blue" href="/pro/devis" />
         </div>
 
-        <div className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,0.95fr)]">
-          <ProPanel>
-            <ProSectionHeader
-              title="Dernières demandes"
-              description="Contacts, devis et réservations actifs, présentés avec plus d’air et des actions plus évidentes."
-              action={
-                <Link href="/pro/demandes" className="text-sm font-semibold text-[var(--pro-accent)] hover:brightness-110">
-                  Voir toutes les demandes
-                </Link>
-              }
-            />
-            <div className="mt-6 grid grid-cols-1 gap-3 xl:gap-4">
-              {latestRequests.map((item) => {
-                const journey = getJourneySummary(item.flatPayload);
-                const tarif = tarifValue(item);
-                return (
+        <div className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.9fr)]">
+          <div className="space-y-6">
+            <ProPanel>
+              <ProSectionHeader
+                title="A traiter en priorite"
+                description="Les demandes nouvelles ou en attente qui meritent une action rapide."
+              />
+              <div className="mt-6 grid grid-cols-1 gap-4">
+                {urgent.map((item) => (
+                  <RequestCard key={item.id} item={item} />
+                ))}
+                {!urgent.length ? <EmptyState message="Aucune demande prioritaire pour le moment." /> : null}
+              </div>
+            </ProPanel>
+
+            <ProPanel>
+              <ProSectionHeader title="Activite recente" description="Dernieres demandes actives, avec acces direct aux fiches." />
+              <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                {latestActive.map((item) => (
+                  <RequestCard key={item.id} item={item} compact />
+                ))}
+                {!latestActive.length ? <EmptyState message="Aucune activite recente." /> : null}
+              </div>
+            </ProPanel>
+          </div>
+
+          <div className="space-y-6">
+            <ProPanel id="pro-cal-upcoming">
+              <ProSectionHeader title="Prochaines reservations" description="Les prochains trajets a suivre de pres." />
+              <div className="mt-6 space-y-3">
+                {upcoming.map((item) => (
                   <Link
                     key={item.id}
                     href={`/pro/demandes/${item.id}`}
-                    className="block rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4 transition hover:border-orange-300/40 hover:bg-[var(--pro-accent-soft)] xl:px-5 xl:py-5"
+                    className="block rounded-[26px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-5 py-5 transition hover:border-[var(--pro-border-strong)] hover:bg-[var(--pro-panel-strong)]"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="font-semibold text-[var(--pro-text)]">{getDisplayName(item.clientName)}</p>
-                        <p className="mt-1 text-sm text-[var(--pro-text-muted)]">
-                          {labelKind(item.kind)} · {formatDateTime(item.createdAt)}
-                        </p>
+                        <p className="mt-1 text-sm text-[var(--pro-text-muted)]">{formatDateTime(item.scheduledStart)}</p>
                       </div>
                       <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${statusBadgeClass(item.status)}`}>
                         {labelStatus(item.status)}
                       </span>
                     </div>
-                    <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[var(--pro-text-soft)]">
-                      {journey ? <span>{journey}</span> : null}
-                      {tarif ? <span className="font-semibold text-[var(--pro-accent)]">{tarif}</span> : null}
-                      <span className="font-medium text-[var(--pro-accent)]">Ouvrir</span>
-                    </div>
+                    {getJourneySummary(item.flatPayload) ? <p className="mt-3 text-sm text-[var(--pro-text-soft)]">{getJourneySummary(item.flatPayload)}</p> : null}
+                    <p className="mt-4 text-sm font-semibold text-[var(--pro-accent)]">Ouvrir la reservation</p>
                   </Link>
-                );
-              })}
-              {!latestRequests.length ? <EmptyState message="Aucune demande active récente." /> : null}
-            </div>
-          </ProPanel>
+                ))}
+                {!upcoming.length ? <EmptyState message="Aucune reservation a venir." /> : null}
+              </div>
+            </ProPanel>
 
-          <ProPanel>
-            <ProSectionHeader title="Prochaines réservations" description="Les dossiers à surveiller en priorité, avec une lecture plus directe." />
-            <div className="mt-6 space-y-3">
-              {upcoming.map((item) => (
-                <Link
-                  key={item.id}
-                  href={`/pro/demandes/${item.id}`}
-                  className="block rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4 transition hover:border-emerald-300/40 hover:bg-[var(--pro-accent-soft)] xl:px-5 xl:py-5"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-[var(--pro-text)]">{getDisplayName(item.clientName)}</p>
-                      <p className="mt-1 text-sm text-[var(--pro-text-muted)]">{formatDateTime(item.scheduledStart)}</p>
-                    </div>
-                    <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${statusBadgeClass(item.status)}`}>
-                      {labelStatus(item.status)}
-                    </span>
-                  </div>
-                  {getJourneySummary(item.flatPayload) ? <p className="mt-3 text-sm text-[var(--pro-text-soft)]">{getJourneySummary(item.flatPayload)}</p> : null}
-                </Link>
-              ))}
-              {!upcoming.length ? <EmptyState message="Aucune réservation à venir." /> : null}
-            </div>
-          </ProPanel>
-        </div>
-
-        <ProPanel>
-          <ProSectionHeader
-            title="Devis récents"
-            description="Accédez rapidement aux derniers devis à suivre."
-            action={
-              <Link href="/pro/devis" className="text-sm font-semibold text-[var(--pro-accent)] hover:brightness-110">
-                Tous les devis
-              </Link>
-            }
-          />
-          <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-4">
-            {recentDevis.map((item) => (
-              <Link
-                key={item.id}
-                href={`/pro/demandes/${item.id}`}
-                className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4 transition hover:border-orange-300/40 hover:bg-[var(--pro-accent-soft)] xl:px-5 xl:py-5"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <p className="font-semibold text-[var(--pro-text)]">{getDisplayName(item.clientName)}</p>
-                  <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(item.status)}`}>
-                    {labelStatus(item.status)}
-                  </span>
-                </div>
-                <p className="mt-2 text-sm text-[var(--pro-text-muted)]">{formatDateTime(item.createdAt)}</p>
-                {tarifValue(item) ? <p className="mt-3 text-sm font-semibold text-[var(--pro-accent)]">{tarifValue(item)}</p> : null}
-              </Link>
-            ))}
-            {!recentDevis.length ? <EmptyState message="Aucun devis récent." /> : null}
+            <ProPanel>
+              <ProSectionHeader title="Raccourcis utiles" description="Acces rapides pour garder le rythme sur la journee." />
+              <div className="mt-6 grid grid-cols-1 gap-3">
+                <ProActionLink href="/pro/demandes?status=new">Ouvrir les nouvelles demandes</ProActionLink>
+                <ProActionLink href="/pro/demandes?status=pending">Voir les demandes en attente</ProActionLink>
+                <ProActionLink href="/pro/calendrier">Ouvrir le calendrier</ProActionLink>
+                <ProActionLink href="/pro/transactions?status=LINK_SENT">Suivre les paiements en attente</ProActionLink>
+              </div>
+            </ProPanel>
           </div>
-        </ProPanel>
+        </div>
       </ProShell>
     </ProGuard>
   );

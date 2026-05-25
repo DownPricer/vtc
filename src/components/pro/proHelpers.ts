@@ -3,7 +3,7 @@
 export const kindLabels: Record<string, string> = {
   contact: "Contact",
   devis: "Devis",
-  reservation: "Réservation",
+  reservation: "Reservation",
   quote: "Devis",
   request: "Demande",
 };
@@ -11,19 +11,19 @@ export const kindLabels: Record<string, string> = {
 export const statusLabels: Record<string, string> = {
   new: "Nouveau",
   pending: "En attente",
-  accepted: "Accepté",
-  refused: "Refusé",
-  processed: "Traité",
-  archived: "Archivé",
-  completed: "Terminé",
-  cancelled: "Annulé",
-  expired: "Expiré",
-  scheduled: "Planifié",
-  refunded: "Remboursé",
-  paid: "Payé",
-  unpaid: "Non payé",
-  failed: "Échoué",
-  sent: "Envoyé",
+  accepted: "Accepte",
+  refused: "Refuse",
+  processed: "Traite",
+  archived: "Archive",
+  completed: "Termine",
+  cancelled: "Annule",
+  expired: "Expire",
+  scheduled: "Planifie",
+  refunded: "Rembourse",
+  paid: "Paye",
+  unpaid: "Non paye",
+  failed: "Echec",
+  sent: "Envoye",
 };
 
 export const paymentMethodLabels: Record<string, string> = {
@@ -42,7 +42,7 @@ export const paymentMethodLabels: Record<string, string> = {
 export const actionLabels: Record<string, string> = {
   accept: "Accepter",
   refuse: "Refuser",
-  process: "Marquer comme traité",
+  process: "Marquer comme traite",
   archive: "Archiver",
   complete: "Terminer",
   cancel: "Annuler",
@@ -52,10 +52,10 @@ export const actionLabels: Record<string, string> = {
   save: "Enregistrer",
   loading: "Chargement",
   error: "Erreur",
-  logout: "Déconnexion",
+  logout: "Deconnexion",
   accepted: "Accepter",
   refused: "Refuser",
-  processed: "Marquer comme traité",
+  processed: "Marquer comme traite",
   scheduled: "Planifier",
   completed: "Terminer",
   cancelled: "Annuler",
@@ -137,8 +137,8 @@ export function translateAction(value?: string | null): string {
 
 export function translatePayment(value?: string | null): string {
   const key = normalizeText(value).replace(/\s+/g, "_");
-  if (!key || key === "n/a") return "Non renseigné";
-  return paymentMethodLabels[key] ?? statusLabels[key] ?? truthyLabels[key] ?? (isUsefulValue(value) ? String(value).trim() : "Non renseigné");
+  if (!key || key === "n/a") return "Non renseigne";
+  return paymentMethodLabels[key] ?? statusLabels[key] ?? truthyLabels[key] ?? (isUsefulValue(value) ? String(value).trim() : "Non renseigne");
 }
 
 export function translateBooleanish(value?: string | null): string {
@@ -165,7 +165,7 @@ export function translatePayField(value: string): string {
 
 export function labelOperatorRole(role?: string | null): string {
   const key = normalizeText(role);
-  return ROLE_LABELS[key] ?? "Rôle inconnu";
+  return ROLE_LABELS[key] ?? "Role inconnu";
 }
 
 export function formatDateTime(value?: string | null): string {
@@ -211,26 +211,27 @@ export function formatValue(label: string, value: unknown): { label: string; val
 export function statusBadgeClass(status?: string | null): string {
   switch (normalizeText(status)) {
     case "new":
+      return "border-amber-300/70 bg-amber-50 text-amber-900";
     case "pending":
     case "unpaid":
-      return "border-amber-300/50 bg-amber-100 text-amber-900";
+      return "border-orange-300/70 bg-orange-50 text-orange-900";
     case "accepted":
     case "scheduled":
     case "paid":
     case "sent":
-      return "border-emerald-300/60 bg-emerald-100 text-emerald-900";
+      return "border-emerald-300/70 bg-emerald-50 text-emerald-900";
     case "refused":
     case "cancelled":
     case "failed":
-      return "border-rose-300/60 bg-rose-100 text-rose-900";
+      return "border-rose-300/70 bg-rose-50 text-rose-900";
     case "processed":
     case "completed":
-      return "border-sky-300/60 bg-sky-100 text-sky-900";
+      return "border-sky-300/70 bg-sky-50 text-sky-900";
     case "archived":
     case "refunded":
-      return "border-slate-300/60 bg-slate-100 text-slate-700";
+      return "border-slate-300/70 bg-slate-100 text-slate-700";
     case "expired":
-      return "border-orange-300/60 bg-orange-100 text-orange-900";
+      return "border-stone-300/70 bg-stone-100 text-stone-700";
     default:
       return "border-slate-200 bg-slate-100 text-slate-700";
   }
@@ -243,23 +244,23 @@ export function getStatusBadgeClass(status?: string | null): string {
 export function actionButtonClass(intent: "primary" | "success" | "danger" | "neutral" | "warning" | "info"): string {
   switch (intent) {
     case "primary":
-      return "border border-orange-400 bg-orange-500 text-white hover:bg-orange-600 focus-visible:outline-orange-500";
+      return "border border-orange-500 bg-orange-500 text-white hover:bg-orange-600 focus-visible:outline-orange-500";
     case "success":
-      return "border border-emerald-300 bg-emerald-500 text-white hover:bg-emerald-600 focus-visible:outline-emerald-500";
+      return "border border-emerald-500 bg-emerald-500 text-white hover:bg-emerald-600 focus-visible:outline-emerald-500";
     case "danger":
-      return "border border-rose-300 bg-rose-500 text-white hover:bg-rose-600 focus-visible:outline-rose-500";
+      return "border border-rose-500 bg-rose-500 text-white hover:bg-rose-600 focus-visible:outline-rose-500";
     case "warning":
-      return "border border-amber-300 bg-amber-500 text-white hover:bg-amber-600 focus-visible:outline-amber-500";
+      return "border border-amber-500 bg-amber-500 text-white hover:bg-amber-600 focus-visible:outline-amber-500";
     case "info":
-      return "border border-sky-300 bg-sky-500 text-white hover:bg-sky-600 focus-visible:outline-sky-500";
+      return "border border-sky-500 bg-sky-500 text-white hover:bg-sky-600 focus-visible:outline-sky-500";
     default:
-      return "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 focus-visible:outline-slate-400";
+      return "border border-[var(--pro-border-strong)] bg-[var(--pro-panel-muted)] text-[var(--pro-text-soft)] hover:bg-[var(--pro-panel-strong)] focus-visible:outline-slate-400";
   }
 }
 
 export function buildStatusActionBanner(nextStatus: string, kind: string, meta?: PatchStatusResponseMeta | null): string {
   if (meta?.unchanged) {
-    return "Le statut est déjà à jour.";
+    return "Le statut est deja a jour.";
   }
 
   const normalizedKind = normalizeText(kind);
@@ -267,25 +268,25 @@ export function buildStatusActionBanner(nextStatus: string, kind: string, meta?:
   const notif = meta?.customerNotification;
 
   const base: Record<string, string> = {
-    accepted: "La demande a été acceptée.",
-    refused: "La demande a été refusée.",
-    processed: "La demande a été marquée comme traitée.",
-    scheduled: "La demande a été planifiée.",
-    completed: "La demande a été terminée.",
-    cancelled: "La demande a été annulée.",
-    archived: "La demande a été archivée.",
+    accepted: "La demande a ete acceptee.",
+    refused: "La demande a ete refusee.",
+    processed: "La demande a ete marquee comme traitee.",
+    scheduled: "La demande a ete planifiee.",
+    completed: "La demande a ete terminee.",
+    cancelled: "La demande a ete annulee.",
+    archived: "La demande a ete archivee.",
   };
 
-  let msg = base[normalizeText(nextStatus)] ?? "Mise à jour enregistrée.";
+  let msg = base[normalizeText(nextStatus)] ?? "Mise a jour enregistree.";
   const mailRelevant = isQuoteOrReservation && ["accepted", "refused"].includes(normalizeText(nextStatus));
 
   if (mailRelevant && notif) {
     if (notif.attempted && notif.sent) {
-      msg += " Le client a été notifié par e-mail.";
+      msg += " Le client a ete notifie par e-mail.";
     } else if (notif.attempted && !notif.sent) {
-      msg = msg.replace(/\.$/, "") + ", mais l'e-mail client n'a pas pu être envoyé.";
+      msg = msg.replace(/\.$/, "") + ", mais l'e-mail client n'a pas pu etre envoye.";
     } else if (notif.skippedReason === "no_client_email") {
-      msg += " Aucun e-mail client valide n'est renseigné.";
+      msg += " Aucun e-mail client valide n'est renseigne.";
     }
   }
 
@@ -322,29 +323,29 @@ export function statusActionList(status: string, kind: string): Array<{ action: 
 export function mapApiErrorToFr(message: string): string {
   const normalized = normalizeText(message);
   if (normalized.includes("failed to fetch") || normalized.includes("networkerror") || normalized.includes("load failed")) {
-    return "Impossible de contacter le serveur. Vérifiez votre connexion.";
+    return "Impossible de contacter le serveur. Verifiez votre connexion.";
   }
   if (normalized.includes("unauthorized") || normalized.includes("401")) {
-    return "Session expirée ou accès refusé. Reconnectez-vous.";
+    return "Session expiree ou acces refuse. Reconnectez-vous.";
   }
   if (normalized.includes("forbidden") || normalized.includes("403")) {
-    return "Accès refusé pour cette action.";
+    return "Acces refuse pour cette action.";
   }
   if (normalized.includes("not found") || normalized.includes("404")) {
     return "Ressource introuvable.";
   }
   if (normalized === "erreur api" || normalized === "api error") {
-    return "Une erreur s'est produite. Réessayez dans un instant.";
+    return "Une erreur s'est produite. Reessayez dans un instant.";
   }
   return message;
 }
 
 export function getJourneySummary(flatPayload?: Record<string, unknown> | null): string {
   if (!flatPayload) return "";
-  const summary = flatPayload.ResumeTrajet ?? flatPayload["RésuméTrajet"];
+  const summary = flatPayload.ResumeTrajet ?? flatPayload["ResumeTrajet"] ?? flatPayload["Resume du trajet"];
   return isUsefulValue(summary) ? String(summary).trim() : "";
 }
 
 export function getDisplayName(name?: string | null): string {
-  return isUsefulValue(name) ? String(name).trim() : "Client non renseigné";
+  return isUsefulValue(name) ? String(name).trim() : "Client non renseigne";
 }

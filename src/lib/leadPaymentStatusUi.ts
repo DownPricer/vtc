@@ -1,31 +1,25 @@
-/**
- * Libellés et styles des statuts paiement côté demande (LeadRequest.paymentStatus),
- * alignés avec l’API Stripe Connect VTC.
- */
-
 export function labelLeadPaymentStatus(raw?: string | null): string {
   switch (raw) {
     case "LINK_SENT":
-      return "Lien envoyé";
+      return "Lien envoye";
     case "PAID":
-      return "Paiement validé";
+      return "Paiement valide";
     case "FAILED":
-      return "Échec";
+      return "Echec";
     case "PENDING":
       return "En cours";
     case "EXPIRED":
-      return "Expiré";
+      return "Expire";
     case "REFUNDED":
-      return "Remboursé";
+      return "Rembourse";
     case "CANCELLED":
-      return "Annulé";
+      return "Annule";
     case "NONE":
     default:
       return "Aucun paiement en ligne";
   }
 }
 
-/** Classes Tailwind pour badge pill (liste + détail). */
 export function leadPaymentStatusBadgeClass(raw?: string | null): string {
   switch (raw) {
     case "PAID":

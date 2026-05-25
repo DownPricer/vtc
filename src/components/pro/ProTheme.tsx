@@ -14,7 +14,7 @@ const STORAGE_KEY = "vtc-pro-theme";
 const ProThemeContext = createContext<ProThemeContextValue | null>(null);
 
 export function ProThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<ProTheme>("dark");
+  const [theme, setTheme] = useState<ProTheme>("light");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -23,8 +23,7 @@ export function ProThemeProvider({ children }: { children: ReactNode }) {
       setTheme(stored);
       return;
     }
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    setTheme(prefersDark ? "dark" : "light");
+    setTheme("light");
   }, []);
 
   useEffect(() => {

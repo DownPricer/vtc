@@ -31,8 +31,9 @@ export function ProGuard({ children }: ProGuardProps) {
 
   if (!ready) {
     return (
-      <div className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel)] px-5 py-10 text-center shadow-sm">
-        <p className="text-sm text-[var(--pro-text-muted)]">Vérification de la session en cours...</p>
+      <div className="rounded-[28px] border border-[var(--pro-border)] bg-[var(--pro-panel)] px-6 py-12 text-center shadow-[var(--pro-shadow)]">
+        <div className="mx-auto h-11 w-11 animate-pulse rounded-full bg-[var(--pro-accent-soft)]" />
+        <p className="mt-4 text-sm text-[var(--pro-text-muted)]">Verification de la session en cours...</p>
       </div>
     );
   }

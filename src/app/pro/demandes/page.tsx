@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ProGuard } from "@/components/pro/ProGuard";
 import { ProNav } from "@/components/pro/ProNav";
-import { EmptyState, ProPanel, ProSectionHeader, ProShell } from "@/components/pro/ProUi";
+import { EmptyState, ProActionLink, ProAlert, ProPanel, ProSectionHeader, ProShell } from "@/components/pro/ProUi";
 import {
   formatDateTime,
   formatPrice,
@@ -39,20 +39,95 @@ type LeadRow = {
 };
 
 const STATUS_FILTERS = [
-  { value: "", label: "Toutes" },
-  { value: "new", label: "Nouveaux" },
+  { value: "", label: "Tous les statuts" },
+  { value: "new", label: "Nouveau" },
   { value: "pending", label: "En attente" },
-  { value: "accepted", label: "Acceptées" },
-  { value: "refused", label: "Refusées" },
-  { value: "processed", label: "Traitées" },
-  { value: "scheduled", label: "Planifiées" },
-  { value: "completed", label: "Terminées" },
-  { value: "cancelled", label: "Annulées" },
-  { value: "archived", label: "Archivées" },
+  { value: "accepted", label: "Accepte" },
+  { value: "refused", label: "Refuse" },
+  { value: "processed", label: "Traite" },
+  { value: "scheduled", label: "Planifie" },
+  { value: "completed", label: "Termine" },
+  { value: "cancelled", label: "Annule" },
+  { value: "archived", label: "Archive" },
 ];
 
 function usefulText(value?: string | null): string {
   return isUsefulValue(value) ? String(value).trim() : "";
+}
+
+function countByStatus(rows: LeadRow[], status: string): number {
+  return rows.filter((row) => row.status === status).length;
+}
+
+function countByKind(rows: LeadRow[], kind: string): number {
+  return rows.filter((row) => row.kind === kind).length;
+}
+
+function RequestListCard({ row }: { row: LeadRow }) {
+  const journey = getJourneySummary(row.flatPayload);
+  const tarif = isUsefulValue(row.pricingResult && (row.pricingResult as Record<string, unknown>).tarif)
+    ? formatPrice((row.pricingResult as Record<string, unknown>).tarif)
+    : "";
+
+  return (
+    <div className="rounded-[28px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-5 py-5 transition hover:border-[var(--pro-border-strong)] hover:bg-[var(--pro-panel-strong)]">
+      <div className="flex flex-col gap-4 xl:grid xl:grid-cols-[minmax(0,1.4fr)_minmax(180px,0.8fr)_minmax(180px,0.7fr)_auto] xl:items-start">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="font-semibold text-[var(--pro-text)]">{getDisplayName(row.clientName)}</p>
+              <p className="mt-1 text-sm text-[var(--pro-text-muted)]">
+                {labelKind(row.kind)} · Recu le {formatDateTime(row.createdAt)}
+              </p>
+            </div>
+            <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${statusBadgeClass(row.status)}`}>
+              {labelStatus(row.status)}
+            </span>
+          </div>
+
+          {journey ? <p className="mt-4 text-sm leading-6 text-[var(--pro-text-soft)]">{journey}</p> : null}
+
+          <div className="mt-4 flex flex-wrap gap-2 text-xs">
+            {usefulText(row.clientPhone) ? (
+              <span className="rounded-full border border-[var(--pro-border)] bg-[var(--pro-panel)] px-3 py-1 text-[var(--pro-text-soft)]">{usefulText(row.clientPhone)}</span>
+            ) : null}
+            {usefulText(row.clientEmail) ? (
+              <span className="rounded-full border border-[var(--pro-border)] bg-[var(--pro-panel)] px-3 py-1 text-[var(--pro-text-soft)]">{usefulText(row.clientEmail)}</span>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Paiement</p>
+          <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${leadPaymentStatusBadgeClass(row.paymentStatus)}`}>
+            {labelLeadPaymentStatus(row.paymentStatus)}
+          </span>
+          <div>
+            <span
+              className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${clientOnlinePaymentPreferenceBadgeClass(row.clientWantsOnlinePayment)}`}
+            >
+              {labelClientOnlinePaymentPreference(row.clientWantsOnlinePayment)}
+            </span>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Montant</p>
+          <p className="text-lg font-semibold text-[var(--pro-accent)]">{tarif || "Aucun montant"}</p>
+          {row.scheduledStart ? <p className="text-sm text-[var(--pro-text-soft)]">Prevu : {formatDateTime(row.scheduledStart)}</p> : null}
+        </div>
+
+        <div className="flex items-center xl:justify-end">
+          <Link
+            href={`/pro/demandes/${row.id}`}
+            className="inline-flex items-center justify-center rounded-2xl bg-[var(--pro-accent)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[color-mix(in_srgb,var(--pro-accent)_88%,black_12%)]"
+          >
+            Ouvrir
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function ProDemandesPage() {
@@ -61,6 +136,8 @@ export default function ProDemandesPage() {
   const [status, setStatus] = useState("");
   const [q, setQ] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -80,10 +157,15 @@ export default function ProDemandesPage() {
   }, [kind, status, q]);
 
   useEffect(() => {
+    setLoading(true);
     proApi(`/requests${query ? `?${query}` : ""}`)
-      .then((json) => setRows((json.data as LeadRow[]) || []))
-      .catch((e) => setError(mapApiErrorToFr((e as Error).message)));
-  }, [query]);
+      .then((json) => {
+        setRows((json.data as LeadRow[]) || []);
+        setError("");
+      })
+      .catch((e) => setError(mapApiErrorToFr((e as Error).message)))
+      .finally(() => setLoading(false));
+  }, [query, refreshKey]);
 
   return (
     <ProGuard>
@@ -93,30 +175,71 @@ export default function ProDemandesPage() {
         <ProPanel>
           <ProSectionHeader
             title="Demandes"
-            description="Filtrez vos contacts, devis et réservations, puis ouvrez chaque fiche dans une vue plus claire et plus confortable."
+            description="Liste operationnelle des contacts, devis et reservations avec filtres, priorites visibles et ouverture rapide des fiches."
+            action={<ProActionLink href="/pro/dashboard">Retour au tableau de bord</ProActionLink>}
+          />
+
+          <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-5">
+            <div className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Total</p>
+              <p className="mt-2 text-2xl font-semibold text-[var(--pro-text)]">{rows.length}</p>
+            </div>
+            <div className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Nouveaux</p>
+              <p className="mt-2 text-2xl font-semibold text-[var(--pro-text)]">{countByStatus(rows, "new")}</p>
+            </div>
+            <div className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">En attente</p>
+              <p className="mt-2 text-2xl font-semibold text-[var(--pro-text)]">{countByStatus(rows, "pending")}</p>
+            </div>
+            <div className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Reservations</p>
+              <p className="mt-2 text-2xl font-semibold text-[var(--pro-text)]">{countByKind(rows, "reservation")}</p>
+            </div>
+            <div className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Devis</p>
+              <p className="mt-2 text-2xl font-semibold text-[var(--pro-text)]">{countByKind(rows, "devis")}</p>
+            </div>
+          </div>
+        </ProPanel>
+
+        <ProPanel>
+          <ProSectionHeader
+            eyebrow="Filtres"
+            title="Trouver la bonne demande"
+            description="Recherchez par client, telephone ou e-mail, puis filtrez par type ou statut."
+            action={
+              <button
+                type="button"
+                onClick={() => setRefreshKey((value) => value + 1)}
+                className="inline-flex items-center justify-center rounded-2xl border border-[var(--pro-border-strong)] bg-[var(--pro-panel-muted)] px-4 py-2.5 text-sm font-semibold text-[var(--pro-text)] transition hover:bg-[var(--pro-panel-strong)]"
+              >
+                Rafraichir
+              </button>
+            }
           />
 
           <div className="mt-6 grid grid-cols-1 gap-3 xl:grid-cols-12">
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Rechercher par nom, e-mail ou téléphone"
-              className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm text-[var(--pro-text)] placeholder:text-[var(--pro-text-muted)] focus:border-[var(--pro-accent)] focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 xl:col-span-5"
+              placeholder="Nom, e-mail ou telephone"
+              className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm text-[var(--pro-text)] placeholder:text-[var(--pro-text-muted)] focus:border-[var(--pro-accent)] focus:outline-none xl:col-span-5"
             />
             <select
               value={kind}
               onChange={(e) => setKind(e.target.value)}
-              className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm text-[var(--pro-text)] focus:border-[var(--pro-accent)] focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 xl:col-span-3"
+              className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm text-[var(--pro-text)] focus:border-[var(--pro-accent)] focus:outline-none xl:col-span-3"
             >
-              <option value="">Toutes</option>
-              <option value="contact">Contacts</option>
+              <option value="">Tous les types</option>
+              <option value="contact">Contact</option>
               <option value="devis">Devis</option>
-              <option value="reservation">Réservations</option>
+              <option value="reservation">Reservation</option>
             </select>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm text-[var(--pro-text)] focus:border-[var(--pro-accent)] focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 xl:col-span-4"
+              className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm text-[var(--pro-text)] focus:border-[var(--pro-accent)] focus:outline-none xl:col-span-4"
             >
               {STATUS_FILTERS.map((item) => (
                 <option key={item.value || "all"} value={item.value}>
@@ -127,122 +250,22 @@ export default function ProDemandesPage() {
           </div>
         </ProPanel>
 
-        {error ? <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
+        {error ? <ProAlert tone="error">{error}</ProAlert> : null}
+        {loading ? <ProAlert tone="info">Chargement des demandes...</ProAlert> : null}
 
-        <ProPanel className="hidden overflow-hidden xl:block">
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead className="border-b border-[var(--pro-border)] text-xs uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">
-                <tr>
-                  <th className="px-4 py-4 font-semibold">Date</th>
-                  <th className="px-4 py-4 font-semibold">Type</th>
-                  <th className="px-4 py-4 font-semibold">Client</th>
-                  <th className="px-4 py-4 font-semibold">Statut</th>
-                  <th className="px-4 py-4 font-semibold">Préf.</th>
-                  <th className="px-4 py-4 font-semibold">Paiement</th>
-                  <th className="px-4 py-4 font-semibold">Tarif</th>
-                  <th className="px-4 py-4 font-semibold">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => {
-                  const journey = getJourneySummary(row.flatPayload);
-                  const tarif = isUsefulValue(row.pricingResult && (row.pricingResult as Record<string, unknown>).tarif)
-                    ? formatPrice((row.pricingResult as Record<string, unknown>).tarif)
-                    : "";
-                  const payLabel = labelLeadPaymentStatus(row.paymentStatus);
-                  return (
-                    <tr key={row.id} className="border-b border-[var(--pro-border)]/70 align-top last:border-b-0">
-                      <td className="px-4 py-5 align-top">
-                        <p className="text-[var(--pro-text-muted)]">{formatDateTime(row.createdAt)}</p>
-                      </td>
-                      <td className="px-4 py-5 align-top">
-                        <p className="font-semibold text-[var(--pro-text)]">{labelKind(row.kind)}</p>
-                      </td>
-                      <td className="px-4 py-5 align-top">
-                        <p className="font-semibold text-[var(--pro-text)]">{getDisplayName(row.clientName)}</p>
-                        {usefulText(row.clientPhone) ? <p className="mt-1 text-[var(--pro-text-soft)]">{usefulText(row.clientPhone)}</p> : null}
-                        {usefulText(row.clientEmail) ? <p className="text-[var(--pro-text-muted)]">{usefulText(row.clientEmail)}</p> : null}
-                      </td>
-                      <td className="px-4 py-5 align-top">
-                        <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${statusBadgeClass(row.status)}`}>
-                          {labelStatus(row.status)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-5 align-top">
-                        <span
-                          className={`inline-flex max-w-[11rem] rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-tight ${clientOnlinePaymentPreferenceBadgeClass(row.clientWantsOnlinePayment)}`}
-                        >
-                          {labelClientOnlinePaymentPreference(row.clientWantsOnlinePayment)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-5 align-top">
-                        <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${leadPaymentStatusBadgeClass(row.paymentStatus)}`}>
-                          {payLabel}
-                        </span>
-                      </td>
-                      <td className="px-4 py-5 align-top">
-                        {tarif ? <p className="font-semibold text-[var(--pro-accent)]">{tarif}</p> : <span className="text-[var(--pro-text-muted)]">—</span>}
-                        {journey ? <p className="mt-1 text-xs text-[var(--pro-text-muted)]">{journey}</p> : null}
-                      </td>
-                      <td className="px-4 py-5 align-top">
-                        <Link href={`/pro/demandes/${row.id}`} className="inline-flex rounded-xl bg-[var(--pro-accent-soft)] px-3 py-2 font-semibold text-[var(--pro-accent)] hover:brightness-110">
-                          Ouvrir
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-            {!rows.length ? <EmptyState message="Aucune demande ne correspond à ces filtres." /> : null}
+        <ProPanel>
+          <ProSectionHeader
+            title="Liste des demandes"
+            description="Vue large et lisible pour parcourir les dossiers sans tableau serre ni informations techniques inutiles."
+          />
+
+          <div className="mt-6 space-y-4">
+            {rows.map((row) => (
+              <RequestListCard key={row.id} row={row} />
+            ))}
+            {!rows.length && !loading ? <EmptyState message="Aucune demande ne correspond a ces filtres." /> : null}
           </div>
         </ProPanel>
-
-        <div className="grid grid-cols-1 gap-4 xl:hidden 2xl:grid-cols-2">
-          {rows.map((row) => {
-            const tarif = isUsefulValue(row.pricingResult && (row.pricingResult as Record<string, unknown>).tarif)
-              ? formatPrice((row.pricingResult as Record<string, unknown>).tarif)
-              : "";
-            const payLabel = labelLeadPaymentStatus(row.paymentStatus);
-            return (
-              <ProPanel key={row.id} className="p-4 sm:p-5">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-[var(--pro-text)]">{getDisplayName(row.clientName)}</p>
-                    <p className="mt-1 text-sm text-[var(--pro-text-muted)]">{labelKind(row.kind)}</p>
-                  </div>
-                  <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${statusBadgeClass(row.status)}`}>
-                    {labelStatus(row.status)}
-                  </span>
-                </div>
-                <p className="mt-2 flex flex-wrap items-center gap-2 text-xs font-medium text-[var(--pro-text-soft)]">
-                  <span
-                    className={`inline-flex rounded-full border px-2 py-0.5 font-semibold ${clientOnlinePaymentPreferenceBadgeClass(row.clientWantsOnlinePayment)}`}
-                  >
-                    {labelClientOnlinePaymentPreference(row.clientWantsOnlinePayment)}
-                  </span>
-                  <span>Paiement :</span>
-                  <span className={`inline-flex rounded-full border px-2 py-0.5 font-semibold ${leadPaymentStatusBadgeClass(row.paymentStatus)}`}>
-                    {payLabel}
-                  </span>
-                </p>
-                {usefulText(row.clientPhone) ? <p className="mt-3 text-sm text-[var(--pro-text-soft)]">{usefulText(row.clientPhone)}</p> : null}
-                {usefulText(row.clientEmail) ? <p className="mt-1 text-sm text-[var(--pro-text-muted)]">{usefulText(row.clientEmail)}</p> : null}
-                <p className="mt-3 text-sm text-[var(--pro-text-muted)]">Création : {formatDateTime(row.createdAt)}</p>
-                {formatDateTime(row.scheduledStart) ? <p className="mt-1 text-sm text-[var(--pro-text-soft)]">Prévue : {formatDateTime(row.scheduledStart)}</p> : null}
-                {getJourneySummary(row.flatPayload) ? <p className="mt-2 text-sm text-[var(--pro-text-soft)]">{getJourneySummary(row.flatPayload)}</p> : null}
-                <div className="mt-4 flex items-center justify-between gap-3">
-                  <span className="text-sm font-semibold text-[var(--pro-accent)]">{tarif || "—"}</span>
-                  <Link href={`/pro/demandes/${row.id}`} className="rounded-xl bg-[var(--pro-accent-soft)] px-3 py-2 text-sm font-semibold text-[var(--pro-accent)]">
-                    Ouvrir
-                  </Link>
-                </div>
-              </ProPanel>
-            );
-          })}
-          {!rows.length ? <EmptyState message="Aucune demande." /> : null}
-        </div>
       </ProShell>
     </ProGuard>
   );
