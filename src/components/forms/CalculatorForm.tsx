@@ -19,6 +19,76 @@ function getAirportAddress(code: string): string {
   return AIRPORTS.find(a => a.value === code)?.address ?? "";
 }
 
+type AddressField = string | { formatted?: string; lat?: number; lon?: number };
+
+/** Adresse normalisée (texte affiché / envoyé à l’API). */
+function getAddr(v: AddressField | undefined | null): string {
+  if (v == null) return "";
+  if (typeof v === "string") return v.trim();
+  return (v.formatted ?? "").trim();
+}
+
+/** Sélection confirmée via l’autocomplétion (coordonnées présentes). */
+function isAutocompleteSelection(v: AddressField | undefined | null): boolean {
+  const text = getAddr(v);
+  if (!text) return false;
+  if (typeof v === "object" && v !== null) {
+    return (
+      typeof v.lat === "number" &&
+      typeof v.lon === "number" &&
+      Number.isFinite(v.lat) &&
+      Number.isFinite(v.lon)
+    );
+  }
+  return false;
+}
+
+function validateAutocompleteAddress(
+  v: AddressField | undefined | null,
+  kind: "depart" | "destination" | "lieu" | "priseEnCharge"
+): string | null {
+  const text = getAddr(v);
+  if (!text) {
+    switch (kind) {
+      case "depart":
+        return "Veuillez renseigner une adresse de départ valide.";
+      case "destination":
+        return "Veuillez renseigner une adresse de destination valide.";
+      case "lieu":
+        return "Veuillez renseigner le lieu de l'événement.";
+      case "priseEnCharge":
+        return "Veuillez renseigner une adresse de prise en charge valide.";
+    }
+  }
+  if (!isAutocompleteSelection(v)) {
+    switch (kind) {
+      case "depart":
+        return "Veuillez sélectionner une adresse de départ dans la liste de suggestions.";
+      case "destination":
+        return "Veuillez sélectionner une adresse de destination dans la liste de suggestions.";
+      case "lieu":
+        return "Veuillez sélectionner le lieu de l'événement dans la liste de suggestions.";
+      case "priseEnCharge":
+        return "Veuillez sélectionner une adresse de prise en charge dans la liste de suggestions.";
+    }
+  }
+  return null;
+}
+
+function normalizeAddressOnChange(v: AddressField): AddressField {
+  if (typeof v === "object" && v !== null) {
+    const formatted = (v.formatted ?? "").trim();
+    if (!formatted) return "";
+    return {
+      formatted,
+      ...(typeof v.lat === "number" ? { lat: v.lat } : {}),
+      ...(typeof v.lon === "number" ? { lon: v.lon } : {}),
+    };
+  }
+  const trimmed = String(v ?? "").trim();
+  return trimmed === "" ? "" : { formatted: trimmed };
+}
+
 function toFrDate(isoDate: string): string {
   if (!isoDate || !isoDate.includes("-")) return "";
   const [y, m, d] = isoDate.split("-");
@@ -242,15 +312,15 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
 
   const [transfertAeroport, setTransfertAeroport] = useState({
     TApassagers: "1",
-    TAallerpriseencharge: "" as string | { formatted: string },
-    TAallerdestination: "" as string | { formatted: string },
+    TAallerpriseencharge: "" as AddressField,
+    TAallerdestination: "" as AddressField,
     TAallerdate: "",
     TAallernumerovol: "",
     TAallerhoraire: "",
     TAtrajet: "Aller Simple" as string,
     // Retour
-    TAretourpriseencharge: "" as string | { formatted: string },
-    TAretourdestination: "" as string | { formatted: string },
+    TAretourpriseencharge: "" as AddressField,
+    TAretourdestination: "" as AddressField,
     TAretourdate: "",
     TAretournumerovol: "",
     TAretourhoraire: "",
@@ -262,7 +332,7 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
     // Mode inversé (départ depuis aéroport)
     TAheureVolDepart: "",
     TANumeroVolDepart: "",
-    TAvilleDestination: "" as string | { formatted: string },
+    TAvilleDestination: "" as AddressField,
   });
 
   /* ── Spécificités Trajet Classique ── */
@@ -270,13 +340,13 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
 
   const [trajetClassique, setTrajetClassique] = useState({
     TCpassagers: "1",
-    TCallerpriseencharge: "" as string | { formatted: string },
-    TCallerDestination: "" as string | { formatted: string },
+    TCallerpriseencharge: "" as AddressField,
+    TCallerDestination: "" as AddressField,
     TCallerdate: "",
     TCallerheure: "",
     TCtrajet: "Aller Simple" as TypeTrajet,
-    TCretourpriseencharge: "" as string | { formatted: string },
-    TCretourDestination: "" as string | { formatted: string },
+    TCretourpriseencharge: "" as AddressField,
+    TCretourDestination: "" as AddressField,
     TCretourdate: "",
     TCretourheure: "",
     HeureMADClassique: "",
@@ -286,15 +356,99 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
 
   /* ── MAD ── */
   const [madEvenementiel, setMadEvenementiel] = useState({
-    LieuEvenement: "" as string | { formatted: string },
+    LieuEvenement: "" as AddressField,
     DateEvenement: "",
     HeureEvenement: "",
     HeureMADEvenement: "",
     nombreinvites: "0",
   });
 
-  const getAddr = (v: string | { formatted?: string }): string =>
-    typeof v === "object" && v?.formatted ? v.formatted : String(v ?? "");
+  const isAR = typeTrajet === "Aller/Retour" || typeTrajet === "A/R + Mise à disposition";
+  const isARMAD = typeTrajet === "A/R + Mise à disposition";
+  const isAeroAR = transfertAeroport.TAtrajet === "Aller/Retour";
+
+  const clearTarifPreview = useCallback(() => {
+    setTarif(null);
+    setTarifResult(null);
+    setError(null);
+  }, []);
+
+  /** Validation métier avant tout appel API (tarif, devis, réservation). */
+  const validateTripBeforeApi = useCallback((): string | null => {
+    if (typeService === "Trajet Classique") {
+      const departErr = validateAutocompleteAddress(trajetClassique.TCallerpriseencharge, "depart");
+      if (departErr) return departErr;
+      const destErr = validateAutocompleteAddress(trajetClassique.TCallerDestination, "destination");
+      if (destErr) return destErr;
+      if (!trajetClassique.TCallerdate) return "Veuillez renseigner la date de départ.";
+      if (!trajetClassique.TCallerheure) return "Veuillez renseigner l'heure de départ.";
+      if (isAR) {
+        if (tcRetourAdresseDifferente) {
+          const retourDepartErr = validateAutocompleteAddress(trajetClassique.TCretourpriseencharge, "depart");
+          if (retourDepartErr) return "Veuillez renseigner une adresse de départ retour valide.";
+          const retourDestErr = validateAutocompleteAddress(trajetClassique.TCretourDestination, "destination");
+          if (retourDestErr) return "Veuillez renseigner une adresse de destination retour valide.";
+        }
+        if (!isARMAD && !trajetClassique.TCretourdate) return "Veuillez renseigner la date de retour.";
+        if (!isARMAD && !trajetClassique.TCretourheure) return "Veuillez renseigner l'heure de retour.";
+        if (isARMAD && !trajetClassique.HeureMADClassique) {
+          return "Veuillez renseigner la durée de mise à disposition.";
+        }
+      }
+      return null;
+    }
+
+    if (typeService === "Transfert Aéroport") {
+      if (departDepuisAeroport && !isAeroAR) {
+        if (!aeroportDepartCode) return "Veuillez choisir l'aéroport de départ.";
+        const destErr = validateAutocompleteAddress(transfertAeroport.TAvilleDestination, "destination");
+        if (destErr) return destErr;
+        if (!transfertAeroport.TAallerdate) return "Veuillez renseigner la date du vol.";
+        if (!transfertAeroport.TAheureVolDepart) return "Veuillez renseigner l'heure du vol.";
+      } else {
+        const pecErr = validateAutocompleteAddress(transfertAeroport.TAallerpriseencharge, "priseEnCharge");
+        if (pecErr) return pecErr;
+        if (!getAddr(transfertAeroport.TAallerdestination)) {
+          return "Veuillez choisir l'aéroport de destination.";
+        }
+        if (!transfertAeroport.TAallerdate) return "Veuillez renseigner la date du vol (aller).";
+        if (!transfertAeroport.TAallerhoraire) return "Veuillez renseigner l'heure du vol (aller).";
+        if (isAeroAR) {
+          if (!transfertAeroport.TAretourdate) return "Veuillez renseigner la date du vol (retour).";
+          if (!transfertAeroport.TAretourhoraire) return "Veuillez renseigner l'heure du vol (retour).";
+          if (taRetourAdresseDifferente) {
+            if (!transfertAeroport.TAaeroportRetourCode) return "Veuillez choisir l'aéroport de retour.";
+            const retourDestErr = validateAutocompleteAddress(transfertAeroport.TAretourdestination, "destination");
+            if (retourDestErr) return retourDestErr;
+          }
+        }
+      }
+      return null;
+    }
+
+    if (typeService === "MAD Evenementiel") {
+      const lieuErr = validateAutocompleteAddress(madEvenementiel.LieuEvenement, "lieu");
+      if (lieuErr) return lieuErr;
+      if (!madEvenementiel.DateEvenement) return "Veuillez renseigner la date de l'événement.";
+      if (!madEvenementiel.HeureEvenement) return "Veuillez renseigner l'heure de début.";
+      if (!madEvenementiel.HeureMADEvenement) return "Veuillez renseigner la durée de mise à disposition.";
+      return null;
+    }
+
+    return null;
+  }, [
+    typeService,
+    trajetClassique,
+    transfertAeroport,
+    madEvenementiel,
+    isAR,
+    isARMAD,
+    isAeroAR,
+    departDepuisAeroport,
+    aeroportDepartCode,
+    taRetourAdresseDifferente,
+    tcRetourAdresseDifferente,
+  ]);
 
   const buildPayload = useCallback(() => {
     const clientData: Record<string, string> = { nom: client.nom, prenom: client.prenom, telephone: client.telephone, email: client.email };
@@ -398,6 +552,13 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
   ]);
 
   const fetchTarif = useCallback(async () => {
+    const validationError = validateTripBeforeApi();
+    if (validationError) {
+      setError(validationError);
+      setTarif(null);
+      setTarifResult(null);
+      return;
+    }
     const payload = buildPayload();
     setLoading(true); setError(null); setTarif(null); setTarifResult(null);
     try {
@@ -413,10 +574,16 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
     } finally {
       setLoading(false);
     }
-  }, [buildPayload]);
+  }, [buildPayload, validateTripBeforeApi]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const validationError = validateTripBeforeApi();
+    if (validationError) {
+      setError(validationError);
+      setSubmitStatus("error");
+      return;
+    }
     setSubmitStatus("loading");
     const payload = buildPayload();
     const route = isDevis ? "devis" : "reservation";
@@ -435,54 +602,10 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
     }
   };
 
-  const isAR = typeTrajet === "Aller/Retour" || typeTrajet === "A/R + Mise à disposition";
-  const isARMAD = typeTrajet === "A/R + Mise à disposition";
-  const isAeroAR = transfertAeroport.TAtrajet === "Aller/Retour";
-
   const getMissingTarifFields = useCallback((): string[] => {
-    const missing: string[] = [];
-    if (typeService === "Transfert Aéroport") {
-      if (departDepuisAeroport && !isAeroAR) {
-        if (!aeroportDepartCode) missing.push("Aéroport de départ");
-        if (!getAddr(transfertAeroport.TAvilleDestination)) missing.push("Destination");
-        if (!transfertAeroport.TAallerdate) missing.push("Date du vol");
-        if (!transfertAeroport.TAheureVolDepart) missing.push("Heure du vol");
-      } else {
-        if (!getAddr(transfertAeroport.TAallerpriseencharge)) missing.push("Lieu de prise en charge (aller)");
-        if (!transfertAeroport.TAallerdestination) missing.push("Aéroport de destination (aller)");
-        if (!transfertAeroport.TAallerdate) missing.push("Date du vol (aller)");
-        if (!transfertAeroport.TAallerhoraire) missing.push("Heure du vol (aller)");
-        if (isAeroAR) {
-          if (!transfertAeroport.TAretourdate) missing.push("Date du vol (retour)");
-          if (!transfertAeroport.TAretourhoraire) missing.push("Heure du vol (retour)");
-          if (taRetourAdresseDifferente) {
-            if (!transfertAeroport.TAaeroportRetourCode) missing.push("Aéroport retour");
-            if (!getAddr(transfertAeroport.TAretourdestination)) missing.push("Destination retour");
-          }
-        }
-      }
-    } else if (typeService === "Trajet Classique") {
-      if (!getAddr(trajetClassique.TCallerpriseencharge)) missing.push("Lieu de départ (aller)");
-      if (!getAddr(trajetClassique.TCallerDestination)) missing.push("Destination (aller)");
-      if (!trajetClassique.TCallerdate) missing.push("Date (aller)");
-      if (!trajetClassique.TCallerheure) missing.push("Heure (aller)");
-      if (isAR) {
-        if (tcRetourAdresseDifferente) {
-          if (!getAddr(trajetClassique.TCretourpriseencharge)) missing.push("Lieu de départ (retour)");
-          if (!getAddr(trajetClassique.TCretourDestination)) missing.push("Destination (retour)");
-        }
-        if (!isARMAD && !trajetClassique.TCretourdate) missing.push("Date (retour)");
-        if (!isARMAD && !trajetClassique.TCretourheure) missing.push("Heure (retour)");
-        if (isARMAD && !trajetClassique.HeureMADClassique) missing.push("Durée mise à disposition");
-      }
-    } else if (typeService === "MAD Evenementiel") {
-      if (!getAddr(madEvenementiel.LieuEvenement)) missing.push("Lieu de l'événement");
-      if (!madEvenementiel.DateEvenement) missing.push("Date");
-      if (!madEvenementiel.HeureEvenement) missing.push("Heure de début");
-      if (!madEvenementiel.HeureMADEvenement) missing.push("Durée de mise à disposition");
-    }
-    return missing;
-  }, [typeService, transfertAeroport, trajetClassique, madEvenementiel, isAR, isARMAD, isAeroAR, departDepuisAeroport, aeroportDepartCode, taRetourAdresseDifferente, tcRetourAdresseDifferente]);
+    const validationError = validateTripBeforeApi();
+    return validationError ? [validationError] : [];
+  }, [validateTripBeforeApi]);
 
   const getMissingCoordFields = useCallback((): string[] => {
     const missing: string[] = [];
@@ -619,7 +742,10 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
                 <AddressAutocomplete label="Lieu de prise en charge (votre adresse)" required
                   placeholder="Votre adresse, ville..."
                   value={getAddr(transfertAeroport.TAallerpriseencharge)}
-                  onChange={(v) => setTransfertAeroport(t => ({ ...t, TAallerpriseencharge: typeof v === "object" ? v : { formatted: v } }))} />
+                  onChange={(v) => {
+                    setTransfertAeroport(t => ({ ...t, TAallerpriseencharge: normalizeAddressOnChange(v) }));
+                    clearTarifPreview();
+                  }} />
                 {renderAeroportSelect("Aéroport de destination", getAddr(transfertAeroport.TAallerdestination as string), (v) => setTransfertAeroport(t => ({ ...t, TAallerdestination: v })))}
                 <div className="grid grid-cols-2 gap-3">
                   <div><FieldLabel required>Date du vol</FieldLabel>
@@ -656,7 +782,10 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
                 <AddressAutocomplete label="Votre adresse de destination" required
                   placeholder="Votre adresse, ville..."
                   value={getAddr(transfertAeroport.TAvilleDestination)}
-                  onChange={(v) => setTransfertAeroport(t => ({ ...t, TAvilleDestination: typeof v === "object" ? v : { formatted: v } }))} />
+                  onChange={(v) => {
+                    setTransfertAeroport(t => ({ ...t, TAvilleDestination: normalizeAddressOnChange(v) }));
+                    clearTarifPreview();
+                  }} />
               </div>
             )}
 
@@ -680,7 +809,10 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
                     <AddressAutocomplete label="Destination (retour — votre adresse)" required
                       placeholder="Votre adresse de destination..."
                       value={getAddr(transfertAeroport.TAretourdestination)}
-                      onChange={(v) => setTransfertAeroport(t => ({ ...t, TAretourdestination: typeof v === "object" ? v : { formatted: v } }))} />
+                      onChange={(v) => {
+                        setTransfertAeroport(t => ({ ...t, TAretourdestination: normalizeAddressOnChange(v) }));
+                        clearTarifPreview();
+                      }} />
                   </>
                 )}
 
@@ -747,10 +879,16 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
               <p className="text-[11px] font-bold text-primary/70 uppercase tracking-[0.12em] flex items-center gap-2"><IconPlane /> Aller</p>
               <AddressAutocomplete label="Lieu de départ" required
                 value={getAddr(trajetClassique.TCallerpriseencharge)}
-                onChange={(v) => setTrajetClassique(t => ({ ...t, TCallerpriseencharge: typeof v === "object" ? v : { formatted: v } }))} />
+                onChange={(v) => {
+                  setTrajetClassique(t => ({ ...t, TCallerpriseencharge: normalizeAddressOnChange(v) }));
+                  clearTarifPreview();
+                }} />
               <AddressAutocomplete label="Destination" required
                 value={getAddr(trajetClassique.TCallerDestination)}
-                onChange={(v) => setTrajetClassique(t => ({ ...t, TCallerDestination: typeof v === "object" ? v : { formatted: v } }))} />
+                onChange={(v) => {
+                  setTrajetClassique(t => ({ ...t, TCallerDestination: normalizeAddressOnChange(v) }));
+                  clearTarifPreview();
+                }} />
               <div className="grid grid-cols-2 gap-3">
                 <div><FieldLabel required>Date</FieldLabel>
                   <StyledInput icon={<IconCalendar />} required type="date" value={trajetClassique.TCallerdate}
@@ -781,10 +919,16 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
                   <>
                     <AddressAutocomplete label="Lieu de départ (retour)" required
                       value={getAddr(trajetClassique.TCretourpriseencharge)}
-                      onChange={(v) => setTrajetClassique(t => ({ ...t, TCretourpriseencharge: typeof v === "object" ? v : { formatted: v } }))} />
+                      onChange={(v) => {
+                        setTrajetClassique(t => ({ ...t, TCretourpriseencharge: normalizeAddressOnChange(v) }));
+                        clearTarifPreview();
+                      }} />
                     <AddressAutocomplete label="Destination (retour)" required
                       value={getAddr(trajetClassique.TCretourDestination)}
-                      onChange={(v) => setTrajetClassique(t => ({ ...t, TCretourDestination: typeof v === "object" ? v : { formatted: v } }))} />
+                      onChange={(v) => {
+                        setTrajetClassique(t => ({ ...t, TCretourDestination: normalizeAddressOnChange(v) }));
+                        clearTarifPreview();
+                      }} />
                   </>
                 )}
 
@@ -819,7 +963,10 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
           <div className="space-y-5">
             <AddressAutocomplete label="Lieu de l'événement" required
               value={getAddr(madEvenementiel.LieuEvenement)}
-              onChange={(v) => setMadEvenementiel(e => ({ ...e, LieuEvenement: typeof v === "object" ? v : { formatted: v } }))} />
+              onChange={(v) => {
+                setMadEvenementiel(e => ({ ...e, LieuEvenement: normalizeAddressOnChange(v) }));
+                clearTarifPreview();
+              }} />
             <div className="grid grid-cols-2 gap-3">
               <div><FieldLabel required>Date</FieldLabel>
                 <StyledInput icon={<IconCalendar />} required type="date" value={madEvenementiel.DateEvenement}
@@ -853,7 +1000,7 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
           } />
           {missingTarif.length > 0 && (
-            <div className="mb-4"><Annotation type="warning">Pour calculer le tarif, veuillez renseigner : {missingTarif.join(", ")}.</Annotation></div>
+            <div className="mb-4"><Annotation type="warning">{missingTarif[0]}</Annotation></div>
           )}
           <button type="button" onClick={fetchTarif} disabled={loading || !canCalculateTarif}
             className="chrome-btn w-full py-3.5 rounded-lg text-primary font-bold text-sm uppercase tracking-widest hover:text-white active:scale-[0.98] transition-all disabled:opacity-40 flex items-center justify-center gap-3">
@@ -992,7 +1139,7 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
       {isDevis && (
         <div className="space-y-4">
           {missingTarif.length > 0 && (
-            <Annotation type="info">Complétez les informations du trajet : {missingTarif.join(", ")}.</Annotation>
+            <Annotation type="info">{missingTarif[0]}</Annotation>
           )}
           {missingCoord.length > 0 && canCalculateTarif && (
             <Annotation type="info">Complétez vos coordonnées : {missingCoord.join(", ")}.</Annotation>
