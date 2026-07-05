@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useState, useEffect, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { siteConfig, type SiteConfig } from "@/config/site.config";
+import { trackEvent } from "@/lib/telemetryClient";
 
 const iconHome = (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -155,6 +156,7 @@ export function Header({ runtimeSite }: HeaderProps) {
             <div className="hidden lg:flex items-center shrink-0 gap-1.5 xl:gap-2">
               <a
                 href={`tel:${phoneTel}`}
+                onClick={() => trackEvent({ type: "click_phone", throttleMs: 5000 })}
                 className="flex items-center gap-1.5 px-2 py-2 xl:px-3 text-gray-400 hover:text-white text-sm whitespace-nowrap transition-colors"
               >
                 <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -164,6 +166,7 @@ export function Header({ runtimeSite }: HeaderProps) {
               </a>
               <Link
                 href="/calculateur"
+                onClick={() => trackEvent({ type: "click_reserver", throttleMs: 1500 })}
                 className="flex items-center gap-1.5 px-3 py-2 xl:px-4 rounded-lg bg-primary hover:bg-primary-dark text-white font-semibold text-sm whitespace-nowrap transition-colors shadow-glow"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -205,7 +208,12 @@ export function Header({ runtimeSite }: HeaderProps) {
               <Link
                 key={link.href}
                 href={link.href}
-                onClick={() => setMobileOpen(false)}
+                onClick={() => {
+                  if (link.href === "/contact") trackEvent({ type: "click_contact", throttleMs: 1500 });
+                  if (link.href === "/devis") trackEvent({ type: "click_devis", throttleMs: 1500 });
+                  if (link.href === "/calculateur") trackEvent({ type: "click_reserver", throttleMs: 1500 });
+                  setMobileOpen(false);
+                }}
                 className={`mb-1 flex items-center gap-4 rounded-xl px-4 py-4 transition-colors ${
                   pathname === link.href
                     ? "bg-primary/10 text-primary"
@@ -224,7 +232,10 @@ export function Header({ runtimeSite }: HeaderProps) {
           <div className="px-4 py-4 space-y-3">
             <Link
               href="/calculateur"
-              onClick={() => setMobileOpen(false)}
+              onClick={() => {
+                trackEvent({ type: "click_reserver", throttleMs: 1500 });
+                setMobileOpen(false);
+              }}
               className="flex items-center justify-center gap-3 w-full py-4 rounded-xl bg-primary text-white font-bold text-base shadow-glow"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -234,7 +245,10 @@ export function Header({ runtimeSite }: HeaderProps) {
             </Link>
             <Link
               href="/devis"
-              onClick={() => setMobileOpen(false)}
+              onClick={() => {
+                trackEvent({ type: "click_devis", throttleMs: 1500 });
+                setMobileOpen(false);
+              }}
               className="flex items-center justify-center gap-3 w-full py-4 rounded-xl border border-primary/40 text-primary font-semibold text-base"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

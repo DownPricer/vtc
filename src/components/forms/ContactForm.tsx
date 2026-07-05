@@ -1,11 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { postCentralApi } from "@/lib/centralApi";
+import { trackEvent } from "@/lib/telemetryClient";
 
 export function ContactForm() {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
+  const [started, setStarted] = useState(false);
+
+  const markStartedOnce = useCallback(() => {
+    if (started) return;
+    setStarted(true);
+    trackEvent({ type: "contact_form_started", throttleMs: 2000 });
+  }, [started]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -37,7 +45,7 @@ export function ContactForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4" onFocusCapture={markStartedOnce} onInputCapture={markStartedOnce}>
       <div>
         <label htmlFor="nom" className="block text-sm font-medium text-gray-light mb-1">
           Nom *
@@ -110,6 +118,7 @@ export function ContactForm() {
         type="submit"
         disabled={status === "loading"}
         className="w-full py-4 rounded-lg bg-primary hover:bg-primary-dark text-white font-semibold disabled:opacity-50 transition-colors"
+        onClick={() => trackEvent({ type: "click_contact", throttleMs: 1500 })}
       >
         {status === "loading" ? "Envoi..." : "Envoyer"}
       </button>

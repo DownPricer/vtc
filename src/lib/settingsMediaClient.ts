@@ -49,7 +49,7 @@ export async function deleteSettingsMediaFile(publicPath: string): Promise<void>
   await fetch("/api/pro/settings-media", {
     method: "DELETE",
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "application/json; charset=utf-8",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify({ publicPath }),

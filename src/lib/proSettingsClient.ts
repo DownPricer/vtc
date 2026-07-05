@@ -48,7 +48,7 @@ export async function putProTenantSettingsToApi(settings: TenantSettingsV1): Pro
   try {
     const res = await proAuthenticatedFetch("/pro/settings", {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json; charset=utf-8" },
       body: JSON.stringify({ settings }),
     });
     const json = await readJsonBody(res);

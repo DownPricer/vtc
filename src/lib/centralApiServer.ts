@@ -19,7 +19,7 @@ export async function postCentralApiServer(route: CentralBusinessRoute, body: un
   return fetch(`${cfg.baseUrl}/api/${route}`, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "application/json; charset=utf-8",
       "X-Tenant-ID": cfg.tenantId,
     },
     body: JSON.stringify(body),

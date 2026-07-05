@@ -12,6 +12,7 @@ import { getBrandCssVariables } from "@/lib/branding/cssVariables";
 import { getPublicTenantSettings } from "@/lib/publicTenantSettingsClient";
 import { buildSiteConfigFromTenant } from "@/config/siteConfigFromTenant";
 import { buildBusinessConfigFromTenant } from "@/config/businessConfigFromTenant";
+import { TelemetryRoot } from "@/components/telemetry/TelemetryRoot";
 
 const SITE_URL = getPublicSiteUrl();
 const ogUrl = `${SITE_URL}${siteConfig.branding.ogImageSrc}`;
@@ -88,6 +89,7 @@ export default async function RootLayout({
       <body className="antialiased bg-dark text-white min-h-screen flex flex-col">
         {runtimeSite.features.introScreen ? <IntroScreen runtimeSite={runtimeSite} /> : null}
         <Header runtimeSite={runtimeSite} />
+        <TelemetryRoot />
         <main className="flex-1 pb-24 md:pb-0">{children}</main>
         <Footer runtimeSite={runtimeSite} runtimeBusiness={runtimeBusiness} />
         <FloatingButtons runtimeSite={runtimeSite} />

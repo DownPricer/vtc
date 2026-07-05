@@ -52,7 +52,7 @@ async function authFetch(path: string, init?: RequestInit, withAuth = true): Pro
   const { baseUrl, tenantId } = cfg();
   const token = getStoredAccessToken();
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    "Content-Type": "application/json; charset=utf-8",
     "X-Tenant-ID": tenantId,
     ...(init?.headers as Record<string, string>),
   };

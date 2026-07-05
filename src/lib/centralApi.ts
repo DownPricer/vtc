@@ -67,7 +67,7 @@ export async function postCentralApi<T = Record<string, unknown>>(
     try {
       const res = await fetch(`/api/${route}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json; charset=utf-8" },
         body: JSON.stringify(body),
       });
       let json: unknown;
@@ -106,7 +106,7 @@ export async function postCentralApi<T = Record<string, unknown>>(
     const res = await fetch(url, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "application/json; charset=utf-8",
         "X-Tenant-ID": cfg.tenantId,
       },
       body: JSON.stringify(body),

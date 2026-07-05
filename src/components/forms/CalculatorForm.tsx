@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { AddressAutocomplete } from "./AddressAutocomplete";
 import { postCentralApi } from "@/lib/centralApi";
+import { trackEvent } from "@/lib/telemetryClient";
 
 type TypeService = "Transfert Aéroport" | "Trajet Classique" | "MAD Evenementiel";
 type TypeTrajet = "Aller Simple" | "Aller/Retour" | "A/R + Mise à disposition";
@@ -305,6 +306,32 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
   /** Préférence paiement en ligne (formulaires publics PR8). Défaut : sur place. */
   const [clientWantsOnlinePayment, setClientWantsOnlinePayment] = useState(false);
 
+  const [startedSent, setStartedSent] = useState(false);
+
+  useEffect(() => {
+    // Le formulaire calculateur est affiché.
+    trackEvent({
+      type: "calculator_opened",
+      metadata: { mode },
+      throttleMs: 2000,
+    });
+  }, [mode]);
+
+  const markStartedOnce = useCallback(() => {
+    if (startedSent) return;
+    setStartedSent(true);
+    trackEvent({
+      type: "calculator_started",
+      metadata: { mode },
+      throttleMs: 2000,
+    });
+    trackEvent({
+      type: isDevis ? "quote_form_started" : "booking_form_started",
+      metadata: { mode },
+      throttleMs: 2000,
+    });
+  }, [startedSent, isDevis, mode]);
+
   /* ── Spécificités Transfert Aéroport ── */
   const [departDepuisAeroport, setDepartDepuisAeroport] = useState(false);
   const [aeroportDepartCode, setAeroportDepartCode] = useState("");
@@ -557,6 +584,11 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
       setError(validationError);
       setTarif(null);
       setTarifResult(null);
+      trackEvent({
+        type: "form_validation_error",
+        metadata: { context: "tarif", mode, message: validationError.slice(0, 160) },
+        throttleMs: 1500,
+      });
       return;
     }
     const payload = buildPayload();
@@ -564,17 +596,54 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
     try {
       const result = await postCentralApi<Record<string, unknown>>("calculer-tarif", payload);
       if (result.ok && result.data && result.data.tarif != null) {
-        setTarif(result.data.tarif as number);
+        const price = result.data.tarif as number;
+        setTarif(price);
         setTarifResult(result.data);
+        // Prix affiché côté front (funnel)
+        trackEvent({
+          type: "calculator_quote_displayed",
+          metadata: {
+            mode,
+            estimatedPrice: price,
+            serviceType: typeService,
+            tripMode: typeTrajet,
+            passengerCount:
+              typeService === "Transfert Aéroport" ? Number(transfertAeroport.TApassagers || 0) :
+              typeService === "Trajet Classique" ? Number(trajetClassique.TCpassagers || 0) :
+              Number(madEvenementiel.nombreinvites || 0),
+            airportCode: typeService === "Transfert Aéroport" ? (aeroportDepartCode || transfertAeroport.TAaeroportRetourCode || null) : null,
+          },
+          throttleMs: 1500,
+        });
       } else {
         setError(result.ok ? "Impossible de calculer le tarif" : result.message);
+        trackEvent({
+          type: "form_validation_error",
+          metadata: { context: "tarif", mode, message: (result.ok ? "Impossible de calculer le tarif" : String(result.message || "")).slice(0, 160) },
+          throttleMs: 1500,
+        });
       }
     } catch (e) {
       setError((e as Error).message);
+      trackEvent({
+        type: "form_validation_error",
+        metadata: { context: "tarif", mode, message: String((e as Error).message || "").slice(0, 160) },
+        throttleMs: 1500,
+      });
     } finally {
       setLoading(false);
     }
-  }, [buildPayload, validateTripBeforeApi]);
+  }, [
+    buildPayload,
+    validateTripBeforeApi,
+    mode,
+    typeService,
+    typeTrajet,
+    transfertAeroport,
+    trajetClassique,
+    madEvenementiel,
+    aeroportDepartCode,
+  ]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -582,6 +651,11 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
     if (validationError) {
       setError(validationError);
       setSubmitStatus("error");
+      trackEvent({
+        type: "form_validation_error",
+        metadata: { context: "submit", mode, message: validationError.slice(0, 160) },
+        throttleMs: 1500,
+      });
       return;
     }
     setSubmitStatus("loading");
@@ -595,10 +669,20 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
       } else {
         setSubmitStatus("error");
         setError(result.message || "Erreur lors de l'envoi");
+        trackEvent({
+          type: "form_validation_error",
+          metadata: { context: "submit", mode, message: String(result.message || "Erreur lors de l'envoi").slice(0, 160) },
+          throttleMs: 1500,
+        });
       }
     } catch (err) {
       setSubmitStatus("error");
       setError((err as Error).message);
+      trackEvent({
+        type: "form_validation_error",
+        metadata: { context: "submit", mode, message: String((err as Error).message || "").slice(0, 160) },
+        throttleMs: 1500,
+      });
     }
   };
 
@@ -645,7 +729,14 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
   );
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6" data-mode={isDevis ? "devis" : "reservation"}>
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-6"
+      data-mode={isDevis ? "devis" : "reservation"}
+      onFocusCapture={markStartedOnce}
+      onInputCapture={markStartedOnce}
+      onChangeCapture={markStartedOnce}
+    >
 
       {/* ── ÉTAPE 1 : Type de service ── */}
       <div className="dashboard-card rounded-2xl p-5 md:p-6">

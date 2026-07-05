@@ -4,6 +4,7 @@ import Link from "next/link";
 import { siteConfig, type SiteConfig } from "@/config/site.config";
 import { defaultTenantSettings } from "@/config/defaultTenantSettings";
 import type { TenantSettingsV1 } from "@/config/tenant-settings.types";
+import { trackEvent } from "@/lib/telemetryClient";
 
 type Props = {
   runtimeSite?: SiteConfig;
@@ -22,6 +23,7 @@ export function MobileCtaBar({ runtimeSite, tenantSettings = defaultTenantSettin
         <div className="flex gap-3">
           <a
             href={`tel:${phoneTel}`}
+            onClick={() => trackEvent({ type: "click_phone", throttleMs: 5000 })}
             className="flex-1 flex items-center justify-center gap-2.5 py-3.5 rounded-xl bg-surface border border-white/10 text-white font-semibold text-sm active:scale-95 transition-transform"
           >
             <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -47,6 +49,7 @@ export function MobileCtaBar({ runtimeSite, tenantSettings = defaultTenantSettin
 
           <Link
             href="/calculateur"
+            onClick={() => trackEvent({ type: "click_reserver", throttleMs: 1500 })}
             className="flex-[1.4] flex items-center justify-center gap-2 py-3.5 rounded-xl bg-primary text-white font-bold text-sm shadow-glow active:scale-95 transition-transform"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
