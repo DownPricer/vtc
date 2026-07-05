@@ -14,13 +14,14 @@ function getCentralServerConfig(): { baseUrl: string; tenantId: string } {
   return { baseUrl: normalizeBaseUrl(baseUrlRaw), tenantId };
 }
 
-export async function postCentralApiServer(route: CentralBusinessRoute, body: unknown): Promise<Response> {
+export async function postCentralApiServer(route: CentralBusinessRoute, body: unknown, siteDomain?: string | null): Promise<Response> {
   const cfg = getCentralServerConfig();
   return fetch(`${cfg.baseUrl}/api/${route}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json; charset=utf-8",
       "X-Tenant-ID": cfg.tenantId,
+      ...(siteDomain ? { "X-Site-Domain": siteDomain } : {}),
     },
     body: JSON.stringify(body),
     cache: "no-store",

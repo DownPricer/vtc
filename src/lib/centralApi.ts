@@ -43,6 +43,11 @@ export function getCentralApiMissingEnvMessage(): string {
   return `Configuration incomplète : ${missing.join(", ")}`;
 }
 
+function getSiteDomainHeader(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  return { "X-Site-Domain": window.location.hostname };
+}
+
 function extractErrorMessage(json: unknown): string {
   if (!json || typeof json !== "object") return "Une erreur est survenue";
   const o = json as Record<string, unknown>;
@@ -67,7 +72,7 @@ export async function postCentralApi<T = Record<string, unknown>>(
     try {
       const res = await fetch(`/api/${route}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json; charset=utf-8" },
+        headers: { "Content-Type": "application/json; charset=utf-8", ...getSiteDomainHeader() },
         body: JSON.stringify(body),
       });
       let json: unknown;
@@ -108,6 +113,7 @@ export async function postCentralApi<T = Record<string, unknown>>(
       headers: {
         "Content-Type": "application/json; charset=utf-8",
         "X-Tenant-ID": cfg.tenantId,
+        ...getSiteDomainHeader(),
       },
       body: JSON.stringify(body),
     });

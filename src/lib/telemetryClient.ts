@@ -33,6 +33,27 @@ function baseUrl(): string {
   return raw || "https://api.sitereadyshd.fr";
 }
 
+function getRuntimeLocation(): {
+  hostname: string;
+  origin: string;
+  href: string;
+  path: string;
+  isTechnicalHost: boolean;
+} {
+  const hostname = window.location.hostname;
+  const origin = window.location.origin;
+  const href = window.location.href;
+  const path = window.location.pathname;
+  const h = hostname.toLowerCase().replace(/^www\./, "");
+  const isTechnicalHost =
+    h === "localhost" ||
+    h === "127.0.0.1" ||
+    h === "vercel.com" ||
+    h === "vercel.app" ||
+    h.endsWith(".vercel.app");
+  return { hostname, origin, href, path, isTechnicalHost };
+}
+
 function nowIso(): string {
   return new Date().toISOString();
 }
@@ -100,7 +121,8 @@ export function trackEvent(params: {
   try {
     if (typeof window === "undefined") return;
     const tenantId = getTenantId();
-    const path = params.path || window.location.pathname;
+    const location = getRuntimeLocation();
+    const path = params.path || location.path;
     const throttleKey = `${params.type}:${path}`;
     if (params.throttleMs && shouldThrottle(throttleKey, params.throttleMs)) return;
 
@@ -112,6 +134,10 @@ export function trackEvent(params: {
 
     const payload = {
       tenantId,
+      siteDomain: location.hostname,
+      hostname: location.hostname,
+      origin: location.origin,
+      href: location.href,
       type: params.type,
       path,
       referrer: document.referrer || undefined,
@@ -120,6 +146,11 @@ export function trackEvent(params: {
       consentAnalytics,
       metadata: safeMeta({
         ...params.metadata,
+        siteDomain: location.hostname,
+        hostname: location.hostname,
+        origin: location.origin,
+        href: location.href,
+        isTechnicalHost: location.isTechnicalHost,
         clientTs: nowIso(),
       }),
     };
