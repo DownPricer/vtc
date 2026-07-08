@@ -120,21 +120,21 @@ export default function ProCalendrierPage() {
           <ProSectionHeader
             eyebrow="Planning"
             title="Calendrier"
-            description="Visualisez rapidement les reservations du mois, selectionnez un jour et ouvrez les fiches sans quitter le planning."
-            action={<ProActionLink href="/pro/demandes?kind=reservation">Voir les reservations</ProActionLink>}
+            description="Visualisez rapidement les réservations du mois, sélectionnez un jour et ouvrez les fiches sans quitter le planning."
+            action={<ProActionLink href="/pro/demandes?kind=reservation">Voir les réservations</ProActionLink>}
           />
 
           <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-3">
             <div className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Mois affiche</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Mois affiché</p>
               <p className="mt-2 text-lg font-semibold capitalize text-[var(--pro-text)]">{monthLabel}</p>
             </div>
             <div className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Reservations</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Réservations</p>
               <p className="mt-2 text-lg font-semibold text-[var(--pro-text)]">{items.length}</p>
             </div>
             <div className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Jours occupes</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Jours occupés</p>
               <p className="mt-2 text-lg font-semibold text-[var(--pro-text)]">{occupiedDays}</p>
             </div>
           </div>
@@ -145,7 +145,7 @@ export default function ProCalendrierPage() {
               onClick={() => setMonthCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
               className="rounded-2xl border border-[var(--pro-border-strong)] bg-[var(--pro-panel-muted)] px-4 py-2.5 text-sm font-semibold text-[var(--pro-text)] transition hover:bg-[var(--pro-panel-strong)]"
             >
-              Mois precedent
+              Mois précédent
             </button>
             <p className="text-base font-semibold capitalize text-[var(--pro-text)]">{monthLabel}</p>
             <button
@@ -162,7 +162,7 @@ export default function ProCalendrierPage() {
 
         <div className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,1.45fr)_380px]">
           <ProPanel className="overflow-hidden">
-            {!items.length ? <EmptyState message="Aucune reservation planifiee sur cette periode." /> : null}
+            {!items.length ? <EmptyState message="Aucune réservation planifiée sur cette période." /> : null}
             {items.length ? (
               <>
                 <div className="hidden lg:grid lg:grid-cols-7 lg:gap-3">
@@ -255,7 +255,7 @@ export default function ProCalendrierPage() {
 
           <ProPanel className="2xl:sticky 2xl:top-28">
             <ProSectionHeader
-              title="Jour selectionne"
+              title="Jour sélectionné"
               description={selectedDay ? selectedDay.date.toLocaleDateString("fr-FR", { weekday: "long", day: "2-digit", month: "long" }) : "Aucun jour"}
             />
 
@@ -280,7 +280,7 @@ export default function ProCalendrierPage() {
                 </Link>
               ))}
 
-              {!selectedDay?.items.length ? <EmptyState message="Aucune reservation pour le jour selectionne." /> : null}
+              {!selectedDay?.items.length ? <EmptyState message="Aucune réservation pour le jour sélectionné." /> : null}
             </div>
           </ProPanel>
         </div>

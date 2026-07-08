@@ -13,14 +13,14 @@ import { proBtnDangerClass, proBtnSecondaryClass } from "../editable/proFieldSty
 import type { SettingsTabsSharedProps } from "./context";
 
 const SECTION_ITEMS = [
-  { id: "resume", label: "Resume" },
+  { id: "resume", label: "Résumé" },
   { id: "base-vtc", label: "Base VTC" },
   { id: "trajets-classiques", label: "Trajets classiques" },
-  { id: "aeroports", label: "Aeroports" },
-  { id: "mise-a-disposition", label: "Mise a disposition" },
+  { id: "aeroports", label: "Aéroports" },
+  { id: "mise-a-disposition", label: "Mise à disposition" },
   { id: "majorations", label: "Majorations" },
   { id: "remises", label: "Remises" },
-  { id: "villes-speciales", label: "Villes speciales" },
+  { id: "villes-speciales", label: "Villes spéciales" },
   { id: "test-calcul", label: "Test de calcul" },
 ] as const;
 
@@ -89,9 +89,9 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
   const activeAirportCodes = activeAirports.map((airport) => airport.code).filter(Boolean).join(" / ") || "Aucun";
   const activeSurcharges = [
     pricing.surcharges.nightPercent > 0 ? "Nuit" : null,
-    pricing.surcharges.eveningPercent > 0 ? "Soiree" : null,
+    pricing.surcharges.eveningPercent > 0 ? "Soirée" : null,
     pricing.surcharges.weekendPercent > 0 ? "Week-end" : null,
-    pricing.surcharges.holidayPercent > 0 ? "Ferie" : null,
+    pricing.surcharges.holidayPercent > 0 ? "Férié" : null,
   ]
     .filter(Boolean)
     .join(", ") || "Aucune";
@@ -135,24 +135,24 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
                 Tarifs & calculateur
               </span>
               <span className="rounded-full border border-sky-300/50 bg-sky-500/10 px-3 py-1 text-xs font-semibold text-sky-700">
-                Les demandes existantes ne sont pas recalculees
+                Les demandes existantes ne sont pas recalculées
               </span>
             </div>
             <div>
               <h2 className="text-2xl font-semibold tracking-tight text-[var(--pro-text)] md:text-3xl">
-                Configurez les regles utilisees pour les nouveaux calculs.
+                Configurez les règles utilisées pour les nouveaux calculs.
               </h2>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--pro-text-soft)]">
-                Cette zone rassemble la base chauffeur, les trajets classiques, les aeroports, la mise a disposition,
-                les majorations, les remises et les villes speciales dans une vue admin plus claire.
+                Cette zone rassemble la base chauffeur, les trajets classiques, les aéroports, la mise à disposition,
+                les majorations, les remises et les villes spéciales dans une vue admin plus claire.
               </p>
             </div>
           </div>
           <div className="grid w-full gap-3 sm:grid-cols-2 lg:max-w-md">
             <SummaryCard
               title="Base actuelle"
-              value={draft.calculatorDisplay.vtcBaseAddress?.trim() || "Non renseignee"}
-              hint="Utilisee pour l approche chauffeur et le retour depot."
+              value={draft.calculatorDisplay.vtcBaseAddress?.trim() || "Non renseignée"}
+              hint="Utilisée pour l'approche chauffeur et le retour dépôt."
             />
             <SummaryCard
               title="Classique"
@@ -165,7 +165,7 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
 
       <div className="grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)]">
         <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
-          <SettingsSectionCard title="Navigation interne" description="Accedez rapidement a chaque groupe de regles.">
+          <SettingsSectionCard title="Navigation interne" description="Accédez rapidement à chaque groupe de règles.">
             <div className="grid gap-2">
               {SECTION_ITEMS.map((section) => (
                 <button
@@ -182,24 +182,24 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
 
           <SettingsCallout
             title="Aide rapide"
-            description="Vous modifiez la presentation et les valeurs transmises au moteur existant. L algorithme de pricing n est pas change dans cette refonte."
-            caption="Le bouton Enregistrer du header principal conserve le meme fonctionnement qu avant."
+            description="Vous modifiez la présentation et les valeurs transmises au moteur existant. L'algorithme de pricing n'est pas changé dans cette refonte."
+            caption="Le bouton Enregistrer du header principal conserve le même fonctionnement qu'avant."
           />
         </aside>
 
         <div className="space-y-6">
           <section id="resume" className="scroll-mt-24">
-            <SettingsSectionCard title="Resume" description="Vue synthese des reglages les plus importants avant modification.">
+            <SettingsSectionCard title="Résumé" description="Vue synthèse des réglages les plus importants avant modification.">
               <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
-                <SummaryCard title="Base VTC" value={draft.calculatorDisplay.vtcBaseAddress || "Non renseignee"} hint="Adresse de depart du chauffeur." />
+                <SummaryCard title="Base VTC" value={draft.calculatorDisplay.vtcBaseAddress || "Non renseignée"} hint="Adresse de départ du chauffeur." />
                 <SummaryCard
                   title="Minimum classique"
                   value={formatMoney(pricing.classicTrip.minimumPrice)}
                   hint={`Aller simple ${formatRate(pricing.classicTrip.oneWayPricePerKm)}`}
                 />
-                <SummaryCard title="Aeroports actifs" value={String(activeAirports.length)} hint={activeAirportCodes} />
+                <SummaryCard title="Aéroports actifs" value={String(activeAirports.length)} hint={activeAirportCodes} />
                 <SummaryCard
-                  title="Mise a disposition"
+                  title="Mise à disposition"
                   value={pricing.hourlyHire.enabled ? formatMoney(pricing.hourlyHire.hourlyRate) : "Inactive"}
                   hint={`Minimum ${formatMoney(pricing.hourlyHire.minimumTotal)}`}
                 />
@@ -207,10 +207,10 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
                 <SummaryCard
                   title="Remise aller-retour"
                   value={pricing.discounts.roundTripEnabled ? "Active" : "Inactive"}
-                  hint="La regle exacte reste definie par le moteur."
+                  hint="La règle exacte reste définie par le moteur."
                 />
-                <SummaryCard title="Retour depot" value={formatStatus(pricing.classicTrip.returnToBaseEnabled)} hint="Applicable aux trajets classiques." />
-                <SummaryCard title="Villes speciales" value={String(activeCityRules)} hint="Regles actives stockees et transmises." />
+                <SummaryCard title="Retour dépôt" value={formatStatus(pricing.classicTrip.returnToBaseEnabled)} hint="Applicable aux trajets classiques." />
+                <SummaryCard title="Villes spéciales" value={String(activeCityRules)} hint="Règles actives stockées et transmises." />
               </div>
             </SettingsSectionCard>
           </section>
@@ -218,7 +218,7 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
           <section id="base-vtc" className="scroll-mt-24">
             <SettingsSectionCard
               title="Base VTC"
-              description="Adresse de reference du chauffeur, utilisee pour calculer l approche et le retour depot."
+              description="Adresse de référence du chauffeur, utilisée pour calculer l'approche et le retour dépôt."
             >
               <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_320px]">
                 <div className="space-y-4">
@@ -227,7 +227,7 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
                       appearance="pro"
                       label="Adresse de la base VTC"
                       value={draft.calculatorDisplay.vtcBaseAddress}
-                      placeholder="Tapez au moins 3 caracteres pour des suggestions..."
+                      placeholder="Tapez au moins 3 caractères pour des suggestions..."
                       onChange={(next) => {
                         const value = typeof next === "string" ? next : next.formatted;
                         setDraft((d) => ({
@@ -241,12 +241,12 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
                   )}
                 </div>
                 <div className="rounded-[22px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/55 p-4 shadow-sm">
-                  <p className="text-sm font-semibold text-[var(--pro-text)]">A quoi sert cette adresse ?</p>
+                  <p className="text-sm font-semibold text-[var(--pro-text)]">À quoi sert cette adresse ?</p>
                   <p className="mt-2 text-sm leading-relaxed text-[var(--pro-text-soft)]">
-                    Cette adresse sert de point de depart du chauffeur pour calculer le trajet d approche et le retour depot.
+                    Cette adresse sert de point de départ du chauffeur pour calculer le trajet d’approche et le retour dépôt.
                   </p>
                   <p className="mt-3 text-xs leading-relaxed text-[var(--pro-text-muted)]">
-                    Aucun geocodage supplementaire n est ajoute dans cette passe. Vous gardez le meme comportement de calcul qu aujourd hui.
+                    Aucun géocodage supplémentaire n’est ajouté dans cette passe. Vous gardez le même comportement de calcul qu’aujourd’hui.
                   </p>
                 </div>
               </div>
@@ -256,18 +256,18 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
           <section id="trajets-classiques" className="scroll-mt-24">
             <SettingsSectionCard
               title="Trajets classiques"
-              description="Reglez les trajets standards : activation, prix au kilometre, minimum, approche chauffeur et retour depot."
+              description="Réglez les trajets standards : activation, prix au kilomètre, minimum, approche chauffeur et retour dépôt."
             >
               <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
                 <div className="space-y-4">
                   <EditableSwitch
-                    label="Section activee"
+                    label="Section activée"
                     checked={pricing.classicTrip.enabled}
                     onChange={(value) =>
                       setDraft((d) => ({ ...d, pricing: { ...d.pricing, classicTrip: { ...d.pricing.classicTrip, enabled: value } } }))
                     }
                     editing={editing}
-                    hint="Desactivez uniquement si vous ne souhaitez plus proposer les trajets classiques."
+                    hint="Désactivez uniquement si vous ne souhaitez plus proposer les trajets classiques."
                   />
                   <div className="grid gap-3 md:grid-cols-2">
                     <EditableNumberField
@@ -314,7 +314,7 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
                       suffix="EUR/km"
                     />
                     <EditableSwitch
-                      label="Retour depot active"
+                      label="Retour dépôt activé"
                       checked={pricing.classicTrip.returnToBaseEnabled}
                       onChange={(value) =>
                         setDraft((d) => ({
@@ -343,10 +343,10 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
                 <div className="rounded-[22px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/55 p-4 shadow-sm">
                   <p className="text-sm font-semibold text-[var(--pro-text)]">Ce que vous modifiez ici</p>
                   <ul className="mt-3 space-y-2 text-sm leading-relaxed text-[var(--pro-text-soft)]">
-                    <li>Le prix au kilometre du trajet classique.</li>
-                    <li>Le minimum facture si le calcul brut est trop faible.</li>
-                    <li>Le cout d approche chauffeur.</li>
-                    <li>Le retour depot et le multiplicateur hors zone.</li>
+                    <li>Le prix au kilomètre du trajet classique.</li>
+                    <li>Le minimum facturé si le calcul brut est trop faible.</li>
+                    <li>Le coût d’approche chauffeur.</li>
+                    <li>Le retour dépôt et le multiplicateur hors zone.</li>
                   </ul>
                 </div>
               </div>
@@ -355,18 +355,18 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
 
           <section id="aeroports" className="scroll-mt-24">
             <SettingsSectionCard
-              title="Aeroports"
-              description="Chaque aeroport dispose de sa propre carte, avec un resume rapide puis un detail editable."
+              title="Aéroports"
+              description="Chaque aéroport dispose de sa propre carte, avec un résumé rapide puis un détail éditable."
             >
               <div className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-3">
                   <SummaryCard title="Section" value={formatStatus(pricing.airportTransfers.enabled)} hint="Active ou inactive pour les nouveaux calculs." />
-                  <SummaryCard title="Aeroports actifs" value={String(activeAirports.length)} hint={activeAirportCodes} />
-                  <SummaryCard title="Premier repere" value={pricing.airportTransfers.airports[0]?.code || "--"} hint="Codes habituellement attendus : ORY, CDG, BVA, CC." />
+                  <SummaryCard title="Aéroports actifs" value={String(activeAirports.length)} hint={activeAirportCodes} />
+                  <SummaryCard title="Premier repère" value={pricing.airportTransfers.airports[0]?.code || "--"} hint="Codes habituellement attendus : ORY, CDG, BVA, CC." />
                 </div>
 
                 <EditableSwitch
-                  label="Section activee"
+                  label="Section activée"
                   checked={pricing.airportTransfers.enabled}
                   onChange={(value) =>
                     setDraft((d) => ({
@@ -381,7 +381,7 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
                   {pricing.airportTransfers.airports.map((airport, index) => (
                     <li key={`airport-row-${index}`}>
                       <CollapsibleSettingsCard
-                        title={`${airport.code || "Aeroport"} - ${airport.name || "Sans nom"}`}
+                        title={`${airport.code || "Aéroport"} - ${airport.name || "Sans nom"}`}
                         subtitle={`Minimum AS ${formatMoney(airport.oneWayMinimumPrice)} · Minimum AR ${formatMoney(
                           airport.roundTripMinimumPrice
                         )} · ${formatRate(airport.pricePerKm)}`}
@@ -478,7 +478,7 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
                                 suffix="EUR/km"
                               />
                               <EditableSwitch
-                                label="Aeroport active"
+                                label="Aéroport activé"
                                 checked={airport.enabled}
                                 onChange={(value) =>
                                   setDraft((d) => {
@@ -493,7 +493,7 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
                           </div>
 
                           <div className="rounded-[22px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/55 p-4 shadow-sm">
-                            <p className="text-sm font-semibold text-[var(--pro-text)]">Resume rapide</p>
+                            <p className="text-sm font-semibold text-[var(--pro-text)]">Résumé rapide</p>
                             <div className="mt-3 grid gap-3">
                               <ReadonlyField label="Code" value={airport.code} />
                               <ReadonlyField label="Minimum aller simple" value={airport.oneWayMinimumPrice} suffix="EUR" />
@@ -512,13 +512,13 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
 
           <section id="mise-a-disposition" className="scroll-mt-24">
             <SettingsSectionCard
-              title="Mise a disposition"
-              description="Carte dediee aux tarifs horaires et au minimum applique pour la mise a disposition."
+              title="Mise à disposition"
+              description="Carte dédiée aux tarifs horaires et au minimum appliqué pour la mise à disposition."
             >
               <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
                 <div className="space-y-4">
                   <EditableSwitch
-                    label="Section activee"
+                    label="Section activée"
                     checked={pricing.hourlyHire.enabled}
                     onChange={(value) =>
                       setDraft((d) => ({ ...d, pricing: { ...d.pricing, hourlyHire: { ...d.pricing.hourlyHire, enabled: value } } }))
@@ -549,9 +549,9 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
                   </div>
                 </div>
                 <div className="rounded-[22px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/55 p-4 shadow-sm">
-                  <p className="text-sm font-semibold text-[var(--pro-text)]">Lecture metier</p>
+                  <p className="text-sm font-semibold text-[var(--pro-text)]">Lecture métier</p>
                   <p className="mt-2 text-sm leading-relaxed text-[var(--pro-text-soft)]">
-                    Cette section sert a regler la mise a disposition : tarif horaire, activation et minimum facture.
+                    Cette section sert à régler la mise à disposition : tarif horaire, activation et minimum facturé.
                   </p>
                 </div>
               </div>
@@ -561,7 +561,7 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
           <section id="majorations" className="scroll-mt-24">
             <SettingsSectionCard
               title="Majorations"
-              description="Ces pourcentages sont appliques selon le creneau detecte par le moteur."
+              description="Ces pourcentages sont appliqués selon le créneau détecté par le moteur."
             >
               <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
                 <div className="grid gap-3 md:grid-cols-2">
@@ -576,7 +576,7 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
                     suffix="%"
                   />
                   <EditableNumberField
-                    label="Soiree"
+                    label="Soirée"
                     value={pricing.surcharges.eveningPercent}
                     onChange={(value) =>
                       setDraft((d) => ({ ...d, pricing: { ...d.pricing, surcharges: { ...d.pricing.surcharges, eveningPercent: value } } }))
@@ -596,7 +596,7 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
                     suffix="%"
                   />
                   <EditableNumberField
-                    label="Ferie"
+                    label="Férié"
                     value={pricing.surcharges.holidayPercent}
                     onChange={(value) =>
                       setDraft((d) => ({ ...d, pricing: { ...d.pricing, surcharges: { ...d.pricing.surcharges, holidayPercent: value } } }))
@@ -619,10 +619,10 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
                 <div className="rounded-[22px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/55 p-4 shadow-sm">
                   <p className="text-sm font-semibold text-[var(--pro-text)]">Aide contextuelle</p>
                   <p className="mt-2 text-sm leading-relaxed text-[var(--pro-text-soft)]">
-                    Ces pourcentages sont appliques selon le creneau detecte par le moteur.
+                    Ces pourcentages sont appliqués selon le créneau détecté par le moteur.
                   </p>
                   <p className="mt-3 text-xs leading-relaxed text-[var(--pro-text-muted)]">
-                    Le minimum majoration permet d eviter une hausse trop faible sur certains trajets.
+                    Le minimum majoration permet d’éviter une hausse trop faible sur certains trajets.
                   </p>
                 </div>
               </div>
@@ -632,7 +632,7 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
           <section id="remises" className="scroll-mt-24">
             <SettingsSectionCard
               title="Remises"
-              description="Activez ou desactivez la remise aller-retour. La regle exacte reste definie cote moteur."
+              description="Activez ou désactivez la remise aller-retour. La règle exacte reste définie côté moteur."
             >
               <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
                 <div className="space-y-4">
@@ -646,14 +646,14 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
                   />
                   <div className="rounded-[22px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/55 p-4 shadow-sm">
                     <p className="text-sm leading-relaxed text-[var(--pro-text-soft)]">
-                      La regle exacte est definie cote moteur. Cette interface vous permet seulement d activer ou de desactiver la remise aller-retour.
+                      La règle exacte est définie côté moteur. Cette interface vous permet seulement d’activer ou de désactiver la remise aller-retour.
                     </p>
                   </div>
                 </div>
                 <SummaryCard
                   title="Etat"
                   value={pricing.discounts.roundTripEnabled ? "Remise active" : "Remise inactive"}
-                  hint="Les transferts aeroport ne sont pas concernes."
+                  hint="Les transferts aéroport ne sont pas concernés."
                 />
               </div>
             </SettingsSectionCard>
@@ -661,25 +661,25 @@ export function CalculatorTab({ draft, setDraft, editing }: SettingsTabsSharedPr
 
           <section id="villes-speciales" className="scroll-mt-24">
             <SettingsSectionCard
-              title="Villes speciales"
-              description="Ces regles sont stockees et transmises. Leur application depend du support moteur."
+              title="Villes spéciales"
+              description="Ces règles sont stockées et transmises. Leur application dépend du support moteur."
             >
               <div className="space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-[22px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/55 p-4 shadow-sm">
                   <div className="space-y-1">
-                    <p className="text-sm font-semibold text-[var(--pro-text)]">Regles ville</p>
+                    <p className="text-sm font-semibold text-[var(--pro-text)]">Règles ville</p>
                     <p className="text-sm text-[var(--pro-text-soft)]">
-                      Ajoutez, modifiez ou desactivez des comportements specifiques par ville ou code postal.
+                      Ajoutez, modifiez ou désactivez des comportements spécifiques par ville ou code postal.
                     </p>
                   </div>
                   <button type="button" onClick={addCityRule} className={proBtnSecondaryClass}>
-                    Ajouter une ville speciale
+                    Ajouter une ville spéciale
                   </button>
                 </div>
 
                 {pricing.cityRules.length === 0 ? (
                   <div className="rounded-[22px] border border-dashed border-[var(--pro-border)] bg-[var(--pro-panel)] px-4 py-8 text-center text-sm text-[var(--pro-text-muted)]">
-                    Aucune ville speciale configuree.
+                    Aucune ville spéciale configurée.
                   </div>
                 ) : (
                   <ul className="space-y-3">

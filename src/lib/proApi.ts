@@ -20,6 +20,11 @@ function cfg() {
   return c;
 }
 
+function getSiteDomainHeader(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  return { "X-Site-Domain": window.location.hostname };
+}
+
 export function getStoredAccessToken(): string {
   if (typeof window === "undefined") return "";
   return window.localStorage.getItem(ACCESS_TOKEN_KEY) || "";
@@ -54,6 +59,7 @@ async function authFetch(path: string, init?: RequestInit, withAuth = true): Pro
   const headers: Record<string, string> = {
     "Content-Type": "application/json; charset=utf-8",
     "X-Tenant-ID": tenantId,
+    ...getSiteDomainHeader(),
     ...(init?.headers as Record<string, string>),
   };
   if (withAuth && token) headers.Authorization = `Bearer ${token}`;

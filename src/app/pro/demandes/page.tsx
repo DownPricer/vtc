@@ -175,7 +175,7 @@ export default function ProDemandesPage() {
         <ProPanel>
           <ProSectionHeader
             title="Demandes"
-            description="Liste operationnelle des contacts, devis et reservations avec filtres, priorites visibles et ouverture rapide des fiches."
+            description="Liste opérationnelle des contacts, devis et réservations avec filtres, priorités visibles et ouverture rapide des fiches."
             action={<ProActionLink href="/pro/dashboard">Retour au tableau de bord</ProActionLink>}
           />
 
@@ -193,7 +193,7 @@ export default function ProDemandesPage() {
               <p className="mt-2 text-2xl font-semibold text-[var(--pro-text)]">{countByStatus(rows, "pending")}</p>
             </div>
             <div className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Reservations</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Réservations</p>
               <p className="mt-2 text-2xl font-semibold text-[var(--pro-text)]">{countByKind(rows, "reservation")}</p>
             </div>
             <div className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
@@ -207,14 +207,14 @@ export default function ProDemandesPage() {
           <ProSectionHeader
             eyebrow="Filtres"
             title="Trouver la bonne demande"
-            description="Recherchez par client, telephone ou e-mail, puis filtrez par type ou statut."
+            description="Recherchez par client, téléphone ou e-mail, puis filtrez par type ou statut."
             action={
               <button
                 type="button"
                 onClick={() => setRefreshKey((value) => value + 1)}
                 className="inline-flex items-center justify-center rounded-2xl border border-[var(--pro-border-strong)] bg-[var(--pro-panel-muted)] px-4 py-2.5 text-sm font-semibold text-[var(--pro-text)] transition hover:bg-[var(--pro-panel-strong)]"
               >
-                Rafraichir
+                Rafraîchir
               </button>
             }
           />
@@ -223,7 +223,7 @@ export default function ProDemandesPage() {
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Nom, e-mail ou telephone"
+              placeholder="Nom, e-mail ou téléphone"
               className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm text-[var(--pro-text)] placeholder:text-[var(--pro-text-muted)] focus:border-[var(--pro-accent)] focus:outline-none xl:col-span-5"
             />
             <select
@@ -234,7 +234,7 @@ export default function ProDemandesPage() {
               <option value="">Tous les types</option>
               <option value="contact">Contact</option>
               <option value="devis">Devis</option>
-              <option value="reservation">Reservation</option>
+              <option value="reservation">Réservation</option>
             </select>
             <select
               value={status}

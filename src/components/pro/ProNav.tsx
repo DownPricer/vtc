@@ -45,10 +45,10 @@ export function ProNav() {
               <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--pro-accent)]">Espace pro VTC</p>
               <div className="mt-2 flex flex-col gap-2 md:flex-row md:items-end md:gap-4">
                 <h2 className="truncate text-2xl font-semibold tracking-tight text-[var(--pro-text)]">
-                  {session?.tenantName ?? "Pilotage de l'activite"}
+                  {session?.tenantName ?? "Pilotage de l'activité"}
                 </h2>
                 <p className="truncate text-sm text-[var(--pro-text-muted)]">
-                  {session?.operatorEmail ?? "Gestion des demandes, reservations et suivi client"}
+                  {session?.operatorEmail ?? "Gestion des demandes, réservations et suivi client"}
                 </p>
               </div>
             </div>

@@ -671,7 +671,7 @@ export default function ProDemandeDetailPage() {
                 <ProPanel>
                   <ProSectionHeader
                     title="Documents"
-                    description="Acces rapide au devis imprimable ou telechargeable en PDF via le navigateur."
+                    description="Accès rapide au devis imprimable ou téléchargeable en PDF via le navigateur."
                   />
                   <div className="mt-6 flex flex-wrap gap-3">
                     <Link

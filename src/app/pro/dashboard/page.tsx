@@ -171,19 +171,19 @@ export default function ProDashboardPage() {
             </ProPanel>
 
             <ProPanel>
-              <ProSectionHeader title="Activite recente" description="Dernieres demandes actives, avec acces direct aux fiches." />
+              <ProSectionHeader title="Activité récente" description="Dernières demandes actives, avec accès direct aux fiches." />
               <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
                 {latestActive.map((item) => (
                   <RequestCard key={item.id} item={item} compact />
                 ))}
-                {!latestActive.length ? <EmptyState message="Aucune activite recente." /> : null}
+                {!latestActive.length ? <EmptyState message="Aucune activité récente." /> : null}
               </div>
             </ProPanel>
           </div>
 
           <div className="space-y-6">
             <ProPanel id="pro-cal-upcoming">
-              <ProSectionHeader title="Prochaines reservations" description="Les prochains trajets a suivre de pres." />
+              <ProSectionHeader title="Prochaines réservations" description="Les prochains trajets à suivre de près." />
               <div className="mt-6 space-y-3">
                 {upcoming.map((item) => (
                   <Link
@@ -201,15 +201,15 @@ export default function ProDashboardPage() {
                       </span>
                     </div>
                     {getJourneySummary(item.flatPayload) ? <p className="mt-3 text-sm text-[var(--pro-text-soft)]">{getJourneySummary(item.flatPayload)}</p> : null}
-                    <p className="mt-4 text-sm font-semibold text-[var(--pro-accent)]">Ouvrir la reservation</p>
+                    <p className="mt-4 text-sm font-semibold text-[var(--pro-accent)]">Ouvrir la réservation</p>
                   </Link>
                 ))}
-                {!upcoming.length ? <EmptyState message="Aucune reservation a venir." /> : null}
+                {!upcoming.length ? <EmptyState message="Aucune réservation à venir." /> : null}
               </div>
             </ProPanel>
 
             <ProPanel>
-              <ProSectionHeader title="Raccourcis utiles" description="Acces rapides pour garder le rythme sur la journee." />
+              <ProSectionHeader title="Raccourcis utiles" description="Accès rapides pour garder le rythme sur la journée." />
               <div className="mt-6 grid grid-cols-1 gap-3">
                 <ProActionLink href="/pro/demandes?status=new">Ouvrir les nouvelles demandes</ProActionLink>
                 <ProActionLink href="/pro/demandes?status=pending">Voir les demandes en attente</ProActionLink>

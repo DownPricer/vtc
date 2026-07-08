@@ -3,8 +3,8 @@ import { isUsefulValue, translatePayField, translatePaymentMethod } from "./proD
 const LABELS: Record<string, string> = {
   TypeService: "Type de service",
   TypeTrajet: "Type de trajet",
-  ResumeTrajet: "Resume du trajet",
-  "RésuméTrajet": "Resume du trajet",
+  ResumeTrajet: "Résumé du trajet",
+  "RésuméTrajet": "Résumé du trajet",
   AdresseDepart_1: "Depart",
   AdresseArrivee_1: "Arrivee",
   AdresseDepart_2: "Depart retour",
