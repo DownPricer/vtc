@@ -126,12 +126,12 @@ export default function ProDevisPrintPage() {
         {item ? (
           <div
             id="devis-print-root"
-            className="mx-auto mt-8 max-w-[210mm] overflow-hidden bg-white px-8 py-10 text-slate-900 shadow-lg print:mt-0 print:max-w-none print:bg-white print:p-0 print:shadow-none"
+            className="quote-print-area mx-auto mt-8 max-w-[210mm] overflow-hidden bg-white px-8 py-10 text-slate-900 shadow-lg print:mt-0 print:max-w-none print:bg-white print:p-0 print:shadow-none"
             style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
           >
             <style
               dangerouslySetInnerHTML={{
-                __html: `@page{size:A4;margin:12mm}@media print{html,body{background:#fff!important;color:#0f172a!important}body *{-webkit-print-color-adjust:exact;print-color-adjust:exact}a,a:visited{color:#1e3a8a!important;text-decoration:underline}header,nav,[data-pro-nav],[data-dashboard-header],.no-print{display:none!important}#devis-print-root{box-shadow:none!important;margin:0 auto!important;max-width:186mm!important;width:186mm!important;padding:0!important;border:none!important}#devis-print-root .print-card{break-inside:avoid-page;page-break-inside:avoid}#devis-print-root .print-long-text{overflow-wrap:anywhere;word-break:break-word}#devis-print-root *{max-width:100%!important}}`,
+                __html: `@page{size:A4;margin:12mm}@media print{html,body{background:#fff!important;color:#0f172a!important}body *{visibility:hidden!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.quote-print-area,.quote-print-area *{visibility:visible!important}header,footer,nav,.no-print,[data-pro-nav],[data-dashboard-header]{display:none!important}.quote-print-area{position:absolute!important;left:0!important;top:0!important;box-shadow:none!important;margin:0 auto!important;max-width:186mm!important;width:186mm!important;padding:0!important;border:none!important}.quote-print-area a,.quote-print-area a:visited{color:#1e3a8a!important;text-decoration:underline}.quote-print-area .print-card{break-inside:avoid-page;page-break-inside:avoid}.quote-print-area .print-long-text{overflow-wrap:anywhere;word-break:break-word}.quote-print-area *{max-width:100%!important}}`,
               }}
             />
 

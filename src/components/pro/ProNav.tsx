@@ -10,10 +10,14 @@ import { translateAction } from "./proDisplay";
 const mainLinks = [
   { href: "/pro/dashboard", label: "Tableau de bord" },
   { href: "/pro/demandes", label: "Demandes" },
-  { href: "/pro/calendrier", label: "Calendrier" },
   { href: "/pro/devis", label: "Devis" },
+  { href: "/pro/reservations", label: "Réservations" },
+  { href: "/pro/calendrier", label: "Calendrier" },
+  { href: "/pro/tarifs", label: "Tarifs" },
+  { href: "/pro/site", label: "Site internet" },
+  { href: "/pro/paiements", label: "Paiements" },
   { href: "/pro/transactions", label: "Transactions" },
-  { href: "/pro/parametres", label: "Tarifs & site" },
+  { href: "/pro/parametres", label: "Paramètres / Profil" },
 ];
 
 type SessionInfo = {
@@ -37,65 +41,58 @@ export function ProNav() {
   }, []);
 
   return (
-    <div className="sticky top-3 z-30">
-      <div className="overflow-hidden rounded-[34px] border border-[var(--pro-border-strong)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--pro-panel)_90%,white_10%)_0%,var(--pro-panel)_100%)] shadow-[var(--pro-shadow)] backdrop-blur">
-        <div className="border-b border-[var(--pro-border)] px-5 py-5 md:px-7 xl:px-8">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-            <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--pro-accent)]">Espace pro VTC</p>
-              <div className="mt-2 flex flex-col gap-2 md:flex-row md:items-end md:gap-4">
-                <h2 className="truncate text-2xl font-semibold tracking-tight text-[var(--pro-text)]">
-                  {session?.tenantName ?? "Pilotage de l'activité"}
-                </h2>
-                <p className="truncate text-sm text-[var(--pro-text-muted)]">
-                  {session?.operatorEmail ?? "Gestion des demandes, réservations et suivi client"}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={toggleTheme}
-                className="rounded-2xl border border-[var(--pro-border-strong)] bg-[var(--pro-panel-muted)] px-4 py-2.5 text-sm font-medium text-[var(--pro-text-soft)] transition hover:bg-[var(--pro-panel-strong)]"
-              >
-                {theme === "dark" ? "Mode clair" : "Mode sombre"}
-              </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  await logoutPro();
-                  router.replace("/pro/login");
-                }}
-                className="rounded-2xl border border-[var(--pro-border-strong)] bg-[var(--pro-panel-muted)] px-4 py-2.5 text-sm font-semibold text-[var(--pro-text)] transition hover:bg-[var(--pro-panel-strong)]"
-              >
-                {translateAction("logout")}
-              </button>
-            </div>
-          </div>
+    <aside className="lg:sticky lg:top-5 lg:row-span-[999]">
+      <div className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel)] shadow-[var(--pro-shadow)]">
+        <div className="border-b border-[var(--pro-border)] px-5 py-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--pro-accent)]">Espace pro VTC</p>
+          <h2 className="mt-2 truncate text-lg font-semibold tracking-tight text-[var(--pro-text)]">
+            {session?.tenantName ?? "Pilotage métier"}
+          </h2>
+          <p className="mt-1 truncate text-xs text-[var(--pro-text-muted)]">
+            {session?.operatorEmail ?? "Demandes, devis et réservations"}
+          </p>
         </div>
 
-        <div className="px-4 py-4 md:px-6 xl:px-7">
-          <nav className="flex gap-2 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]">
-            {mainLinks.map((link) => {
-              const active = pathname.startsWith(link.href);
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`shrink-0 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-                    active
-                      ? "border border-[var(--pro-accent)] bg-[var(--pro-accent)] text-white shadow-sm"
-                      : "border border-transparent bg-[var(--pro-panel-muted)] text-[var(--pro-text-soft)] hover:border-[var(--pro-border-strong)] hover:bg-[var(--pro-panel-strong)] hover:text-[var(--pro-text)]"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              );
-            })}
-          </nav>
+        <nav className="flex gap-2 overflow-x-auto px-3 py-3 lg:block lg:space-y-1 lg:overflow-visible" aria-label="Navigation professionnelle">
+          {mainLinks.map((link) => {
+            const baseHref = link.href.split("?")[0];
+            const active = pathname === baseHref || pathname.startsWith(`${baseHref}/`);
+            return (
+              <Link
+                key={`${link.href}-${link.label}`}
+                href={link.href}
+                className={`flex shrink-0 items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium transition lg:w-full ${
+                  active
+                    ? "bg-[var(--pro-accent)] text-white"
+                    : "text-[var(--pro-text-soft)] hover:bg-[var(--pro-panel-muted)] hover:text-[var(--pro-text)]"
+                }`}
+              >
+                <span>{link.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="grid gap-2 border-t border-[var(--pro-border)] px-3 py-3 sm:grid-cols-2 lg:grid-cols-1">
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-3 py-2.5 text-sm font-medium text-[var(--pro-text-soft)] transition hover:bg-[var(--pro-panel-strong)]"
+          >
+            {theme === "dark" ? "Mode clair" : "Mode sombre"}
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              await logoutPro();
+              router.replace("/pro/login");
+            }}
+            className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-3 py-2.5 text-sm font-semibold text-[var(--pro-text)] transition hover:bg-[var(--pro-panel-strong)]"
+          >
+            {translateAction("logout")}
+          </button>
         </div>
       </div>
-    </div>
+    </aside>
   );
 }

@@ -4,7 +4,11 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 
 export function ProShell({ children }: { children: ReactNode }) {
-  return <div className="space-y-6 xl:space-y-8">{children}</div>;
+  return (
+    <div className="grid gap-5 lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start [&>*:not(:first-child)]:lg:col-start-2">
+      {children}
+    </div>
+  );
 }
 
 export function ProPanel({
@@ -19,7 +23,7 @@ export function ProPanel({
   return (
     <section
       id={id}
-      className={`rounded-[32px] border border-[var(--pro-border)] bg-[var(--pro-panel)] p-5 shadow-[var(--pro-shadow)] backdrop-blur md:p-7 xl:p-8 ${className}`}
+      className={`rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel)] p-5 shadow-[var(--pro-shadow)] md:p-6 xl:p-7 ${className}`}
     >
       {children}
     </section>
@@ -38,11 +42,11 @@ export function ProSectionHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+    <div className="flex flex-col gap-4 border-b border-[var(--pro-border)] pb-5 xl:flex-row xl:items-start xl:justify-between">
       <div className="min-w-0">
-        {eyebrow ? <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--pro-accent)]">{eyebrow}</p> : null}
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-[var(--pro-text)] md:text-3xl xl:text-[2.15rem]">{title}</h1>
-        {description ? <p className="mt-2 max-w-4xl text-sm leading-6 text-[var(--pro-text-muted)] md:text-[15px]">{description}</p> : null}
+        {eyebrow ? <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--pro-accent)]">{eyebrow}</p> : null}
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-[var(--pro-text)] md:text-3xl">{title}</h1>
+        {description ? <p className="mt-2 max-w-4xl text-sm leading-6 text-[var(--pro-text-muted)]">{description}</p> : null}
       </div>
       {action ? <div className="shrink-0 xl:self-start">{action}</div> : null}
     </div>
@@ -65,7 +69,7 @@ export function ProAlert({
           ? "border-amber-200 bg-amber-50 text-amber-900"
           : "border-sky-200 bg-sky-50 text-sky-800";
 
-  return <div className={`rounded-2xl border px-4 py-3 text-sm ${toneClass}`}>{children}</div>;
+  return <div className={`rounded-xl border px-4 py-3 text-sm ${toneClass}`}>{children}</div>;
 }
 
 export function ProStatCard({
@@ -83,21 +87,21 @@ export function ProStatCard({
 }) {
   const toneClass =
     tone === "orange"
-      ? "border-orange-300/30 bg-[linear-gradient(145deg,rgba(249,115,22,0.22),rgba(255,255,255,0.05))]"
+      ? "border-orange-200 bg-orange-50/70"
       : tone === "green"
-        ? "border-emerald-300/30 bg-[linear-gradient(145deg,rgba(16,185,129,0.22),rgba(255,255,255,0.05))]"
+        ? "border-emerald-200 bg-emerald-50/70"
         : tone === "blue"
-          ? "border-sky-300/30 bg-[linear-gradient(145deg,rgba(14,165,233,0.22),rgba(255,255,255,0.05))]"
+          ? "border-sky-200 bg-sky-50/70"
           : "border-[var(--pro-border)] bg-[var(--pro-panel-muted)]";
 
   const inner = (
     <>
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-sm font-medium text-[var(--pro-text-soft)]">{title}</p>
-        {href ? <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--pro-accent)]">Ouvrir</span> : null}
+      <div className="flex items-start justify-between gap-3 border-b border-black/5 pb-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--pro-text-muted)]">{title}</p>
+        {href ? <span className="text-xs font-semibold text-[var(--pro-accent)]">Voir</span> : null}
       </div>
-      <p className="mt-5 text-3xl font-semibold tracking-tight text-[var(--pro-text)] sm:text-4xl">{value}</p>
-      {hint ? <p className="mt-3 text-sm leading-6 text-[var(--pro-text-muted)]">{hint}</p> : null}
+      <p className="mt-4 text-3xl font-semibold tracking-tight text-[var(--pro-text)]">{value}</p>
+      {hint ? <p className="mt-2 text-sm leading-6 text-[var(--pro-text-muted)]">{hint}</p> : null}
     </>
   );
 
@@ -105,27 +109,33 @@ export function ProStatCard({
     return (
       <Link
         href={href}
-        className={`block rounded-[28px] border p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--pro-accent)] ${toneClass}`}
+        className={`block rounded-2xl border p-5 transition hover:border-[var(--pro-border-strong)] hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--pro-accent)] ${toneClass}`}
       >
         {inner}
       </Link>
     );
   }
 
-  return <article className={`rounded-[28px] border p-5 shadow-sm ${toneClass}`}>{inner}</article>;
+  return <article className={`rounded-2xl border p-5 ${toneClass}`}>{inner}</article>;
 }
 
 export function ProActionLink({
   href,
   children,
+  variant = "secondary",
 }: {
   href: string;
   children: ReactNode;
+  variant?: "primary" | "secondary";
 }) {
   return (
     <Link
       href={href}
-      className="inline-flex items-center justify-center rounded-2xl border border-[var(--pro-border-strong)] bg-[var(--pro-panel-muted)] px-4 py-2.5 text-sm font-semibold text-[var(--pro-text)] transition hover:bg-[var(--pro-panel-strong)]"
+      className={
+        variant === "primary"
+          ? "inline-flex items-center justify-center rounded-xl border border-[var(--pro-accent)] bg-[var(--pro-accent)] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-95"
+          : "inline-flex items-center justify-center rounded-xl border border-[var(--pro-border-strong)] bg-[var(--pro-panel-muted)] px-4 py-2.5 text-sm font-semibold text-[var(--pro-text)] transition hover:bg-[var(--pro-panel-strong)]"
+      }
     >
       {children}
     </Link>
@@ -134,8 +144,70 @@ export function ProActionLink({
 
 export function EmptyState({ message }: { message: string }) {
   return (
-    <p className="rounded-[24px] border border-dashed border-[var(--pro-border-strong)] bg-[var(--pro-panel-muted)] px-5 py-12 text-center text-sm text-[var(--pro-text-muted)]">
+    <p className="rounded-xl border border-dashed border-[var(--pro-border-strong)] bg-[var(--pro-panel-muted)] px-5 py-10 text-center text-sm text-[var(--pro-text-muted)]">
       {message}
     </p>
+  );
+}
+
+export function ProField({
+  label,
+  children,
+  className = "",
+}: {
+  label: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <label className={`block ${className}`}>
+      <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--pro-text-muted)]">{label}</span>
+      <div className="mt-2">{children}</div>
+    </label>
+  );
+}
+
+export const proInputClass =
+  "w-full rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm text-[var(--pro-text)] placeholder:text-[var(--pro-text-muted)] focus:border-[var(--pro-accent)] focus:outline-none";
+
+export function ProTable({
+  headers,
+  children,
+}: {
+  headers: ReactNode[];
+  children: ReactNode;
+}) {
+  return (
+    <div className="overflow-x-auto rounded-xl border border-[var(--pro-border)]">
+      <table className="w-full min-w-[960px] border-collapse text-left text-sm">
+        <thead className="bg-[var(--pro-panel-muted)] text-xs uppercase tracking-[0.16em] text-[var(--pro-text-muted)]">
+          <tr>
+            {headers.map((header, index) => (
+              <th key={index} className="border-b border-[var(--pro-border)] px-4 py-3 font-semibold">
+                {header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-[var(--pro-border)]">{children}</tbody>
+      </table>
+    </div>
+  );
+}
+
+export function ProDescriptionList({
+  rows,
+}: {
+  rows: Array<{ label: string; value: ReactNode }>;
+}) {
+  return (
+    <dl className="divide-y divide-[var(--pro-border)] rounded-xl border border-[var(--pro-border)]">
+      {rows.map((row) => (
+        <div key={row.label} className="grid gap-2 px-4 py-3 text-sm md:grid-cols-[180px_minmax(0,1fr)]">
+          <dt className="font-medium text-[var(--pro-text-muted)]">{row.label}</dt>
+          <dd className="min-w-0 text-[var(--pro-text)]">{row.value}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }

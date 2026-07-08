@@ -175,7 +175,7 @@ function confirmMessage(next: LeadStatus): string {
 
 function DetailCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
+    <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">{label}</p>
       <p className="mt-2 text-sm leading-6 text-[var(--pro-text)]">{value}</p>
     </div>
@@ -397,13 +397,13 @@ export default function ProDemandeDetailPage() {
               />
 
               <div className="mt-6 flex flex-wrap items-center gap-3">
-                <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${statusBadgeClass(item.status)}`}>
+                <span className={`inline-flex rounded-md border px-2 py-1 text-xs font-semibold ${statusBadgeClass(item.status)}`}>
                   {labelStatus(item.status)}
                 </span>
-                <span className="rounded-full border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-3 py-1 text-xs font-semibold text-[var(--pro-text-soft)]">
+                <span className="rounded-md border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-2 py-1 text-xs font-semibold text-[var(--pro-text-soft)]">
                   Reference : {pickReference(flatPayload, item.id)}
                 </span>
-                <span className="rounded-full border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-3 py-1 text-xs font-semibold text-[var(--pro-text-soft)]">
+                <span className="rounded-md border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-2 py-1 text-xs font-semibold text-[var(--pro-text-soft)]">
                   Creee le {formatDateTime(item.createdAt)}
                 </span>
               </div>
@@ -453,7 +453,7 @@ export default function ProDemandeDetailPage() {
                 {clientComment ? (
                   <ProPanel>
                     <ProSectionHeader title="Commentaire client" description="Message libre laisse au moment de la demande." />
-                    <div className="mt-6 rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-5 py-5 text-sm leading-7 text-[var(--pro-text-soft)]">
+                    <div className="mt-6 rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-5 py-5 text-sm leading-7 text-[var(--pro-text-soft)]">
                       {clientComment}
                     </div>
                   </ProPanel>
@@ -477,17 +477,17 @@ export default function ProDemandeDetailPage() {
                     </div>
 
                     <div className="space-y-4">
-                      <div className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-5 py-5">
+                      <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-5 py-5">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Preference client</span>
                           <span
-                            className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${clientOnlinePaymentPreferenceBadgeClass(item.clientWantsOnlinePayment)}`}
+                            className={`inline-flex rounded-md border px-2 py-1 text-xs font-semibold ${clientOnlinePaymentPreferenceBadgeClass(item.clientWantsOnlinePayment)}`}
                           >
                             {labelClientOnlinePaymentPreference(item.clientWantsOnlinePayment)}
                           </span>
                         </div>
                         <div className="mt-4">
-                          <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${leadPaymentStatusBadgeClass(item.paymentStatus)}`}>
+                          <span className={`inline-flex rounded-md border px-2 py-1 text-xs font-semibold ${leadPaymentStatusBadgeClass(item.paymentStatus)}`}>
                             {labelLeadPaymentStatus(item.paymentStatus)}
                           </span>
                           {paymentStatusExplanation(item.paymentStatus) ? (
@@ -497,7 +497,7 @@ export default function ProDemandeDetailPage() {
                       </div>
 
                       {item.paymentStatus === "PAID" && paidPayment ? (
-                        <div className="rounded-[24px] border border-emerald-200 bg-emerald-50 px-5 py-5 text-emerald-950">
+                        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-5 text-emerald-950">
                           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">Paiement valide</p>
                           <p className="mt-3 text-sm">
                             Montant encaisse : <span className="font-semibold">{formatAmountFromCents(paidPayment.amount, paidPayment.currency)}</span>
@@ -516,7 +516,7 @@ export default function ProDemandeDetailPage() {
                       ) : (
                         <>
                           {item.clientWantsOnlinePayment === false ? (
-                            <div className="rounded-[24px] border border-amber-200 bg-amber-50 px-5 py-5 text-amber-950">
+                            <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-5 text-amber-950">
                               <p className="font-semibold">Paiement en ligne non demande par le client</p>
                               <p className="mt-2 text-sm leading-6 text-amber-900">
                                 Le lien de paiement est masque par defaut. Activez-le seulement si cela a ete convenu avec le client.
@@ -537,7 +537,7 @@ export default function ProDemandeDetailPage() {
                             <>
                               {paymentError ? <ProAlert tone="error">{paymentError}</ProAlert> : null}
 
-                              <div className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-5 py-5">
+                              <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-5 py-5">
                                 <label className={`flex cursor-pointer items-start gap-3 ${!hasValidClientEmail(item) ? "cursor-not-allowed opacity-70" : ""}`}>
                                   <input
                                     type="checkbox"
@@ -587,7 +587,7 @@ export default function ProDemandeDetailPage() {
                               </div>
 
                               {checkoutUrlToShow ? (
-                                <div className="rounded-[24px] border border-emerald-300/40 bg-emerald-50 px-5 py-5 text-emerald-950">
+                                <div className="rounded-xl border border-emerald-300/40 bg-emerald-50 px-5 py-5 text-emerald-950">
                                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">
                                     {item.paymentStatus === "LINK_SENT" ? "Lien envoye ou paiement en attente" : "Lien Stripe disponible"}
                                   </p>
@@ -653,7 +653,7 @@ export default function ProDemandeDetailPage() {
                   <ProSectionHeader title="Historique" description="Chronologie des actions et changements de statut." />
                   <div className="mt-6 space-y-4">
                     {item.history.map((row) => (
-                      <div key={row.id} className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-5 py-5">
+                      <div key={row.id} className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-5 py-5">
                         <p className="text-sm text-[var(--pro-text-soft)]">
                           <span className="font-semibold text-[var(--pro-text)]">{formatDateTime(row.createdAt)}</span>
                           {" · "}
@@ -697,7 +697,7 @@ export default function ProDemandeDetailPage() {
                       {isUsefulValue(item.clientPhone) ? (
                         <a
                           href={`tel:${String(item.clientPhone).replace(/\s/g, "")}`}
-                          className="inline-flex items-center justify-center rounded-2xl border border-[var(--pro-border-strong)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm font-semibold text-[var(--pro-text)] transition hover:bg-[var(--pro-panel-strong)]"
+                      className="inline-flex items-center justify-center rounded-xl border border-[var(--pro-border-strong)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm font-semibold text-[var(--pro-text)] transition hover:bg-[var(--pro-panel-strong)]"
                         >
                           Appeler · {item.clientPhone}
                         </a>
@@ -705,7 +705,7 @@ export default function ProDemandeDetailPage() {
                       {isUsefulValue(item.clientEmail) ? (
                         <a
                           href={`mailto:${item.clientEmail}`}
-                          className="inline-flex items-center justify-center rounded-2xl border border-[var(--pro-border-strong)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm font-semibold text-[var(--pro-text)] transition hover:bg-[var(--pro-panel-strong)]"
+                      className="inline-flex items-center justify-center rounded-xl border border-[var(--pro-border-strong)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm font-semibold text-[var(--pro-text)] transition hover:bg-[var(--pro-panel-strong)]"
                         >
                           Envoyer un e-mail
                         </a>
@@ -734,7 +734,7 @@ export default function ProDemandeDetailPage() {
                     {latestHistory ? <DetailCard label="Derniere action" value={`${labelStatus(latestHistory.newStatus)} · ${formatDateTime(latestHistory.createdAt)}`} /> : null}
 
                     {(item.customerDecisionMailSentAt || item.customerDecisionMailLastError) ? (
-                      <div className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4 text-sm text-[var(--pro-text-soft)]">
+                      <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4 text-sm text-[var(--pro-text-soft)]">
                         {item.customerDecisionMailSentAt ? <p>Notification client envoyee le {formatDateTime(item.customerDecisionMailSentAt)}.</p> : null}
                         {item.customerDecisionMailLastError ? <p className="mt-2 text-rose-700">La mise a jour a ete faite, mais le message client reste non envoye.</p> : null}
                       </div>
@@ -749,7 +749,7 @@ export default function ProDemandeDetailPage() {
                     onChange={(e) => setNote(e.target.value)}
                     rows={6}
                     placeholder="Ajoutez une note utile pour votre equipe."
-                    className="mt-6 w-full rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm text-[var(--pro-text)] placeholder:text-[var(--pro-text-muted)] focus:border-[var(--pro-accent)] focus:outline-none"
+                    className="mt-6 w-full rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm text-[var(--pro-text)] placeholder:text-[var(--pro-text-muted)] focus:border-[var(--pro-accent)] focus:outline-none"
                   />
                   <button
                     type="button"

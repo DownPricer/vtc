@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ProGuard } from "@/components/pro/ProGuard";
 import { ProNav } from "@/components/pro/ProNav";
-import { EmptyState, ProActionLink, ProAlert, ProPanel, ProSectionHeader, ProShell, ProStatCard } from "@/components/pro/ProUi";
+import { EmptyState, ProActionLink, ProAlert, ProPanel, ProSectionHeader, ProShell, ProStatCard, ProTable } from "@/components/pro/ProUi";
 import {
   formatDateTime,
   formatPrice,
@@ -51,7 +51,7 @@ function RequestCard({ item, compact = false }: { item: LeadRow; compact?: boole
   return (
     <Link
       href={`/pro/demandes/${item.id}`}
-      className={`block rounded-[28px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] transition hover:border-[var(--pro-border-strong)] hover:bg-[var(--pro-panel-strong)] ${
+      className={`block rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] transition hover:border-[var(--pro-border-strong)] hover:bg-[var(--pro-panel-strong)] ${
         compact ? "px-4 py-4" : "px-5 py-5"
       }`}
     >
@@ -62,7 +62,7 @@ function RequestCard({ item, compact = false }: { item: LeadRow; compact?: boole
             {labelKind(item.kind)} · {formatDateTime(item.createdAt)}
           </p>
         </div>
-        <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${statusBadgeClass(item.status)}`}>
+        <span className={`inline-flex rounded-md border px-2 py-1 text-xs font-semibold ${statusBadgeClass(item.status)}`}>
           {labelStatus(item.status)}
         </span>
       </div>
@@ -127,17 +127,20 @@ export default function ProDashboardPage() {
             action={<ProActionLink href="/pro/demandes">Voir toutes les demandes</ProActionLink>}
           />
 
-          <div className="mt-6 flex flex-wrap gap-3">
-            <span className="rounded-full border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-3 py-1.5 text-sm text-[var(--pro-text-soft)]">
-              {newCount} nouvelle(s) demande(s)
-            </span>
-            <span className="rounded-full border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-3 py-1.5 text-sm text-[var(--pro-text-soft)]">
-              {data?.acceptedToday ?? 0} acceptee(s) ce jour
-            </span>
-            <span className="rounded-full border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-3 py-1.5 text-sm text-[var(--pro-text-soft)]">
-              {data?.stripePaymentsPendingCount ?? 0} paiement(s) en attente
-            </span>
-          </div>
+          <dl className="mt-6 grid grid-cols-1 gap-3 text-sm md:grid-cols-3">
+            <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3">
+              <dt className="text-[var(--pro-text-muted)]">Nouvelles demandes</dt>
+              <dd className="mt-1 font-semibold text-[var(--pro-text)]">{newCount}</dd>
+            </div>
+            <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3">
+              <dt className="text-[var(--pro-text-muted)]">Acceptées ce jour</dt>
+              <dd className="mt-1 font-semibold text-[var(--pro-text)]">{data?.acceptedToday ?? 0}</dd>
+            </div>
+            <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3">
+              <dt className="text-[var(--pro-text-muted)]">Paiements en attente</dt>
+              <dd className="mt-1 font-semibold text-[var(--pro-text)]">{data?.stripePaymentsPendingCount ?? 0}</dd>
+            </div>
+          </dl>
         </ProPanel>
 
         {error ? <ProAlert tone="error">{error}</ProAlert> : null}
@@ -184,26 +187,30 @@ export default function ProDashboardPage() {
           <div className="space-y-6">
             <ProPanel id="pro-cal-upcoming">
               <ProSectionHeader title="Prochaines réservations" description="Les prochains trajets à suivre de près." />
-              <div className="mt-6 space-y-3">
-                {upcoming.map((item) => (
-                  <Link
-                    key={item.id}
-                    href={`/pro/demandes/${item.id}`}
-                    className="block rounded-[26px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-5 py-5 transition hover:border-[var(--pro-border-strong)] hover:bg-[var(--pro-panel-strong)]"
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="font-semibold text-[var(--pro-text)]">{getDisplayName(item.clientName)}</p>
-                        <p className="mt-1 text-sm text-[var(--pro-text-muted)]">{formatDateTime(item.scheduledStart)}</p>
-                      </div>
-                      <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${statusBadgeClass(item.status)}`}>
-                        {labelStatus(item.status)}
-                      </span>
-                    </div>
-                    {getJourneySummary(item.flatPayload) ? <p className="mt-3 text-sm text-[var(--pro-text-soft)]">{getJourneySummary(item.flatPayload)}</p> : null}
-                    <p className="mt-4 text-sm font-semibold text-[var(--pro-accent)]">Ouvrir la réservation</p>
-                  </Link>
-                ))}
+              <div className="mt-6">
+                {upcoming.length ? (
+                  <ProTable headers={["Date course", "Client", "Trajet", "Statut", "Action"]}>
+                    {upcoming.map((item) => (
+                      <tr key={item.id} className="bg-[var(--pro-panel)] transition hover:bg-[var(--pro-panel-muted)]">
+                        <td className="px-4 py-3 align-top text-[var(--pro-text-muted)]">{formatDateTime(item.scheduledStart)}</td>
+                        <td className="px-4 py-3 align-top font-semibold text-[var(--pro-text)]">{getDisplayName(item.clientName)}</td>
+                        <td className="max-w-[320px] px-4 py-3 align-top text-[var(--pro-text-soft)]">
+                          <span className="line-clamp-2">{getJourneySummary(item.flatPayload) || "Trajet non renseigné"}</span>
+                        </td>
+                        <td className="px-4 py-3 align-top">
+                          <span className={`inline-flex rounded-md border px-2 py-1 text-xs font-semibold ${statusBadgeClass(item.status)}`}>
+                            {labelStatus(item.status)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 align-top">
+                          <Link href={`/pro/demandes/${item.id}`} className="inline-flex rounded-lg bg-[var(--pro-accent)] px-3 py-2 text-xs font-semibold text-white">
+                            Ouvrir
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </ProTable>
+                ) : null}
                 {!upcoming.length ? <EmptyState message="Aucune réservation à venir." /> : null}
               </div>
             </ProPanel>

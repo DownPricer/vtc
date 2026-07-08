@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ProGuard } from "@/components/pro/ProGuard";
 import { ProNav } from "@/components/pro/ProNav";
-import { EmptyState, ProActionLink, ProAlert, ProPanel, ProSectionHeader, ProShell } from "@/components/pro/ProUi";
+import { EmptyState, ProActionLink, ProAlert, ProField, ProPanel, ProSectionHeader, ProShell, ProTable, proInputClass } from "@/components/pro/ProUi";
 import {
   formatDateTime,
   formatPrice,
@@ -63,14 +63,14 @@ function countByKind(rows: LeadRow[], kind: string): number {
   return rows.filter((row) => row.kind === kind).length;
 }
 
-function RequestListCard({ row }: { row: LeadRow }) {
+function RequestMobileCard({ row }: { row: LeadRow }) {
   const journey = getJourneySummary(row.flatPayload);
   const tarif = isUsefulValue(row.pricingResult && (row.pricingResult as Record<string, unknown>).tarif)
     ? formatPrice((row.pricingResult as Record<string, unknown>).tarif)
     : "";
 
   return (
-    <div className="rounded-[28px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-5 py-5 transition hover:border-[var(--pro-border-strong)] hover:bg-[var(--pro-panel-strong)]">
+    <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4 transition hover:border-[var(--pro-border-strong)] hover:bg-[var(--pro-panel-strong)]">
       <div className="flex flex-col gap-4 xl:grid xl:grid-cols-[minmax(0,1.4fr)_minmax(180px,0.8fr)_minmax(180px,0.7fr)_auto] xl:items-start">
         <div className="min-w-0">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -80,7 +80,7 @@ function RequestListCard({ row }: { row: LeadRow }) {
                 {labelKind(row.kind)} · Recu le {formatDateTime(row.createdAt)}
               </p>
             </div>
-            <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${statusBadgeClass(row.status)}`}>
+            <span className={`inline-flex rounded-md border px-2 py-1 text-xs font-semibold ${statusBadgeClass(row.status)}`}>
               {labelStatus(row.status)}
             </span>
           </div>
@@ -89,22 +89,22 @@ function RequestListCard({ row }: { row: LeadRow }) {
 
           <div className="mt-4 flex flex-wrap gap-2 text-xs">
             {usefulText(row.clientPhone) ? (
-              <span className="rounded-full border border-[var(--pro-border)] bg-[var(--pro-panel)] px-3 py-1 text-[var(--pro-text-soft)]">{usefulText(row.clientPhone)}</span>
+              <span className="rounded-md border border-[var(--pro-border)] bg-[var(--pro-panel)] px-2 py-1 text-[var(--pro-text-soft)]">{usefulText(row.clientPhone)}</span>
             ) : null}
             {usefulText(row.clientEmail) ? (
-              <span className="rounded-full border border-[var(--pro-border)] bg-[var(--pro-panel)] px-3 py-1 text-[var(--pro-text-soft)]">{usefulText(row.clientEmail)}</span>
+              <span className="rounded-md border border-[var(--pro-border)] bg-[var(--pro-panel)] px-2 py-1 text-[var(--pro-text-soft)]">{usefulText(row.clientEmail)}</span>
             ) : null}
           </div>
         </div>
 
         <div className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Paiement</p>
-          <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${leadPaymentStatusBadgeClass(row.paymentStatus)}`}>
+          <span className={`inline-flex rounded-md border px-2 py-1 text-xs font-semibold ${leadPaymentStatusBadgeClass(row.paymentStatus)}`}>
             {labelLeadPaymentStatus(row.paymentStatus)}
           </span>
           <div>
             <span
-              className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${clientOnlinePaymentPreferenceBadgeClass(row.clientWantsOnlinePayment)}`}
+              className={`inline-flex rounded-md border px-2 py-1 text-xs font-semibold ${clientOnlinePaymentPreferenceBadgeClass(row.clientWantsOnlinePayment)}`}
             >
               {labelClientOnlinePaymentPreference(row.clientWantsOnlinePayment)}
             </span>
@@ -120,13 +120,56 @@ function RequestListCard({ row }: { row: LeadRow }) {
         <div className="flex items-center xl:justify-end">
           <Link
             href={`/pro/demandes/${row.id}`}
-            className="inline-flex items-center justify-center rounded-2xl bg-[var(--pro-accent)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[color-mix(in_srgb,var(--pro-accent)_88%,black_12%)]"
+            className="inline-flex items-center justify-center rounded-xl bg-[var(--pro-accent)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[color-mix(in_srgb,var(--pro-accent)_88%,black_12%)]"
           >
             Ouvrir
           </Link>
         </div>
       </div>
     </div>
+  );
+}
+
+function RequestTable({ rows }: { rows: LeadRow[] }) {
+  return (
+    <ProTable headers={["Date demande", "Client", "Type", "Trajet", "Date course", "Montant", "Statut", "Paiement", "Action"]}>
+      {rows.map((row) => {
+        const journey = getJourneySummary(row.flatPayload);
+        const tarif = isUsefulValue(row.pricingResult && (row.pricingResult as Record<string, unknown>).tarif)
+          ? formatPrice((row.pricingResult as Record<string, unknown>).tarif)
+          : "—";
+        return (
+          <tr key={row.id} className="bg-[var(--pro-panel)] transition hover:bg-[var(--pro-panel-muted)]">
+            <td className="px-4 py-3 align-top text-[var(--pro-text-muted)]">{formatDateTime(row.createdAt)}</td>
+            <td className="px-4 py-3 align-top">
+              <p className="font-semibold text-[var(--pro-text)]">{getDisplayName(row.clientName)}</p>
+              <p className="mt-1 text-xs text-[var(--pro-text-muted)]">{usefulText(row.clientEmail) || usefulText(row.clientPhone) || "Coordonnées non renseignées"}</p>
+            </td>
+            <td className="px-4 py-3 align-top text-[var(--pro-text-soft)]">{labelKind(row.kind)}</td>
+            <td className="max-w-[280px] px-4 py-3 align-top text-[var(--pro-text-soft)]">
+              <span className="line-clamp-2">{journey || "Trajet non renseigné"}</span>
+            </td>
+            <td className="px-4 py-3 align-top text-[var(--pro-text-muted)]">{row.scheduledStart ? formatDateTime(row.scheduledStart) : "—"}</td>
+            <td className="px-4 py-3 align-top font-semibold text-[var(--pro-text)]">{tarif}</td>
+            <td className="px-4 py-3 align-top">
+              <span className={`inline-flex rounded-md border px-2 py-1 text-xs font-semibold ${statusBadgeClass(row.status)}`}>
+                {labelStatus(row.status)}
+              </span>
+            </td>
+            <td className="px-4 py-3 align-top">
+              <span className={`inline-flex rounded-md border px-2 py-1 text-xs font-semibold ${leadPaymentStatusBadgeClass(row.paymentStatus)}`}>
+                {labelLeadPaymentStatus(row.paymentStatus)}
+              </span>
+            </td>
+            <td className="px-4 py-3 align-top">
+              <Link href={`/pro/demandes/${row.id}`} className="inline-flex rounded-lg bg-[var(--pro-accent)] px-3 py-2 text-xs font-semibold text-white">
+                Ouvrir
+              </Link>
+            </td>
+          </tr>
+        );
+      })}
+    </ProTable>
   );
 }
 
@@ -180,23 +223,23 @@ export default function ProDemandesPage() {
           />
 
           <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-5">
-            <div className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
+            <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Total</p>
               <p className="mt-2 text-2xl font-semibold text-[var(--pro-text)]">{rows.length}</p>
             </div>
-            <div className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
+            <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Nouveaux</p>
               <p className="mt-2 text-2xl font-semibold text-[var(--pro-text)]">{countByStatus(rows, "new")}</p>
             </div>
-            <div className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
+            <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">En attente</p>
               <p className="mt-2 text-2xl font-semibold text-[var(--pro-text)]">{countByStatus(rows, "pending")}</p>
             </div>
-            <div className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
+            <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Réservations</p>
               <p className="mt-2 text-2xl font-semibold text-[var(--pro-text)]">{countByKind(rows, "reservation")}</p>
             </div>
-            <div className="rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
+            <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Devis</p>
               <p className="mt-2 text-2xl font-semibold text-[var(--pro-text)]">{countByKind(rows, "devis")}</p>
             </div>
@@ -220,33 +263,26 @@ export default function ProDemandesPage() {
           />
 
           <div className="mt-6 grid grid-cols-1 gap-3 xl:grid-cols-12">
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Nom, e-mail ou téléphone"
-              className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm text-[var(--pro-text)] placeholder:text-[var(--pro-text-muted)] focus:border-[var(--pro-accent)] focus:outline-none xl:col-span-5"
-            />
-            <select
-              value={kind}
-              onChange={(e) => setKind(e.target.value)}
-              className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm text-[var(--pro-text)] focus:border-[var(--pro-accent)] focus:outline-none xl:col-span-3"
-            >
-              <option value="">Tous les types</option>
-              <option value="contact">Contact</option>
-              <option value="devis">Devis</option>
-              <option value="reservation">Réservation</option>
-            </select>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm text-[var(--pro-text)] focus:border-[var(--pro-accent)] focus:outline-none xl:col-span-4"
-            >
-              {STATUS_FILTERS.map((item) => (
-                <option key={item.value || "all"} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
+            <ProField label="Recherche" className="xl:col-span-5">
+              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nom, e-mail, téléphone ou trajet" className={proInputClass} />
+            </ProField>
+            <ProField label="Type" className="xl:col-span-3">
+              <select value={kind} onChange={(e) => setKind(e.target.value)} className={proInputClass}>
+                <option value="">Tous les types</option>
+                <option value="contact">Contact</option>
+                <option value="devis">Devis</option>
+                <option value="reservation">Réservation</option>
+              </select>
+            </ProField>
+            <ProField label="Statut" className="xl:col-span-4">
+              <select value={status} onChange={(e) => setStatus(e.target.value)} className={proInputClass}>
+                {STATUS_FILTERS.map((item) => (
+                  <option key={item.value || "all"} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+            </ProField>
           </div>
         </ProPanel>
 
@@ -259,10 +295,19 @@ export default function ProDemandesPage() {
             description="Vue large et lisible pour parcourir les dossiers sans tableau serre ni informations techniques inutiles."
           />
 
-          <div className="mt-6 space-y-4">
-            {rows.map((row) => (
-              <RequestListCard key={row.id} row={row} />
-            ))}
+          <div className="mt-6">
+            {rows.length ? (
+              <>
+                <div className="hidden xl:block">
+                  <RequestTable rows={rows} />
+                </div>
+                <div className="space-y-3 xl:hidden">
+                  {rows.map((row) => (
+                    <RequestMobileCard key={row.id} row={row} />
+                  ))}
+                </div>
+              </>
+            ) : null}
             {!rows.length && !loading ? <EmptyState message="Aucune demande ne correspond a ces filtres." /> : null}
           </div>
         </ProPanel>
