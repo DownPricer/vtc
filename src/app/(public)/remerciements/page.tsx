@@ -17,16 +17,14 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RemerciementsPage() {
   const t = await getPublicTenantSettings();
   const thanks = t.thanksPage;
-  const responseDelayDisplay =
-    thanks.responseDelayLabel?.trim() || thanks.infoResponseValue?.trim() || "";
-  const responseDelayCaption =
-    thanks.responseDelayLabel?.trim() ? thanks.infoResponseLabel || "Délai de réponse" : thanks.infoResponseLabel;
+  const responseDelayDisplay = thanks.responseDelayLabel?.trim() || thanks.infoResponseValue?.trim() || "";
+  const responseDelayCaption = thanks.responseDelayLabel?.trim()
+    ? thanks.infoResponseLabel || "Délai de réponse"
+    : thanks.infoResponseLabel;
 
   return (
     <div className="min-h-[80vh] bg-dark flex items-center justify-center px-5">
       <div className="max-w-md w-full text-center">
-
-        {/* Icône succès */}
         <div className="relative inline-flex mb-8">
           <div className="w-20 h-20 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center animate-glow-pulse">
             <svg className="w-9 h-9 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -36,19 +34,11 @@ export default async function RemerciementsPage() {
           <div className="absolute inset-0 rounded-full bg-primary/5 blur-xl" />
         </div>
 
-        <h1 className="text-2xl md:text-3xl font-black text-white mb-3 tracking-tight">
-          {thanks.heading}
-        </h1>
+        <h1 className="text-2xl md:text-3xl font-black text-white mb-3 tracking-tight">{thanks.heading}</h1>
         <p className="text-gradient font-bold text-lg mb-2">{thanks.highlight}</p>
-        <p className="text-gray-500 text-sm leading-relaxed mb-8 max-w-sm mx-auto">
-          {thanks.body}
-        </p>
+        <p className="text-gray-500 text-sm leading-relaxed mb-8 max-w-sm mx-auto">{thanks.body}</p>
 
-        {/* Infos rapides */}
-        <div
-          className="p-4 rounded-xl border border-white/[0.07] mb-8 text-left space-y-3"
-          style={{ background: "linear-gradient(145deg, #1a1a1a, #111)" }}
-        >
+        <div className="p-4 rounded-xl border border-white/[0.07] mb-8 text-left space-y-3" style={{ background: "linear-gradient(145deg, #1a1a1a, #111)" }}>
           {[
             { label: responseDelayCaption, value: responseDelayDisplay },
             { label: thanks.infoPhoneLabel, value: t.contact.phoneDisplay },
@@ -73,3 +63,4 @@ export default async function RemerciementsPage() {
     </div>
   );
 }
+

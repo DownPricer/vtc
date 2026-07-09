@@ -89,12 +89,11 @@ export default async function ContactPage() {
             <span className="text-primary text-[11px] font-bold tracking-widest uppercase">{tenant.contactPage.eyebrow}</span>
           </div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 leading-tight tracking-tight">
-            {tenant.contactPage.title}<br />
+            {tenant.contactPage.title}
+            <br />
             <span className="text-gradient">{tenant.contactPage.titleHighlight}</span>
           </h1>
-          <p className="text-gray-400 text-base md:text-lg leading-relaxed max-w-lg">
-            {tenant.contactPage.intro}
-          </p>
+          <p className="text-gray-400 text-base md:text-lg leading-relaxed max-w-lg">{tenant.contactPage.intro}</p>
         </div>
       </div>
 
@@ -160,10 +159,7 @@ export default async function ContactPage() {
               </div>
             </a>
 
-            <div
-              className="flex items-start gap-3.5 p-4 rounded-xl border border-white/[0.07]"
-              style={{ background: "linear-gradient(145deg, #1a1a1a, #111)" }}
-            >
+            <div className="flex items-start gap-3.5 p-4 rounded-xl border border-white/[0.07]" style={{ background: "linear-gradient(145deg, #1a1a1a, #111)" }}>
               <div className="w-10 h-10 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-gray-500 flex-shrink-0">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -185,3 +181,4 @@ export default async function ContactPage() {
     </div>
   );
 }
+

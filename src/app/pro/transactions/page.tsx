@@ -5,8 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { actionButtonClass, formatDateTime, mapApiErrorToFr } from "@/components/pro/proDisplay";
 import { ProGuard } from "@/components/pro/ProGuard";
-import { ProNav } from "@/components/pro/ProNav";
-import { EmptyState, ProPanel, ProSectionHeader, ProShell } from "@/components/pro/ProUi";
+import { EmptyState, ProPanel, ProSectionHeader } from "@/components/pro/ProUi";
 import { labelLeadPaymentStatus, leadPaymentStatusBadgeClass } from "@/lib/leadPaymentStatusUi";
 import { listProPayments, type ProPaymentsListData, type ProPaymentsListItem } from "@/lib/proPaymentsClient";
 
@@ -134,10 +133,7 @@ function ProTransactionsContent() {
 
   return (
     <ProGuard>
-      <ProShell>
-        <ProNav />
-
-        <ProPanel>
+      <ProPanel>
           <ProSectionHeader
             eyebrow="Encaissements"
             title="Historique des paiements"
@@ -151,11 +147,11 @@ function ProTransactionsContent() {
               </Link>
             }
           />
-        </ProPanel>
+      </ProPanel>
 
-        {error ? <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
+      {error ? <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
 
-        <ProPanel>
+      <ProPanel>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-4">
             <div className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Total encaissé</p>
@@ -326,8 +322,7 @@ function ProTransactionsContent() {
               </div>
             </>
           ) : null}
-        </ProPanel>
-      </ProShell>
+      </ProPanel>
     </ProGuard>
   );
 }
@@ -337,12 +332,9 @@ export default function ProTransactionsPage() {
     <Suspense
       fallback={
         <ProGuard>
-          <ProShell>
-            <ProNav />
-            <ProPanel>
-              <p className="text-sm text-[var(--pro-text-muted)]">Chargement…</p>
-            </ProPanel>
-          </ProShell>
+          <ProPanel>
+            <p className="text-sm text-[var(--pro-text-muted)]">Chargement…</p>
+          </ProPanel>
         </ProGuard>
       }
     >

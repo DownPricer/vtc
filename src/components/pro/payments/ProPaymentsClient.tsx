@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ProGuard } from "@/components/pro/ProGuard";
-import { ProNav } from "@/components/pro/ProNav";
 import { mapApiErrorToFr } from "@/components/pro/proDisplay";
-import { ProPanel, ProSectionHeader, ProShell } from "@/components/pro/ProUi";
+import { ProPanel, ProSectionHeader } from "@/components/pro/ProUi";
 import {
   type ProPaymentSettingsData,
   type ProStripeSnapshot,
@@ -251,10 +250,7 @@ export function ProPaymentsClient() {
 
   return (
     <ProGuard>
-      <ProShell>
-        <ProNav />
-
-        <ProPanel>
+      <ProPanel>
           <ProSectionHeader
             eyebrow="Encaissements"
             title="Paiements Stripe"
@@ -268,7 +264,7 @@ export function ProPaymentsClient() {
               </Link>
             }
           />
-        </ProPanel>
+      </ProPanel>
 
         {loadState === "loading" ? (
           <ProPanel>
@@ -467,7 +463,6 @@ export function ProPaymentsClient() {
             </ProPanel>
           </>
         ) : null}
-      </ProShell>
     </ProGuard>
   );
 }

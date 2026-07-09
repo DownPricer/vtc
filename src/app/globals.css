@@ -576,19 +576,19 @@ select.dashboard-input option,
 }
 
 .pro-theme-light {
-  --pro-bg: #f5f7fb;
-  --pro-bg-strong: #eef2f7;
+  --pro-bg: #f8fafc;
+  --pro-bg-strong: #f1f5f9;
   --pro-panel: #ffffff;
   --pro-panel-muted: #f8fafc;
-  --pro-panel-strong: #eef2f7;
-  --pro-border: rgba(148, 163, 184, 0.28);
-  --pro-border-strong: rgba(100, 116, 139, 0.34);
-  --pro-text: #111827;
+  --pro-panel-strong: #f1f5f9;
+  --pro-border: #e2e8f0;
+  --pro-border-strong: #cbd5e1;
+  --pro-text: #0f172a;
   --pro-text-soft: #334155;
   --pro-text-muted: #64748b;
-  --pro-accent: #c2410c;
-  --pro-accent-soft: rgba(194, 65, 12, 0.1);
-  --pro-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
+  --pro-accent: #2563eb;
+  --pro-accent-soft: rgba(37, 99, 235, 0.12);
+  --pro-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
 }
 
 .pro-theme-dark {

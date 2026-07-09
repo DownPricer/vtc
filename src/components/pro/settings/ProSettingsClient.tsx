@@ -5,8 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import type { SiteConfig } from "@/config/site.config";
 import type { TenantSettingsV1 } from "@/config/tenant-settings.types";
 import { ProGuard } from "@/components/pro/ProGuard";
-import { ProNav } from "@/components/pro/ProNav";
-import { ProPanel, ProSectionHeader, ProShell } from "@/components/pro/ProUi";
+import { ProPanel, ProSectionHeader } from "@/components/pro/ProUi";
 import {
   getProTenantSettingsFromApi,
   mergePersistedWithDefaults,
@@ -116,9 +115,7 @@ export function ProSettingsClient({ tenant, mailMeta, siteFeatures }: ProSetting
   return (
     <ProGuard>
       <SiteDraftPreviewModal open={previewOpen} onClose={() => setPreviewOpen(false)} draft={draft} />
-      <ProShell>
-        <ProNav />
-        <ProPanel>
+      <ProPanel>
           <div className="flex flex-col gap-4 rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/50 p-5 md:flex-row md:items-center md:justify-between xl:px-6 xl:py-6">
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--pro-accent)]">Paiement Stripe</p>
@@ -134,8 +131,8 @@ export function ProSettingsClient({ tenant, mailMeta, siteFeatures }: ProSetting
               Ouvrir les réglages Stripe
             </Link>
           </div>
-        </ProPanel>
-        <ProPanel>
+      </ProPanel>
+      <ProPanel>
           <ProSectionHeader
             eyebrow="Configuration"
             title="Paramètres du site"
@@ -191,8 +188,7 @@ export function ProSettingsClient({ tenant, mailMeta, siteFeatures }: ProSetting
               />
             </div>
           </div>
-        </ProPanel>
-      </ProShell>
+      </ProPanel>
     </ProGuard>
   );
 }

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useProTheme } from "@/components/pro/ProTheme";
 import { loginPro } from "@/lib/proApi";
 
 function loginErrorMessage(message: string): string {
@@ -13,7 +12,6 @@ function loginErrorMessage(message: string): string {
 
 export default function ProLoginPage() {
   const router = useRouter();
-  const { theme, toggleTheme } = useProTheme();
   const [nextPath, setNextPath] = useState("/pro/dashboard");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -38,13 +36,6 @@ export default function ProLoginPage() {
               Gérez vos demandes, devis, réservations et paiements.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-3 py-2 text-xs font-medium text-[var(--pro-text-soft)]"
-          >
-            {theme === "dark" ? "Clair" : "Sombre"}
-          </button>
         </div>
             <form
               className="space-y-5"
@@ -72,7 +63,7 @@ export default function ProLoginPage() {
                   autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm text-[var(--pro-text)] placeholder:text-[var(--pro-text-muted)] focus:border-[var(--pro-accent)] focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
+                  className="w-full rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm text-[var(--pro-text)] placeholder:text-[var(--pro-text-muted)] focus:border-[var(--pro-accent)] focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-100"
                   placeholder="vous@exemple.fr"
                   required
                 />
@@ -88,7 +79,7 @@ export default function ProLoginPage() {
                     autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 pr-12 text-sm text-[var(--pro-text)] placeholder:text-[var(--pro-text-muted)] focus:border-[var(--pro-accent)] focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
+                    className="w-full rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 pr-12 text-sm text-[var(--pro-text)] placeholder:text-[var(--pro-text-muted)] focus:border-[var(--pro-accent)] focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-100"
                     placeholder="Votre mot de passe"
                     required
                   />

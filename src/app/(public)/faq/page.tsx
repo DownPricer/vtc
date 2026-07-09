@@ -102,16 +102,9 @@ export default async function FAQPage() {
 
   return (
     <div className="min-h-screen bg-dark">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqStructuredData) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqStructuredData) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
-      {/* ── Hero ── */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-dark via-dark to-dark-medium" />
         <div className="absolute inset-0 radial-brand-tl" />
@@ -126,7 +119,8 @@ export default async function FAQPage() {
             <span className="text-primary text-[11px] font-bold tracking-widest uppercase">{faqConfig.pageHero.eyebrow}</span>
           </div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 leading-tight tracking-tight">
-            {faqConfig.pageHero.title}<br />
+            {faqConfig.pageHero.title}
+            <br />
             <span className="text-gradient">{faqConfig.pageHero.titleHighlight}</span>
           </h1>
           <p className="text-gray-400 text-base md:text-lg leading-relaxed max-w-lg">
@@ -135,9 +129,7 @@ export default async function FAQPage() {
         </div>
       </div>
 
-      {/* ── Contenu ── */}
       <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8 py-12 md:py-16">
-
         <div className="space-y-3 mb-12">
           {faqs.map((faq, i) => (
             <div
@@ -145,11 +137,9 @@ export default async function FAQPage() {
               className="group flex items-start gap-4 p-5 rounded-2xl border border-white/[0.07] bg-white/[0.02] hover:border-primary/30 hover:bg-white/[0.04] transition-all duration-200"
               style={{ background: "linear-gradient(145deg, #161616, #111)" }}
             >
-              {/* Numéro */}
               <span className="text-[10px] font-black text-primary/40 tracking-wider mt-1 flex-shrink-0 w-6 text-right">
                 {String(i + 1).padStart(2, "0")}
               </span>
-              {/* Icône */}
               <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/15 flex items-center justify-center text-primary flex-shrink-0 group-hover:scale-105 transition-transform duration-200">
                 {faq.icon}
               </div>
@@ -161,11 +151,7 @@ export default async function FAQPage() {
           ))}
         </div>
 
-        {/* CTA */}
-        <div
-          className="p-6 rounded-2xl border border-white/[0.07] text-center"
-          style={{ background: "linear-gradient(145deg, #1a1a1a, #111)" }}
-        >
+        <div className="p-6 rounded-2xl border border-white/[0.07] text-center" style={{ background: "linear-gradient(145deg, #1a1a1a, #111)" }}>
           <p className="text-gray-500 text-sm mb-5">{faqConfig.cta.missingAnswerText}</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
@@ -186,3 +172,4 @@ export default async function FAQPage() {
     </div>
   );
 }
+

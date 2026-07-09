@@ -111,13 +111,21 @@ export default function ProDevisPrintPage() {
             <Link href={`/pro/demandes/${id}`} className="text-sm font-semibold text-[var(--pro-accent)] hover:brightness-110">
               ← Retour à la demande
             </Link>
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="rounded-xl bg-[var(--pro-accent)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:brightness-105"
-            >
-              Imprimer / enregistrer en PDF
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href={`/pro/demandes/${id}/devis/print`}
+                className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-2.5 text-sm font-semibold text-[var(--pro-text)] hover:bg-[var(--pro-panel-strong)]"
+              >
+                Version imprimable
+              </Link>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="rounded-xl bg-[var(--pro-accent)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:brightness-105"
+              >
+                Imprimer / enregistrer en PDF
+              </button>
+            </div>
           </div>
         </div>
 

@@ -31,9 +31,12 @@ const breadcrumbSchema = {
 
 const guaranteeIconByBadgeId: Partial<Record<string, string>> = {
   fixed_price: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z",
-  luggage_included: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4",
-  home_pickup: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6",
-  flight_tracking: "M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
+  luggage_included:
+    "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4",
+  home_pickup:
+    "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6",
+  flight_tracking:
+    "M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
   availability_24_7: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
   no_surcharge: "M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636",
 };
@@ -124,26 +127,13 @@ export default async function TarifsPage() {
 
   return (
     <div className="min-h-screen bg-dark">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(tarifsSchema) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(tarifsSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
       {/* ── Hero avec fond photo ── */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <Image
-            src={pricing.heroImageSrc}
-            alt={pricing.heroImageAlt}
-            fill
-            priority
-            className="object-cover object-center"
-            sizes="100vw"
-          />
+          <Image src={pricing.heroImageSrc} alt={pricing.heroImageAlt} fill priority className="object-cover object-center" sizes="100vw" />
           {/* Fond sombre homogène — pas de zone « transparente » sur une photo claire */}
           <div className="absolute inset-0 bg-black/82" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/45 to-black/35" />
@@ -154,7 +144,6 @@ export default async function TarifsPage() {
 
         <div className="relative z-10 max-w-5xl mx-auto px-5 sm:px-6 lg:px-8 py-16 md:py-24">
           <div className="max-w-2xl">
-
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/35 border border-primary/35 backdrop-blur-sm mb-5 shadow-[0_2px_20px_rgba(0,0,0,0.45)]">
               <svg className="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -189,7 +178,6 @@ export default async function TarifsPage() {
 
       {/* ── Contenu ── */}
       <div className="max-w-5xl mx-auto px-5 sm:px-6 lg:px-8 py-12 md:py-16">
-
         {/* Titre section */}
         <div className="flex items-center gap-4 mb-8">
           <div className="flex-1 h-px bg-white/[0.06]" />
@@ -205,9 +193,7 @@ export default async function TarifsPage() {
               <div
                 key={`${t.depart}-${t.code}`}
                 className={`relative rounded-2xl overflow-hidden transition-all duration-300 group hover:-translate-y-0.5 ${
-                  t.featured
-                    ? "border border-primary/50 ring-1 ring-primary/15 shadow-glow"
-                    : "border border-white/[0.07] hover:border-white/[0.14]"
+                  t.featured ? "border border-primary/50 ring-1 ring-primary/15 shadow-glow" : "border border-white/[0.07] hover:border-white/[0.14]"
                 }`}
                 style={{ background: "linear-gradient(145deg, #1a1a1a, #111)" }}
               >
@@ -275,8 +261,7 @@ export default async function TarifsPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <p className="text-gray-500 text-xs leading-relaxed">
-            Ces tarifs sont donnés à titre indicatif depuis les villes mentionnées. Le prix exact dépend de votre adresse précise de prise en charge.
-            Utilisez le calculateur pour obtenir votre tarif personnalisé en 30 secondes.
+            Ces tarifs sont donnés à titre indicatif depuis les villes mentionnées. Le prix exact dépend de votre adresse précise de prise en charge. Utilisez le calculateur pour obtenir votre tarif personnalisé en 30 secondes.
           </p>
         </div>
 
@@ -335,8 +320,8 @@ export default async function TarifsPage() {
             {pricing.ctaSecondaryLabel}
           </Link>
         </div>
-
       </div>
     </div>
   );
 }
+

@@ -23,7 +23,7 @@ export function ProPanel({
   return (
     <section
       id={id}
-      className={`rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel)] p-5 shadow-[var(--pro-shadow)] md:p-6 xl:p-7 ${className}`}
+      className={`rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel)] p-5 shadow-[var(--pro-shadow)] md:p-6 xl:p-7 ${className}`}
     >
       {children}
     </section>
@@ -85,18 +85,18 @@ export function ProStatCard({
   tone: "orange" | "green" | "blue" | "slate";
   href?: string;
 }) {
-  const toneClass =
+  const toneLeft =
     tone === "orange"
-      ? "border-orange-200 bg-orange-50/70"
+      ? "border-l-amber-500"
       : tone === "green"
-        ? "border-emerald-200 bg-emerald-50/70"
+        ? "border-l-emerald-600"
         : tone === "blue"
-          ? "border-sky-200 bg-sky-50/70"
-          : "border-[var(--pro-border)] bg-[var(--pro-panel-muted)]";
+          ? "border-l-blue-600"
+          : "border-l-slate-300";
 
   const inner = (
     <>
-      <div className="flex items-start justify-between gap-3 border-b border-black/5 pb-3">
+      <div className="flex items-start justify-between gap-3 border-b border-[var(--pro-border)] pb-3">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--pro-text-muted)]">{title}</p>
         {href ? <span className="text-xs font-semibold text-[var(--pro-accent)]">Voir</span> : null}
       </div>
@@ -109,14 +109,14 @@ export function ProStatCard({
     return (
       <Link
         href={href}
-        className={`block rounded-2xl border p-5 transition hover:border-[var(--pro-border-strong)] hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--pro-accent)] ${toneClass}`}
+        className={`block rounded-xl border border-[var(--pro-border)] border-l-4 bg-[var(--pro-panel)] p-5 transition hover:border-[var(--pro-border-strong)] hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--pro-accent)] ${toneLeft}`}
       >
         {inner}
       </Link>
     );
   }
 
-  return <article className={`rounded-2xl border p-5 ${toneClass}`}>{inner}</article>;
+  return <article className={`rounded-xl border border-[var(--pro-border)] border-l-4 bg-[var(--pro-panel)] p-5 ${toneLeft}`}>{inner}</article>;
 }
 
 export function ProActionLink({

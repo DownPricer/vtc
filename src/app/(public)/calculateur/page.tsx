@@ -34,10 +34,7 @@ export default async function CalculateurPage() {
 
         <div className="relative z-10 max-w-3xl mx-auto px-5 py-12 md:py-16">
           <div className="mb-4">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-gray-600 hover:text-primary text-xs transition-colors"
-            >
+            <Link href="/" className="inline-flex items-center gap-1.5 text-gray-600 hover:text-primary text-xs transition-colors">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
@@ -55,7 +52,8 @@ export default async function CalculateurPage() {
           </div>
 
           <h1 className="text-2xl md:text-3xl font-black text-white mb-2.5 tracking-tight leading-tight">
-            Calculer mon<br />
+            Calculer mon
+            <br />
             <span className="text-primary">tarif VTC</span>
           </h1>
 
@@ -68,8 +66,14 @@ export default async function CalculateurPage() {
           <div className="flex items-center gap-5 mt-6 flex-wrap">
             {[
               { label: "Prix fixe garanti", icon: "M5 13l4 4L19 7" },
-              { label: "Bagages inclus", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" },
-              { label: "Prise en charge domicile", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
+              {
+                label: "Bagages inclus",
+                icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2",
+              },
+              {
+                label: "Prise en charge domicile",
+                icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6",
+              },
               { label: "Suivi de vol", icon: "M12 19l9 2-9-18-9 18 9-2zm0 0v-8" },
             ].map((g) => (
               <span key={g.label} className="flex items-center gap-1.5 text-[11px] text-gray-600 font-medium uppercase tracking-wider">
@@ -89,3 +93,4 @@ export default async function CalculateurPage() {
     </main>
   );
 }
+

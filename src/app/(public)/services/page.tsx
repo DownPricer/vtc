@@ -108,26 +108,13 @@ export default async function ServicesPage() {
 
   return (
     <div className="min-h-screen bg-dark">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(servicesSchema) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(servicesSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
       {/* ── Hero avec fond photo ── */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <TenantPublicImage
-            src={hero.imageSrc}
-            alt={hero.imageAlt}
-            fill
-            priority
-            className="object-cover object-center"
-            sizes="100vw"
-          />
+          <TenantPublicImage src={hero.imageSrc} alt={hero.imageAlt} fill priority className="object-cover object-center" sizes="100vw" />
           <div className="absolute inset-0 bg-black/88" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent" />
         </div>
@@ -142,18 +129,16 @@ export default async function ServicesPage() {
             <span className="text-primary text-[11px] font-bold tracking-widest uppercase">{hero.eyebrow}</span>
           </div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 leading-tight tracking-tight">
-            {hero.title}<br />
+            {hero.title}
+            <br />
             <span className="text-gradient">{hero.titleHighlight}</span>
           </h1>
-          <p className="text-gray-400 text-base md:text-lg max-w-lg leading-relaxed">
-            {hero.intro}
-          </p>
+          <p className="text-gray-400 text-base md:text-lg max-w-lg leading-relaxed">{hero.intro}</p>
         </div>
       </div>
 
       {/* ── Contenu ── */}
       <div className="max-w-5xl mx-auto px-5 sm:px-6 lg:px-8 py-12 md:py-16">
-
         <div className="space-y-4 mb-12">
           {services.map((s) => (
             <div
@@ -179,7 +164,9 @@ export default async function ServicesPage() {
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {s.tags.map((tag) => (
-                      <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full bg-white/[0.04] text-gray-500 border border-white/[0.06]">{tag}</span>
+                      <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full bg-white/[0.04] text-gray-500 border border-white/[0.06]">
+                        {tag}
+                      </span>
                     ))}
                   </div>
                 </div>
@@ -187,10 +174,7 @@ export default async function ServicesPage() {
 
               <p className="text-gray-500 leading-relaxed text-sm mb-5 relative z-10 max-w-2xl">{s.description}</p>
 
-              <Link
-                href={s.href}
-                className="relative z-10 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-dark text-white font-bold text-sm transition-all shadow-glow active:scale-95"
-              >
+              <Link href={s.href} className="relative z-10 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-dark text-white font-bold text-sm transition-all shadow-glow active:scale-95">
                 {s.ctaLabel}
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -201,10 +185,7 @@ export default async function ServicesPage() {
         </div>
 
         {/* Véhicule(s) */}
-        <div
-          className="p-5 md:p-6 rounded-2xl border border-white/[0.07]"
-          style={{ background: "linear-gradient(145deg, #1a1a1a, #111)" }}
-        >
+        <div className="p-5 md:p-6 rounded-2xl border border-white/[0.07]" style={{ background: "linear-gradient(145deg, #1a1a1a, #111)" }}>
           <p className="text-[10px] text-gray-600 uppercase tracking-widest font-bold mb-2">Votre confort</p>
           {multiFleet ? (
             <>
@@ -225,9 +206,7 @@ export default async function ServicesPage() {
                           {veh.passengerMax} passagers max.
                           {veh.baggageLabel?.trim() ? ` · ${veh.baggageLabel.trim()}` : ""}
                         </p>
-                        {veh.highlightText?.trim() ? (
-                          <p className="mt-1 line-clamp-2 text-[11px] text-gray-500">{veh.highlightText.trim()}</p>
-                        ) : null}
+                        {veh.highlightText?.trim() ? <p className="mt-1 line-clamp-2 text-[11px] text-gray-500">{veh.highlightText.trim()}</p> : null}
                       </div>
                     </li>
                   );
@@ -240,7 +219,9 @@ export default async function ServicesPage() {
           <p className="text-gray-500 text-sm mb-3">{comfort.bullets}</p>
           <div className="flex flex-wrap gap-2">
             {comfort.paymentChips.map((m) => (
-              <span key={m} className="text-[10px] px-2.5 py-1 rounded-full border border-white/[0.08] bg-white/[0.03] text-gray-400 font-medium">{m}</span>
+              <span key={m} className="text-[10px] px-2.5 py-1 rounded-full border border-white/[0.08] bg-white/[0.03] text-gray-400 font-medium">
+                {m}
+              </span>
             ))}
           </div>
         </div>
@@ -248,3 +229,4 @@ export default async function ServicesPage() {
     </div>
   );
 }
+

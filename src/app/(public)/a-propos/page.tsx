@@ -116,9 +116,7 @@ export default async function AProposPage() {
               <br />
               <span className="text-gradient">{about.roleLabel}</span>
             </h1>
-            <p className="text-gray-200 text-base md:text-lg leading-relaxed max-w-md drop-shadow-md">
-              {about.storyLocation}
-            </p>
+            <p className="text-gray-200 text-base md:text-lg leading-relaxed max-w-md drop-shadow-md">{about.storyLocation}</p>
             <div className="flex items-center gap-3 mt-6">
               <span className="flex items-center gap-1.5 text-xs text-gray-300 font-medium">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
@@ -140,9 +138,7 @@ export default async function AProposPage() {
 
         <div className="flex items-center gap-4 mb-8">
           <div className="flex-1 h-px bg-white/[0.06]" />
-          <span className="text-gray-500 text-[11px] font-bold tracking-widest uppercase whitespace-nowrap">
-            Nos engagements
-          </span>
+          <span className="text-gray-500 text-[11px] font-bold tracking-widest uppercase whitespace-nowrap">Nos engagements</span>
           <div className="flex-1 h-px bg-white/[0.06]" />
         </div>
 
@@ -174,10 +170,7 @@ export default async function AProposPage() {
               {fleet.map((veh) => {
                 const thumb = veh.gallery[0];
                 return (
-                  <div
-                    key={veh.id}
-                    className="flex gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 transition-colors hover:border-primary/25"
-                  >
+                  <div key={veh.id} className="flex gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 transition-colors hover:border-primary/25">
                     <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-lg bg-black/40">
                       {thumb?.src?.trim() ? (
                         <TenantPublicImage src={thumb.src} alt={thumb.alt || veh.name} fill className="object-cover" sizes="112px" />
@@ -189,9 +182,7 @@ export default async function AProposPage() {
                         {veh.passengerMax} passagers max.
                         {veh.baggageLabel?.trim() ? ` · ${veh.baggageLabel.trim()}` : ""}
                       </p>
-                      {veh.highlightText?.trim() ? (
-                        <p className="mt-2 line-clamp-2 text-xs text-gray-500">{veh.highlightText.trim()}</p>
-                      ) : null}
+                      {veh.highlightText?.trim() ? <p className="mt-2 line-clamp-2 text-xs text-gray-500">{veh.highlightText.trim()}</p> : null}
                     </div>
                   </div>
                 );
@@ -206,10 +197,7 @@ export default async function AProposPage() {
               <div className="flex-1 h-px bg-white/[0.06]" />
             </div>
 
-            <div
-              className="p-5 md:p-6 rounded-2xl border border-white/[0.07] mb-10 group"
-              style={{ background: "linear-gradient(145deg, #1a1a1a, #111)" }}
-            >
+            <div className="p-5 md:p-6 rounded-2xl border border-white/[0.07] mb-10 group" style={{ background: "linear-gradient(145deg, #1a1a1a, #111)" }}>
               <div className="flex items-start gap-4">
                 <div className="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary flex-shrink-0">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -221,10 +209,7 @@ export default async function AProposPage() {
                   <p className="text-gray-500 text-sm mb-2">{tenant.aboutPage.vehicleBlock.helperText}</p>
                   <div className="flex flex-wrap gap-2">
                     {tenant.vehicles.featured.paymentChips.map((m) => (
-                      <span
-                        key={m}
-                        className="text-[10px] px-2.5 py-1 rounded-full border border-white/[0.08] bg-white/[0.03] text-gray-400 font-medium"
-                      >
+                      <span key={m} className="text-[10px] px-2.5 py-1 rounded-full border border-white/[0.08] bg-white/[0.03] text-gray-400 font-medium">
                         {m}
                       </span>
                     ))}
@@ -253,3 +238,4 @@ export default async function AProposPage() {
     </div>
   );
 }
+

@@ -26,3 +26,4 @@ export default function PaymentReturnPage({
 
   return <PaymentReturnClient sessionId={sessionId} />;
 }
+

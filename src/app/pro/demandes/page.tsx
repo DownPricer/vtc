@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ProGuard } from "@/components/pro/ProGuard";
-import { ProNav } from "@/components/pro/ProNav";
-import { EmptyState, ProActionLink, ProAlert, ProField, ProPanel, ProSectionHeader, ProShell, ProTable, proInputClass } from "@/components/pro/ProUi";
+import { EmptyState, ProActionLink, ProAlert, ProField, ProPanel, ProSectionHeader, ProTable, proInputClass } from "@/components/pro/ProUi";
 import {
   formatDateTime,
   formatPrice,
@@ -212,41 +211,38 @@ export default function ProDemandesPage() {
 
   return (
     <ProGuard>
-      <ProShell>
-        <ProNav />
+      <ProPanel>
+        <ProSectionHeader
+          title="Demandes"
+          description="Liste opérationnelle des contacts, devis et réservations avec filtres, priorités visibles et ouverture rapide des fiches."
+          action={<ProActionLink href="/pro/dashboard">Retour au tableau de bord</ProActionLink>}
+        />
 
-        <ProPanel>
-          <ProSectionHeader
-            title="Demandes"
-            description="Liste opérationnelle des contacts, devis et réservations avec filtres, priorités visibles et ouverture rapide des fiches."
-            action={<ProActionLink href="/pro/dashboard">Retour au tableau de bord</ProActionLink>}
-          />
-
-          <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-5">
-            <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Total</p>
-              <p className="mt-2 text-2xl font-semibold text-[var(--pro-text)]">{rows.length}</p>
-            </div>
-            <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Nouveaux</p>
-              <p className="mt-2 text-2xl font-semibold text-[var(--pro-text)]">{countByStatus(rows, "new")}</p>
-            </div>
-            <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">En attente</p>
-              <p className="mt-2 text-2xl font-semibold text-[var(--pro-text)]">{countByStatus(rows, "pending")}</p>
-            </div>
-            <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Réservations</p>
-              <p className="mt-2 text-2xl font-semibold text-[var(--pro-text)]">{countByKind(rows, "reservation")}</p>
-            </div>
-            <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Devis</p>
-              <p className="mt-2 text-2xl font-semibold text-[var(--pro-text)]">{countByKind(rows, "devis")}</p>
-            </div>
+        <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-5">
+          <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Total</p>
+            <p className="mt-2 text-2xl font-semibold text-[var(--pro-text)]">{rows.length}</p>
           </div>
-        </ProPanel>
+          <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Nouveaux</p>
+            <p className="mt-2 text-2xl font-semibold text-[var(--pro-text)]">{countByStatus(rows, "new")}</p>
+          </div>
+          <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">En attente</p>
+            <p className="mt-2 text-2xl font-semibold text-[var(--pro-text)]">{countByStatus(rows, "pending")}</p>
+          </div>
+          <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Réservations</p>
+            <p className="mt-2 text-2xl font-semibold text-[var(--pro-text)]">{countByKind(rows, "reservation")}</p>
+          </div>
+          <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Devis</p>
+            <p className="mt-2 text-2xl font-semibold text-[var(--pro-text)]">{countByKind(rows, "devis")}</p>
+          </div>
+        </div>
+      </ProPanel>
 
-        <ProPanel>
+      <ProPanel>
           <ProSectionHeader
             eyebrow="Filtres"
             title="Trouver la bonne demande"
@@ -284,12 +280,12 @@ export default function ProDemandesPage() {
               </select>
             </ProField>
           </div>
-        </ProPanel>
+      </ProPanel>
 
-        {error ? <ProAlert tone="error">{error}</ProAlert> : null}
-        {loading ? <ProAlert tone="info">Chargement des demandes...</ProAlert> : null}
+      {error ? <ProAlert tone="error">{error}</ProAlert> : null}
+      {loading ? <ProAlert tone="info">Chargement des demandes...</ProAlert> : null}
 
-        <ProPanel>
+      <ProPanel>
           <ProSectionHeader
             title="Liste des demandes"
             description="Vue large et lisible pour parcourir les dossiers sans tableau serre ni informations techniques inutiles."
@@ -310,8 +306,7 @@ export default function ProDemandesPage() {
             ) : null}
             {!rows.length && !loading ? <EmptyState message="Aucune demande ne correspond a ces filtres." /> : null}
           </div>
-        </ProPanel>
-      </ProShell>
+      </ProPanel>
     </ProGuard>
   );
 }

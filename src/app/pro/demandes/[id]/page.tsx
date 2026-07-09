@@ -5,8 +5,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { clientRowsFromFlat, paiementRowsFromFlat, prestationRowsFromFlat } from "@/components/pro/flatPresentation";
 import { ProGuard } from "@/components/pro/ProGuard";
-import { ProNav } from "@/components/pro/ProNav";
-import { EmptyState, ProActionLink, ProAlert, ProPanel, ProSectionHeader, ProShell } from "@/components/pro/ProUi";
+import { EmptyState, ProActionLink, ProAlert, ProPanel, ProSectionHeader } from "@/components/pro/ProUi";
 import {
   actionButtonClass,
   buildStatusActionBanner,
@@ -378,10 +377,7 @@ export default function ProDemandeDetailPage() {
 
   return (
     <ProGuard>
-      <ProShell>
-        <ProNav />
-
-        {!item ? (
+      {!item ? (
           <>
             {error ? <ProAlert tone="error">{error}</ProAlert> : null}
             <EmptyState message="Chargement de la demande..." />
@@ -763,8 +759,7 @@ export default function ProDemandeDetailPage() {
               </div>
             </div>
           </>
-        )}
-      </ProShell>
+      )}
     </ProGuard>
   );
 }

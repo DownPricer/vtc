@@ -1,17 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
-import { FloatingButtons } from "@/components/layout/FloatingButtons";
-import { MobileCtaBar } from "@/components/layout/MobileCtaBar";
-import { IntroScreen } from "@/components/layout/IntroScreen";
 import { siteConfig } from "@/config/site.config";
 import { seoConfig } from "@/config/seo.config";
 import { getPublicSiteUrl } from "@/lib/siteUrl";
-import { getBrandCssVariables } from "@/lib/branding/cssVariables";
-import { getPublicTenantSettings } from "@/lib/publicTenantSettingsClient";
-import { buildSiteConfigFromTenant } from "@/config/siteConfigFromTenant";
-import { buildBusinessConfigFromTenant } from "@/config/businessConfigFromTenant";
 import { TelemetryRoot } from "@/components/telemetry/TelemetryRoot";
 
 const SITE_URL = getPublicSiteUrl();
@@ -80,20 +71,11 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const tenantSettings = await getPublicTenantSettings();
-  const runtimeSite = buildSiteConfigFromTenant(tenantSettings);
-  const runtimeBusiness = buildBusinessConfigFromTenant(tenantSettings);
-
   return (
-    <html lang="fr" style={getBrandCssVariables(runtimeSite.branding.colors)}>
-      <body className="antialiased bg-dark text-white min-h-screen flex flex-col">
-        {runtimeSite.features.introScreen ? <IntroScreen runtimeSite={runtimeSite} /> : null}
-        <Header runtimeSite={runtimeSite} />
+    <html lang="fr">
+      <body className="antialiased min-h-screen bg-white text-slate-950">
         <TelemetryRoot />
-        <main className="flex-1 pb-24 md:pb-0">{children}</main>
-        <Footer runtimeSite={runtimeSite} runtimeBusiness={runtimeBusiness} />
-        <FloatingButtons runtimeSite={runtimeSite} />
-        <MobileCtaBar runtimeSite={runtimeSite} tenantSettings={tenantSettings} />
+        {children}
       </body>
     </html>
   );

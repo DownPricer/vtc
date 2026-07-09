@@ -34,10 +34,7 @@ export default async function DevisPage() {
 
         <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
           <div className="mb-4">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-gray-600 hover:text-primary text-xs transition-colors"
-            >
+            <Link href="/" className="inline-flex items-center gap-1.5 text-gray-600 hover:text-primary text-xs transition-colors">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
@@ -55,7 +52,8 @@ export default async function DevisPage() {
           </div>
 
           <h1 className="text-2xl md:text-3xl font-black text-white mb-2.5 tracking-tight leading-tight">
-            Votre estimation<br />
+            Votre estimation
+            <br />
             <span className="text-primary">sur mesure</span>
           </h1>
 
@@ -88,3 +86,4 @@ export default async function DevisPage() {
     </div>
   );
 }
+
