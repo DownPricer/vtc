@@ -10,4 +10,5 @@ export type SettingsTabsSharedProps = {
   siteFeatures: SiteConfig["features"];
   mailMeta: ProSettingsMailMeta;
   contactErrors: Record<string, string>;
+  hideMailRouting?: boolean;
 };

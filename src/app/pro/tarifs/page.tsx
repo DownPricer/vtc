@@ -11,5 +11,5 @@ export const metadata: Metadata = {
 
 export default function ProTarifsPage() {
   const tenant = getTenantSettings();
-  return <ProTarifsClient defaults={tenant} />;
+  return <ProTarifsClient defaults={tenant} siteFeatures={siteConfig.features} />;
 }

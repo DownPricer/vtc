@@ -9,7 +9,9 @@ type SettingsEditToolbarProps = {
   onModify: () => void;
   onCancel: () => void;
   onSave: () => void | Promise<void>;
-  onPreview: () => void;
+  onPreview?: () => void;
+  showPreview?: boolean;
+  saveLabel?: string;
 };
 
 export function SettingsEditToolbar({
@@ -20,6 +22,8 @@ export function SettingsEditToolbar({
   onCancel,
   onSave,
   onPreview,
+  showPreview = false,
+  saveLabel = "Enregistrer",
 }: SettingsEditToolbarProps) {
   return (
     <div className="flex flex-wrap items-center gap-2.5">
@@ -38,13 +42,15 @@ export function SettingsEditToolbar({
             className={proBtnPrimaryClass}
             disabled={!isDirty || saving}
           >
-            {saving ? "Enregistrement..." : "Enregistrer"}
+            {saving ? "Enregistrement..." : saveLabel}
           </button>
         </>
       )}
-      <button type="button" onClick={onPreview} className={proBtnSecondaryClass}>
-        Previsualiser
-      </button>
+      {showPreview && onPreview ? (
+        <button type="button" onClick={onPreview} className={proBtnSecondaryClass}>
+          Previsualiser
+        </button>
+      ) : null}
     </div>
   );
 }

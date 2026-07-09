@@ -1,7 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { logoutPro } from "@/lib/proApi";
+import { logoutPro, proApi } from "@/lib/proApi";
 import { translateAction } from "@/components/pro/proDisplay";
 import { ProThemeToggle } from "@/components/pro/ProThemeToggle";
 import { useProTheme } from "@/components/pro/ProTheme";
@@ -15,6 +16,15 @@ type ProSettingsAppearancePanelProps = {
 export function ProSettingsAppearancePanel({ commercialName, operatorHint }: ProSettingsAppearancePanelProps) {
   const { theme } = useProTheme();
   const router = useRouter();
+  const [sessionEmail, setSessionEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    proApi("/dashboard/session")
+      .then((json) => setSessionEmail((json.data as { operatorEmail?: string })?.operatorEmail ?? null))
+      .catch(() => setSessionEmail(null));
+  }, []);
+
+  const accountLabel = sessionEmail ?? operatorHint ?? "Connecté à l’espace pro";
 
   return (
     <ProPanel>
@@ -27,7 +37,7 @@ export function ProSettingsAppearancePanel({ commercialName, operatorHint }: Pro
         <ProDescriptionList
           rows={[
             { label: "Entreprise", value: commercialName },
-            { label: "Compte", value: operatorHint ?? "Connecté à l’espace pro" },
+            { label: "Compte", value: accountLabel },
             {
               label: "Thème actuel",
               value: theme === "dark" ? "Mode sombre" : "Mode clair",

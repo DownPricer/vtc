@@ -7,7 +7,7 @@ import { EditableTextarea } from "../editable/EditableTextarea";
 import { EditableNumberField } from "../editable/EditableNumberField";
 import type { SettingsTabsSharedProps } from "./context";
 
-export function ContactTab({ draft, setDraft, editing, mailMeta, siteFeatures, contactErrors }: SettingsTabsSharedProps) {
+export function ContactTab({ draft, setDraft, editing, mailMeta, siteFeatures, contactErrors, hideMailRouting = false }: SettingsTabsSharedProps) {
   return (
     <div className="space-y-6">
       <SettingsSectionCard title="Coordonnées publiques (vitrine)" description="Affichées sur contact, pied de page, etc.">
@@ -124,6 +124,7 @@ export function ContactTab({ draft, setDraft, editing, mailMeta, siteFeatures, c
           />
         </div>
       </SettingsSectionCard>
+      {!hideMailRouting ? (
       <SettingsSectionCard
         title="Routage e-mails (hébergement)"
         description="Variables d’environnement côté serveur. Aucun mot de passe ni secret n’est affiché."
@@ -143,6 +144,7 @@ export function ContactTab({ draft, setDraft, editing, mailMeta, siteFeatures, c
           hint="Utilisée si la variable d’environnement n’est pas positionnée."
         />
       </SettingsSectionCard>
+      ) : null}
     </div>
   );
 }

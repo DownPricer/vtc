@@ -37,9 +37,11 @@ const TAB_LABELS: Record<SettingsTabId, string> = {
 type SettingsTabsProps = {
   active: SettingsTabId;
   onChange: (id: SettingsTabId) => void;
+  tabIds?: readonly SettingsTabId[];
 };
 
-export function SettingsTabs({ active, onChange }: SettingsTabsProps) {
+export function SettingsTabs({ active, onChange, tabIds = SETTINGS_TAB_IDS }: SettingsTabsProps) {
+  const tabs = tabIds;
   const activeLabel = TAB_LABELS[active];
   return (
     <div className="space-y-4">
@@ -53,7 +55,7 @@ export function SettingsTabs({ active, onChange }: SettingsTabsProps) {
           onChange={(event) => onChange(event.target.value as SettingsTabId)}
           className="w-full rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel)] px-3 py-2.5 text-sm font-medium text-[var(--pro-text)] focus:border-[var(--pro-accent)] focus:outline-none"
         >
-          {SETTINGS_TAB_IDS.map((id) => (
+          {tabs.map((id) => (
             <option key={id} value={id}>
               {TAB_LABELS[id]}
             </option>
@@ -64,7 +66,7 @@ export function SettingsTabs({ active, onChange }: SettingsTabsProps) {
 
       <div className="hidden rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/40 p-3 md:block">
         <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
-          {SETTINGS_TAB_IDS.map((id) => {
+          {tabs.map((id) => {
             const isActive = id === active;
             return (
               <button
