@@ -16,6 +16,7 @@ import { UnsavedChangesBar } from "./editable/UnsavedChangesBar";
 import { SettingsTabs, type SettingsTabId } from "./SettingsTabs";
 import { SettingsTabPanels } from "./tabs/SettingsTabPanels";
 import { SiteDraftPreviewModal } from "./SiteDraftPreviewModal";
+import { ProSettingsAppearancePanel } from "./ProSettingsAppearancePanel";
 import { useTenantDraft } from "./useTenantDraft";
 import { validateContactSection } from "./contactValidation";
 import { normalizeTenantVehicles } from "@/lib/tenantVehiclesNormalize";
@@ -115,6 +116,7 @@ export function ProSettingsClient({ tenant, mailMeta, siteFeatures }: ProSetting
   return (
     <ProGuard>
       <SiteDraftPreviewModal open={previewOpen} onClose={() => setPreviewOpen(false)} draft={draft} />
+      <ProSettingsAppearancePanel commercialName={draft.general.commercialName} />
       <ProPanel>
           <div className="flex flex-col gap-4 rounded-[24px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/50 p-5 md:flex-row md:items-center md:justify-between xl:px-6 xl:py-6">
             <div className="min-w-0">

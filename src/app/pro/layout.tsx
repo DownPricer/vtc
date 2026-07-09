@@ -1,10 +1,6 @@
 import type { ReactNode } from "react";
-import { ProAppShell } from "@/components/pro/ProAppShell";
+import { ProLayoutClient } from "@/components/pro/ProLayoutClient";
 
 export default function ProLayout({ children }: { children: ReactNode }) {
-  return (
-    <div className="pro-theme-light">
-      <ProAppShell>{children}</ProAppShell>
-    </div>
-  );
+  return <ProLayoutClient>{children}</ProLayoutClient>;
 }

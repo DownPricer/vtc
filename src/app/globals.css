@@ -592,19 +592,19 @@ select.dashboard-input option,
 }
 
 .pro-theme-dark {
-  --pro-bg: #07111f;
-  --pro-bg-strong: #1a2333;
-  --pro-panel: rgba(10, 18, 32, 0.88);
-  --pro-panel-muted: rgba(14, 24, 39, 0.82);
-  --pro-panel-strong: rgba(20, 31, 49, 0.96);
-  --pro-border: rgba(148, 163, 184, 0.18);
-  --pro-border-strong: rgba(148, 163, 184, 0.28);
+  --pro-bg: #020617;
+  --pro-bg-strong: #0f172a;
+  --pro-panel: #0f172a;
+  --pro-panel-muted: #111827;
+  --pro-panel-strong: #1e293b;
+  --pro-border: #1e293b;
+  --pro-border-strong: #334155;
   --pro-text: #f8fafc;
-  --pro-text-soft: #dbe4f0;
+  --pro-text-soft: #e2e8f0;
   --pro-text-muted: #94a3b8;
-  --pro-accent: #fb923c;
-  --pro-accent-soft: rgba(251, 146, 60, 0.16);
-  --pro-shadow: 0 24px 80px rgba(2, 6, 23, 0.4);
+  --pro-accent: #3b82f6;
+  --pro-accent-soft: rgba(59, 130, 246, 0.14);
+  --pro-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
 }
 
 @media print {
@@ -613,6 +613,16 @@ select.dashboard-input option,
   body > header,
   body > footer {
     display: none !important;
+  }
+
+  .pro-theme-dark,
+  .pro-theme-light {
+    --pro-bg: #ffffff;
+    --pro-panel: #ffffff;
+    --pro-panel-muted: #ffffff;
+    --pro-text: #0f172a;
+    --pro-text-muted: #475569;
+    --pro-border: #e2e8f0;
   }
 }
 

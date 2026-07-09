@@ -35,7 +35,7 @@ function legacyClassicTripDefaults() {
   };
 }
 
-function getPricingWithFallback(tenantSettings: TenantSettingsV1): TenantPricingSettingsV1 {
+export function getPricingWithFallback(tenantSettings: TenantSettingsV1): TenantPricingSettingsV1 {
   const legacyClassic = legacyClassicTripDefaults();
   const source = (tenantSettings.pricing ?? {}) as PartialPricingSettings;
 

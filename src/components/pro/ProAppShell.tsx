@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { logoutPro, proApi } from "@/lib/proApi";
 import { translateAction } from "@/components/pro/proDisplay";
+import { ProThemeToggle } from "@/components/pro/ProThemeToggle";
 
 type NavLink = { href: string; label: string };
 
@@ -87,6 +88,7 @@ function SidebarContent({
       </nav>
 
       <div className="px-3 py-3 border-t border-white/10 space-y-2">
+        <ProThemeToggle variant="sidebar" />
         <Link
           href="/"
           onClick={onNavigate}
@@ -146,12 +148,12 @@ export function ProAppShell({ children }: { children: ReactNode }) {
       ) : null}
 
       <div className="min-h-screen lg:pl-[280px]">
-        <header className="sticky top-0 z-30 border-b border-[var(--pro-border)] bg-white/90 backdrop-blur">
+        <header className="sticky top-0 z-30 border-b border-[var(--pro-border)] bg-[var(--pro-panel)]/90 backdrop-blur">
           <div className="flex items-center justify-between gap-3 px-4 py-3 lg:px-6">
             <div className="flex items-center gap-3 min-w-0">
               <button
                 type="button"
-                className="lg:hidden inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--pro-border)] bg-white text-slate-900 hover:bg-slate-50"
+                className="lg:hidden inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--pro-border)] bg-[var(--pro-panel)] text-[var(--pro-text)] hover:bg-[var(--pro-panel-muted)]"
                 onClick={() => setMobileOpen(true)}
                 aria-label="Ouvrir le menu"
               >
@@ -165,10 +167,11 @@ export function ProAppShell({ children }: { children: ReactNode }) {
               </div>
             </div>
 
-            <div className="hidden sm:flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              <ProThemeToggle variant="topbar" />
               <Link
                 href="/"
-                className="inline-flex items-center justify-center rounded-lg border border-[var(--pro-border)] bg-white px-3 py-2 text-sm font-semibold hover:bg-slate-50"
+                className="hidden sm:inline-flex items-center justify-center rounded-lg border border-[var(--pro-border)] bg-[var(--pro-panel)] px-3 py-2 text-sm font-semibold text-[var(--pro-text)] hover:bg-[var(--pro-panel-muted)]"
               >
                 Voir le site
               </Link>
