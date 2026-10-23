@@ -576,35 +576,55 @@ select.dashboard-input option,
 }
 
 .pro-theme-light {
-  --pro-bg: #f8fafc;
-  --pro-bg-strong: #f1f5f9;
+  --pro-bg: #f5f7fb;
+  --pro-bg-strong: #eaeff8;
   --pro-panel: #ffffff;
-  --pro-panel-muted: #f8fafc;
-  --pro-panel-strong: #f1f5f9;
-  --pro-border: #e2e8f0;
-  --pro-border-strong: #cbd5e1;
-  --pro-text: #0f172a;
-  --pro-text-soft: #334155;
-  --pro-text-muted: #64748b;
+  --pro-panel-muted: #f8faff;
+  --pro-panel-strong: #ebf2ff;
+  --pro-border: #dce4f0;
+  --pro-border-strong: #abc1e7;
+  --pro-text: #111b30;
+  --pro-text-soft: #33435f;
+  --pro-text-muted: #586b89;
   --pro-accent: #2563eb;
-  --pro-accent-soft: rgba(37, 99, 235, 0.12);
-  --pro-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+  --pro-accent-hover: #1d4ed8;
+  --pro-accent-soft: #ebf2ff;
+  --pro-eyebrow: #2355b5;
+  --pro-kicker: #405777;
+  --pro-sidebar: #10192d;
+  --pro-danger: #a3192a;
+  --pro-danger-title: #8e1321;
+  --pro-danger-text: #8e3944;
+  --pro-danger-line: #f4b7c0;
+  --pro-danger-bg: #fff3f4;
+  --pro-danger-icon: #ffdde2;
+  --pro-shadow: 0 10px 28px rgb(21 39 72 / 4%);
 }
 
 .pro-theme-dark {
-  --pro-bg: #020617;
-  --pro-bg-strong: #0f172a;
-  --pro-panel: #0f172a;
-  --pro-panel-muted: #111827;
-  --pro-panel-strong: #1e293b;
-  --pro-border: #1e293b;
-  --pro-border-strong: #334155;
-  --pro-text: #f8fafc;
-  --pro-text-soft: #e2e8f0;
-  --pro-text-muted: #94a3b8;
-  --pro-accent: #3b82f6;
-  --pro-accent-soft: rgba(59, 130, 246, 0.14);
-  --pro-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+  --pro-bg: #0c1424;
+  --pro-bg-strong: #101b30;
+  --pro-panel: #142037;
+  --pro-panel-muted: #192841;
+  --pro-panel-strong: #243b63;
+  --pro-border: #2a3b57;
+  --pro-border-strong: #3d5a8c;
+  --pro-text: #e8eef9;
+  --pro-text-soft: #cdd9ee;
+  --pro-text-muted: #a9b9d1;
+  --pro-accent: #5a8dfb;
+  --pro-accent-hover: #3876f6;
+  --pro-accent-soft: #243b63;
+  --pro-eyebrow: #abc7ff;
+  --pro-kicker: #abc7ff;
+  --pro-sidebar: #10192d;
+  --pro-danger: #ffd3d8;
+  --pro-danger-title: #ffb2bb;
+  --pro-danger-text: #f1b8bf;
+  --pro-danger-line: #7b3649;
+  --pro-danger-bg: #341e2a;
+  --pro-danger-icon: #633040;
+  --pro-shadow: 0 10px 28px rgb(0 0 0 / 9%);
 }
 
 @media print {

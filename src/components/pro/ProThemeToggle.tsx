@@ -1,5 +1,6 @@
 "use client";
 
+import { ProIcon } from "@/components/pro/ProIcons";
 import { useProTheme } from "@/components/pro/ProTheme";
 
 type ProThemeToggleProps = {
@@ -16,19 +17,11 @@ export function ProThemeToggle({ variant = "topbar" }: ProThemeToggleProps) {
       <button
         type="button"
         onClick={toggleTheme}
-        className="w-full flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white hover:bg-white/10"
+        className="flex min-h-[42px] w-full items-center gap-[11px] rounded-md px-3 text-left text-xs text-[#e1e8f6] transition hover:bg-white/[0.09] hover:text-white"
         aria-pressed={isDark}
+        aria-label={isDark ? "Activer le mode clair" : "Activer le mode sombre"}
       >
-        {isDark ? (
-          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-            <circle cx="12" cy="12" r="4" />
-            <path strokeLinecap="round" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
-          </svg>
-        ) : (
-          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-          </svg>
-        )}
+        <ProIcon name={isDark ? "sun" : "moon"} className="h-4 w-4" />
         {label}
       </button>
     );
