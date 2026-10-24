@@ -32,6 +32,7 @@ export const defaultTenantSettings: TenantSettingsV1 = {
   branding: {
     logoSrc: "/images/logo.png",
     logoAlt: "Logo VTC",
+    logoScale: 100,
     ogImageSrc: "/images/og-default.jpg",
     colors: {
       primary: "#FF8533",

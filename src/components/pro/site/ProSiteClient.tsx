@@ -8,6 +8,7 @@ import { ProGuard } from "@/components/pro/ProGuard";
 import { ProPanel, ProSectionHeader } from "@/components/pro/ProUi";
 import { ProTenantEditorChrome } from "@/components/pro/ProTenantEditorChrome";
 import { ContactTab } from "@/components/pro/settings/tabs/ContactTab";
+import { ImagesTab } from "@/components/pro/settings/tabs/ImagesTab";
 import { SeoTab } from "@/components/pro/settings/tabs/SeoTab";
 import { ServicesTab } from "@/components/pro/settings/tabs/ServicesTab";
 import { VehiclesTab } from "@/components/pro/settings/tabs/VehiclesTab";
@@ -29,6 +30,7 @@ const SECTIONS: SiteSectionLink[] = [
   { id: "identite", label: "Identité" },
   { id: "coordonnees", label: "Coordonnées" },
   { id: "presentation", label: "Présentation" },
+  { id: "images", label: "Images" },
   { id: "services", label: "Services" },
   { id: "vehicules", label: "Véhicules" },
   { id: "seo", label: "SEO" },
@@ -99,6 +101,17 @@ export function ProSiteClient({ defaults, siteFeatures }: ProSiteClientProps) {
           </div>
         </ProPanel>
 
+        <ProPanel id="images" className="scroll-mt-36">
+          <ProSectionHeader
+            level="panel"
+            title="Images"
+            description="Logo et images de chaque page (accueil, à propos, services, tarifs), avec leur emplacement sur le site."
+          />
+          <div>
+            <ImagesTab {...shared} />
+          </div>
+        </ProPanel>
+
         <ProPanel id="services" className="scroll-mt-36">
           <ProSectionHeader level="panel" title="Services" description="Prestations affichées sur la page Services." />
           <div>
@@ -157,8 +170,12 @@ export function ProSiteClient({ defaults, siteFeatures }: ProSiteClientProps) {
               </div>
             </dl>
             <p className="mt-4 text-xs text-[var(--pro-text-muted)]">
-              Pour changer le logo ou les couleurs, rendez-vous dans{" "}
-              <Link href="/pro/parametres" className="font-medium text-[var(--pro-accent)] hover:underline">
+              Le logo se modifie dans la section{" "}
+              <a href="#images" className="font-medium text-[var(--pro-accent)] hover:underline">
+                Images
+              </a>{" "}
+              ; les couleurs dans{" "}
+              <Link href="/pro/parametres#reglages-avances/appearance" className="font-medium text-[var(--pro-accent)] hover:underline">
                 Paramètres → Apparence
               </Link>
               .

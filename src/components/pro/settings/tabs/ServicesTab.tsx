@@ -74,7 +74,9 @@ export function ServicesTab({ draft, setDraft, editing }: SettingsTabsSharedProp
           editing={editing}
         >
           <EditableImageField
-            label="Image de fond"
+            label="Bannière « Services » (image de fond)"
+            where={{ page: "Page Services", position: "grande image en fond de l’en-tête de la page", href: "/services" }}
+            recommended="1920 × 1080 px (paysage)"
             value={hero.imageSrc}
             onChange={(v) =>
               setDraft((d) => ({

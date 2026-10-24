@@ -2,11 +2,11 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useState, useEffect, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { siteConfig, type SiteConfig } from "@/config/site.config";
 import { trackEvent } from "@/lib/telemetryClient";
+import { logoHeightPx } from "@/lib/logoScale";
 
 const iconHome = (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,6 +99,7 @@ export function Header({ runtimeSite }: HeaderProps) {
     };
   }, [mobileOpen]);
 
+  const logoPx = logoHeightPx(site.branding.logoScale);
   const phoneDisplay = site.contact.phoneDisplay;
   const phoneTel = site.contact.phoneE164;
 
@@ -106,17 +107,16 @@ export function Header({ runtimeSite }: HeaderProps) {
     <>
       <header className="sticky top-0 z-50 bg-dark/95 backdrop-blur-md border-b border-white/8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between gap-3 min-h-16 py-2 lg:h-16 lg:py-0">
+          <div className="flex items-center justify-between gap-3 min-h-16 py-2 lg:min-h-16 lg:py-2">
             <Link href="/" className="flex items-center gap-2.5 shrink-0 min-w-0 self-center">
-              <div className="relative w-9 h-9">
-                <Image
-                  src={site.branding.logoSrc}
-                  alt={site.branding.logoAlt}
-                  fill
-                  className="object-contain"
-                  sizes="36px"
-                />
-              </div>
+              {/* Hauteur pilotée par le réglage « taille du logo » ; largeur automatique (logos larges inclus). */}
+              {/* eslint-disable-next-line @next/next/no-img-element -- hauteur libre + ratio inconnu */}
+              <img
+                src={site.branding.logoSrc}
+                alt={site.branding.logoAlt}
+                className="block w-auto object-contain"
+                style={{ height: logoPx, maxWidth: `min(${logoPx * 4}px, 45vw)` }}
+              />
               <div className="flex flex-col leading-none">
                 <span className="text-white font-bold text-base">{site.commercialName}</span>
                 <span className="text-primary text-[10px] font-semibold tracking-wider">{site.tagline}</span>

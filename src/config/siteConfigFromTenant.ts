@@ -28,6 +28,7 @@ export function buildSiteConfigFromTenant(t: TenantSettingsV1) {
     branding: {
       logoSrc: t.branding.logoSrc,
       logoAlt: t.branding.logoAlt,
+      logoScale: t.branding.logoScale ?? 100,
       ogImageSrc: t.branding.ogImageSrc,
       colors: { ...t.branding.colors },
     },

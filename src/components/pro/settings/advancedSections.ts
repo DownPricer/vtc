@@ -21,6 +21,13 @@ export const ADVANCED_SECTION_GROUPS: AdvancedSectionGroup[] = [
     label: "Image du site",
     sections: [
       {
+        id: "images",
+        label: "Images du site",
+        description: "Logo et toutes les images, avec la page et l’emplacement où elles s’affichent.",
+        icon: "grid",
+        draftKeys: [],
+      },
+      {
         id: "appearance",
         label: "Apparence",
         description: "Logo, image de partage et couleurs du site.",

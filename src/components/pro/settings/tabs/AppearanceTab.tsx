@@ -1,9 +1,9 @@
 "use client";
 
 import { SettingsSectionCard } from "../SettingsSectionCard";
-import { EditableField } from "../editable/EditableField";
 import { EditableColorField } from "../editable/EditableColorField";
 import { EditableImageField } from "../editable/EditableImageField";
+import { LogoEditor } from "../editable/LogoEditor";
 import type { SettingsTabsSharedProps } from "./context";
 
 export function AppearanceTab({ draft, setDraft, editing }: SettingsTabsSharedProps) {
@@ -11,31 +11,19 @@ export function AppearanceTab({ draft, setDraft, editing }: SettingsTabsSharedPr
 
   return (
     <div className="space-y-6">
-      <SettingsSectionCard title="Médias" description="Logo et image Open Graph utilisés pour le partage social.">
-        <div className="grid gap-6 md:grid-cols-2">
-          <div className="space-y-3">
-            <EditableImageField
-              label="Logo"
-              value={draft.branding.logoSrc}
-              onChange={(v) => setDraft((d) => ({ ...d, branding: { ...d.branding, logoSrc: v } }))}
-              editing={editing}
-              altPreview={draft.branding.logoAlt}
-            />
-            <EditableField
-              label="Texte alternatif logo"
-              value={draft.branding.logoAlt}
-              onChange={(v) => setDraft((d) => ({ ...d, branding: { ...d.branding, logoAlt: v } }))}
-              editing={editing}
-            />
-          </div>
-          <EditableImageField
-            label="Image Open Graph"
-            value={draft.branding.ogImageSrc}
-            onChange={(v) => setDraft((d) => ({ ...d, branding: { ...d.branding, ogImageSrc: v } }))}
-            editing={editing}
-            altPreview="Open Graph"
-          />
-        </div>
+      <SettingsSectionCard title="Logo" description="Affiché en haut de toutes les pages. Les autres images du site sont dans « Images du site ».">
+        <LogoEditor draft={draft} setDraft={setDraft} editing={editing} />
+      </SettingsSectionCard>
+      <SettingsSectionCard title="Image de partage" description="Vignette affichée quand le lien du site est partagé (WhatsApp, Facebook, SMS…).">
+        <EditableImageField
+          label="Image de partage (Open Graph)"
+          value={draft.branding.ogImageSrc}
+          onChange={(v) => setDraft((d) => ({ ...d, branding: { ...d.branding, ogImageSrc: v } }))}
+          editing={editing}
+          altPreview="Open Graph"
+          where={{ page: "Aperçu de lien", position: "vignette dans les messages et réseaux sociaux" }}
+          recommended="1200 × 630 px"
+        />
       </SettingsSectionCard>
       <SettingsSectionCard title="Couleurs" description="Palette injectée en variables CSS sur la vitrine.">
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">

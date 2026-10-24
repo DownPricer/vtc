@@ -2,6 +2,7 @@
 
 export const SETTINGS_TAB_IDS = [
   "general",
+  "images",
   "appearance",
   "home",
   "calculator",
@@ -20,6 +21,7 @@ export type SettingsTabId = (typeof SETTINGS_TAB_IDS)[number];
 
 const TAB_LABELS: Record<SettingsTabId, string> = {
   general: "Général",
+  images: "Images du site",
   appearance: "Apparence",
   home: "Accueil",
   calculator: "Tarifs / Calculateur",

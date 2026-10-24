@@ -262,6 +262,8 @@ export type TenantSettingsV1 = {
   branding: {
     logoSrc: string;
     logoAlt: string;
+    /** Taille du logo dans l’en-tête, en % (100 = taille standard). Défaut 100. */
+    logoScale?: number;
     ogImageSrc: string;
     colors: {
       primary: string;

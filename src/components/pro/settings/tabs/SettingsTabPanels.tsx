@@ -3,6 +3,7 @@
 import type { SettingsTabId } from "../SettingsTabs";
 import { GeneralTab } from "./GeneralTab";
 import { AppearanceTab } from "./AppearanceTab";
+import { ImagesTab } from "./ImagesTab";
 import { ContactTab } from "./ContactTab";
 import { HomeTab } from "./HomeTab";
 import { CalculatorTab } from "./CalculatorTab";
@@ -23,6 +24,8 @@ export function SettingsTabPanels(props: SettingsTabPanelsProps) {
   switch (tab) {
     case "general":
       return <GeneralTab {...ctx} />;
+    case "images":
+      return <ImagesTab {...ctx} />;
     case "appearance":
       return <AppearanceTab {...ctx} />;
     case "contact":

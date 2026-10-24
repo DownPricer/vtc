@@ -39,7 +39,9 @@ export function HomeTab({ draft, setDraft, editing, siteFeatures }: SettingsTabs
         editing={editing}
       >
         <EditableImageField
-          label="Image de fond"
+          label="Bannière d’accueil (image de fond)"
+          where={{ page: "Page d’accueil", position: "grande image en fond, tout en haut", href: "/" }}
+          recommended="1920 × 1080 px (paysage)"
           value={draft.home.hero.backgroundImageSrc}
           onChange={(v) => setDraft((d) => ({ ...d, home: { ...d.home, hero: { ...d.home.hero, backgroundImageSrc: v } } }))}
           editing={editing}
@@ -198,7 +200,8 @@ export function HomeTab({ draft, setDraft, editing, siteFeatures }: SettingsTabs
         </div>
         <div className="mt-4 space-y-4">
           <EditableImageField
-            label="Image de couverture (poster)"
+            label="Couverture de la vidéo"
+            where={{ page: "Page d’accueil", position: "section vidéo, image affichée avant la lecture", href: "/" }}
             value={draft.home.video.posterSrc}
             onChange={(v) => setDraft((d) => ({ ...d, home: { ...d.home, video: { ...d.home.video, posterSrc: v } } }))}
             editing={editing}
@@ -414,7 +417,8 @@ export function HomeTab({ draft, setDraft, editing, siteFeatures }: SettingsTabs
         />
         <div className="mt-4">
           <EditableImageField
-            label="Image de fond"
+            label="Bannière de fin de page (image de fond)"
+            where={{ page: "Page d’accueil", position: "dernier bloc « Réservez », tout en bas", href: "/" }}
             value={draft.home.ctaFinal.backgroundImageSrc}
             onChange={(v) =>
               setDraft((d) => ({
