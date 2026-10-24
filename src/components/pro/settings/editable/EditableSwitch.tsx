@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { HelpTooltip } from "../HelpTooltip";
 
 type EditableSwitchProps = {
@@ -11,16 +12,18 @@ type EditableSwitchProps = {
 };
 
 export function EditableSwitch({ label, checked, onChange, editing, hint }: EditableSwitchProps) {
+  const labelId = useId();
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel)] px-4 py-3 min-h-[3.25rem]">
       <div className="flex min-w-0 flex-1 items-center gap-2">
-        <span className="text-sm font-medium text-[var(--pro-text)]">{label}</span>
+        <span id={labelId} className="text-sm font-medium text-[var(--pro-text)]">{label}</span>
         {hint ? <HelpTooltip text={hint} /> : null}
       </div>
       {editing ? (
         <button
           type="button"
           role="switch"
+          aria-labelledby={labelId}
           aria-checked={checked}
           onClick={() => onChange(!checked)}
           className={`

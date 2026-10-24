@@ -25,7 +25,7 @@ export function UnsavedChangesBar({ visible }: { visible: boolean }) {
         <span className="font-semibold">Modifications non enregistrées</span>
         <span className={isLight ? "text-amber-900/90" : "text-amber-100/90"}>
           {" "}
-          — elles restent sur cet appareil jusqu’à la prochaine sauvegarde persistante.
+          — cliquez sur Enregistrer pour les publier.
         </span>
       </span>
     </div>

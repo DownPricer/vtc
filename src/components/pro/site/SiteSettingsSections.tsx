@@ -114,7 +114,7 @@ export function SitePresentationSection({ draft, setDraft, editing }: SettingsTa
       </CollapsibleSettingsCard>
 
       <CollapsibleSettingsCard title="Présentation chauffeur" subtitle="Bloc « à propos » sur l’accueil." defaultOpen={false} editing={editing}>
-        <EditableField
+        <EditableTextarea
           label="Paragraphe principal"
           value={draft.home.aboutPreview.leadParagraph}
           onChange={(v) =>
@@ -124,8 +124,9 @@ export function SitePresentationSection({ draft, setDraft, editing }: SettingsTa
             }))
           }
           editing={editing}
+          rows={3}
         />
-        <EditableField
+        <EditableTextarea
           label="Paragraphe secondaire"
           value={draft.home.aboutPreview.secondaryParagraph}
           onChange={(v) =>
@@ -135,12 +136,14 @@ export function SitePresentationSection({ draft, setDraft, editing }: SettingsTa
             }))
           }
           editing={editing}
+          rows={3}
         />
-        <EditableField
+        <EditableTextarea
           label="Histoire (page À propos)"
           value={draft.aboutPage.storyLead}
           onChange={(v) => setDraft((d) => ({ ...d, aboutPage: { ...d.aboutPage, storyLead: v } }))}
           editing={editing}
+          rows={3}
         />
       </CollapsibleSettingsCard>
 

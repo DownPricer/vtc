@@ -42,13 +42,13 @@ export function SettingsEditToolbar({
             className={proBtnPrimaryClass}
             disabled={!isDirty || saving}
           >
-            {saving ? "Enregistrement..." : saveLabel}
+            {saving ? "Enregistrement…" : saveLabel}
           </button>
         </>
       )}
       {showPreview && onPreview ? (
         <button type="button" onClick={onPreview} className={proBtnSecondaryClass}>
-          Previsualiser
+          Prévisualiser
         </button>
       ) : null}
     </div>

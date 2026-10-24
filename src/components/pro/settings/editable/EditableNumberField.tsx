@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { HelpTooltip } from "../HelpTooltip";
 import { proInputClass, proLabelClass } from "./proFieldStyles";
 
@@ -26,10 +27,11 @@ export function EditableNumberField({
   step,
   suffix,
 }: EditableNumberFieldProps) {
+  const id = useId();
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between gap-2">
-        <label className={proLabelClass}>{label}</label>
+        <label htmlFor={id} className={proLabelClass}>{label}</label>
         <div className="flex items-center gap-2">
           {suffix ? (
             <span className="rounded-full border border-[var(--pro-border)] bg-[var(--pro-panel)] px-2.5 py-1 text-[11px] font-semibold text-[var(--pro-text-muted)]">
@@ -42,6 +44,7 @@ export function EditableNumberField({
       {editing ? (
         <div className="relative">
           <input
+            id={id}
             type="number"
             value={Number.isFinite(value) ? value : 0}
             min={min}

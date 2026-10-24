@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { proBtnSecondaryClass } from "./editable/proFieldStyles";
 
 export type CollapsibleSettingsCardProps = {
   title: string;
@@ -19,7 +18,6 @@ export function CollapsibleSettingsCard({
   badge,
   preview,
   defaultOpen = false,
-  editing,
   children,
 }: CollapsibleSettingsCardProps) {
   const [open, setOpen] = useState(defaultOpen);
@@ -36,19 +34,13 @@ export function CollapsibleSettingsCard({
           {subtitle ? <p className="line-clamp-3 text-xs leading-relaxed text-[var(--pro-text-muted)]">{subtitle}</p> : null}
         </div>
         <div className="flex shrink-0 flex-col items-end justify-center gap-2 sm:flex-row sm:items-center">
-          {editing ? (
-            <button type="button" className={proBtnSecondaryClass} onClick={() => setOpen(true)}>
-              Modifier
-            </button>
-          ) : null}
           <button
             type="button"
-            className="min-h-[44px] min-w-[44px] rounded-lg border border-[var(--pro-border)] bg-[var(--pro-panel)] px-2.5 py-2 text-[var(--pro-text)] transition hover:border-[var(--pro-accent)]/35 hover:bg-[var(--pro-accent-soft)] hover:text-[var(--pro-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pro-accent)]/40 sm:min-h-0 sm:min-w-0"
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center gap-1.5 rounded-lg border border-[var(--pro-border)] bg-[var(--pro-panel)] px-2.5 py-2 text-sm font-medium text-[var(--pro-text)] transition hover:border-[var(--pro-accent)]/35 hover:bg-[var(--pro-accent-soft)] hover:text-[var(--pro-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pro-accent)] sm:min-h-0 sm:min-w-0"
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
-            title={open ? "Replier" : "Déplier"}
           >
-            <span className="sr-only">{open ? "Replier" : "Déplier"}</span>
+            <span className="sr-only sm:not-sr-only">{open ? "Fermer" : "Ouvrir"}</span>
             <svg
               className={`h-5 w-5 transition-transform ${open ? "rotate-180" : ""}`}
               viewBox="0 0 24 24"

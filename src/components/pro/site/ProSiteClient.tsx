@@ -14,6 +14,7 @@ import { VehiclesTab } from "@/components/pro/settings/tabs/VehiclesTab";
 import { SiteDraftPreviewModal } from "@/components/pro/settings/SiteDraftPreviewModal";
 import { validateContactSection } from "@/components/pro/settings/contactValidation";
 import { useProTenantEditor } from "@/hooks/useProTenantEditor";
+import { SiteSectionNav, type SiteSectionLink } from "./SiteSectionNav";
 import { SiteIdentitySection, SitePresentationSection } from "./SiteSettingsSections";
 
 const EMPTY_MAIL_META = {
@@ -23,6 +24,16 @@ const EMPTY_MAIL_META = {
   customerConfirmationEnv: "",
   customerConfirmationEffective: false,
 };
+
+const SECTIONS: SiteSectionLink[] = [
+  { id: "identite", label: "Identité" },
+  { id: "coordonnees", label: "Coordonnées" },
+  { id: "presentation", label: "Présentation" },
+  { id: "services", label: "Services" },
+  { id: "vehicules", label: "Véhicules" },
+  { id: "seo", label: "SEO" },
+  { id: "apercu", label: "Aperçu" },
+];
 
 type ProSiteClientProps = {
   defaults: TenantSettingsV1;
@@ -65,51 +76,53 @@ export function ProSiteClient({ defaults, siteFeatures }: ProSiteClientProps) {
         showPreview
         onPreview={() => setPreviewOpen(true)}
       >
-        <ProPanel>
-          <ProSectionHeader title="Identité" description="Nom commercial, raison sociale et zone d’intervention." />
-          <div className="mt-6">
+        <SiteSectionNav sections={SECTIONS} />
+
+        <ProPanel id="identite" className="scroll-mt-36">
+          <ProSectionHeader level="panel" title="Identité" description="Nom commercial, raison sociale et zone d’intervention." />
+          <div>
             <SiteIdentitySection {...shared} />
           </div>
         </ProPanel>
 
-        <ProPanel>
-          <ProSectionHeader title="Coordonnées" description="Téléphone, e-mail et adresse affichés sur le site." />
-          <div className="mt-6">
+        <ProPanel id="coordonnees" className="scroll-mt-36">
+          <ProSectionHeader level="panel" title="Coordonnées" description="Téléphone, e-mail et adresse affichés sur le site." />
+          <div>
             <ContactTab {...shared} hideMailRouting />
           </div>
         </ProPanel>
 
-        <ProPanel>
-          <ProSectionHeader title="Présentation" description="Textes d’accueil et moyens de paiement visibles." />
-          <div className="mt-6">
+        <ProPanel id="presentation" className="scroll-mt-36">
+          <ProSectionHeader level="panel" title="Présentation" description="Textes d’accueil et moyens de paiement visibles." />
+          <div>
             <SitePresentationSection {...shared} />
           </div>
         </ProPanel>
 
-        <ProPanel>
-          <ProSectionHeader title="Services" description="Prestations affichées sur la page Services." />
-          <div className="mt-6">
+        <ProPanel id="services" className="scroll-mt-36">
+          <ProSectionHeader level="panel" title="Services" description="Prestations affichées sur la page Services." />
+          <div>
             <ServicesTab {...shared} />
           </div>
         </ProPanel>
 
-        <ProPanel>
-          <ProSectionHeader title="Véhicules" description="Flotte et véhicule mis en avant sur la vitrine." />
-          <div className="mt-6">
+        <ProPanel id="vehicules" className="scroll-mt-36">
+          <ProSectionHeader level="panel" title="Véhicules" description="Flotte et véhicule mis en avant sur la vitrine." />
+          <div>
             <VehiclesTab {...shared} />
           </div>
         </ProPanel>
 
-        <ProPanel>
-          <ProSectionHeader title="SEO" description="Titres, descriptions et mots-clés pour le référencement." />
-          <div className="mt-6">
+        <ProPanel id="seo" className="scroll-mt-36">
+          <ProSectionHeader level="panel" title="SEO" description="Titres, descriptions et mots-clés pour le référencement." />
+          <div>
             <SeoTab {...shared} />
           </div>
         </ProPanel>
 
-        <ProPanel>
-          <ProSectionHeader title="Aperçu" description="Liens utiles — lecture seule." />
-          <div className="mt-6 rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/40 p-4 text-sm">
+        <ProPanel id="apercu" className="scroll-mt-36">
+          <ProSectionHeader level="panel" title="Aperçu" description="Liens utiles — lecture seule." />
+          <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)]/40 p-4 text-sm">
             <dl className="space-y-3">
               <div>
                 <dt className="font-medium text-[var(--pro-text-muted)]">Vitrine publique</dt>
@@ -121,7 +134,16 @@ export function ProSiteClient({ defaults, siteFeatures }: ProSiteClientProps) {
               </div>
               <div>
                 <dt className="font-medium text-[var(--pro-text-muted)]">Logo actuel</dt>
-                <dd className="mt-1 text-[var(--pro-text)]">{draft.branding.logoSrc || "—"}</dd>
+                <dd className="mt-2 text-[var(--pro-text)]">
+                  {draft.branding.logoSrc ? (
+                    <span className="inline-flex items-center gap-3 rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel)] p-3">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={draft.branding.logoSrc} alt="Logo actuel du site" className="h-12 w-auto max-w-[160px] object-contain" />
+                    </span>
+                  ) : (
+                    "Aucun logo défini"
+                  )}
+                </dd>
               </div>
               <div>
                 <dt className="font-medium text-[var(--pro-text-muted)]">Couleur principale</dt>
@@ -135,7 +157,11 @@ export function ProSiteClient({ defaults, siteFeatures }: ProSiteClientProps) {
               </div>
             </dl>
             <p className="mt-4 text-xs text-[var(--pro-text-muted)]">
-              Logo et couleurs avancées : section « Apparence » dans Paramètres → Réglages avancés.
+              Pour changer le logo ou les couleurs, rendez-vous dans{" "}
+              <Link href="/pro/parametres" className="font-medium text-[var(--pro-accent)] hover:underline">
+                Paramètres → Apparence
+              </Link>
+              .
             </p>
           </div>
         </ProPanel>

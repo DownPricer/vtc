@@ -1,6 +1,7 @@
 "use client";
 
 import { SettingsSectionCard } from "../SettingsSectionCard";
+import { AdvancedDetails } from "../AdvancedDetails";
 import { ReadonlyField } from "../ReadonlyField";
 import { EditableField } from "../editable/EditableField";
 import { EditableTextarea } from "../editable/EditableTextarea";
@@ -19,23 +20,6 @@ export function ContactTab({ draft, setDraft, editing, mailMeta, siteFeatures, c
             editing={editing}
             error={contactErrors.phoneDisplay}
             type="tel"
-          />
-          <EditableField
-            label="Téléphone E.164"
-            value={draft.contact.phoneE164}
-            onChange={(v) => setDraft((d) => ({ ...d, contact: { ...d.contact, phoneE164: v } }))}
-            editing={editing}
-            hint="Doit commencer par « + » si renseigné."
-            error={contactErrors.phoneE164}
-            mono
-            type="tel"
-          />
-          <EditableField
-            label="WhatsApp (chiffres)"
-            value={draft.contact.whatsappDigits ?? ""}
-            onChange={(v) => setDraft((d) => ({ ...d, contact: { ...d.contact, whatsappDigits: v } }))}
-            editing={editing}
-            mono
           />
           <EditableField
             label="E-mail public"
@@ -98,6 +82,26 @@ export function ContactTab({ draft, setDraft, editing, mailMeta, siteFeatures, c
             }
             editing={editing}
           />
+        </div>
+        <AdvancedDetails description="Numéros au format technique et position GPS." forceOpen={Boolean(contactErrors.phoneE164)}>
+          <div className="grid gap-3 sm:grid-cols-2">
+          <EditableField
+            label="Téléphone au format international"
+            value={draft.contact.phoneE164}
+            onChange={(v) => setDraft((d) => ({ ...d, contact: { ...d.contact, phoneE164: v } }))}
+            editing={editing}
+            hint="Ex. +33612345678 — doit commencer par « + »."
+            error={contactErrors.phoneE164}
+            mono
+            type="tel"
+          />
+          <EditableField
+            label="Numéro WhatsApp (chiffres seulement)"
+            value={draft.contact.whatsappDigits ?? ""}
+            onChange={(v) => setDraft((d) => ({ ...d, contact: { ...d.contact, whatsappDigits: v } }))}
+            editing={editing}
+            mono
+          />
           <EditableNumberField
             label="Latitude"
             value={draft.contact.address.latitude}
@@ -122,7 +126,8 @@ export function ContactTab({ draft, setDraft, editing, mailMeta, siteFeatures, c
             editing={editing}
             step={0.000001}
           />
-        </div>
+          </div>
+        </AdvancedDetails>
       </SettingsSectionCard>
       {!hideMailRouting ? (
       <SettingsSectionCard

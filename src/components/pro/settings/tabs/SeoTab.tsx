@@ -1,6 +1,8 @@
 "use client";
 
 import { SettingsSectionCard } from "../SettingsSectionCard";
+import { AdvancedDetails } from "../AdvancedDetails";
+import { EditableTextarea } from "../editable/EditableTextarea";
 import { EditableField } from "../editable/EditableField";
 import { SimpleStringListEditor } from "../editable/SimpleStringListEditor";
 import type { SettingsTabsSharedProps } from "./context";
@@ -15,30 +17,12 @@ export function SeoTab({ draft, setDraft, editing }: SettingsTabsSharedProps) {
           onChange={(v) => setDraft((d) => ({ ...d, seo: { ...d.seo, defaultTitle: v } }))}
           editing={editing}
         />
-        <EditableField
-          label="Modèle de titre"
-          value={draft.seo.titleTemplate}
-          onChange={(v) => setDraft((d) => ({ ...d, seo: { ...d.seo, titleTemplate: v } }))}
-          editing={editing}
-          hint="Ex. « %s | Ma marque »"
-        />
-        <EditableField
+        <EditableTextarea
           label="Description par défaut"
           value={draft.seo.defaultDescription}
           onChange={(v) => setDraft((d) => ({ ...d, seo: { ...d.seo, defaultDescription: v } }))}
           editing={editing}
-        />
-        <EditableField
-          label="Locale Open Graph"
-          value={draft.seo.openGraphLocale}
-          onChange={(v) => setDraft((d) => ({ ...d, seo: { ...d.seo, openGraphLocale: v } }))}
-          editing={editing}
-        />
-        <EditableField
-          label="Catégorie"
-          value={draft.seo.category}
-          onChange={(v) => setDraft((d) => ({ ...d, seo: { ...d.seo, category: v } }))}
-          editing={editing}
+          rows={3}
         />
         <EditableField
           label="Région (libellé)"
@@ -47,6 +31,27 @@ export function SeoTab({ draft, setDraft, editing }: SettingsTabsSharedProps) {
           editing={editing}
           hint="Utilisé dans plusieurs textes et SEO."
         />
+        <AdvancedDetails description="Modèle de titre, langue de partage et catégorie.">
+          <EditableField
+            label="Modèle de titre des pages"
+            value={draft.seo.titleTemplate}
+            onChange={(v) => setDraft((d) => ({ ...d, seo: { ...d.seo, titleTemplate: v } }))}
+            editing={editing}
+            hint="« %s » est remplacé par le titre de chaque page. Ex. « %s | Ma marque »."
+          />
+          <EditableField
+            label="Langue pour les partages (réseaux sociaux)"
+            value={draft.seo.openGraphLocale}
+            onChange={(v) => setDraft((d) => ({ ...d, seo: { ...d.seo, openGraphLocale: v } }))}
+            editing={editing}
+          />
+          <EditableField
+            label="Catégorie"
+            value={draft.seo.category}
+            onChange={(v) => setDraft((d) => ({ ...d, seo: { ...d.seo, category: v } }))}
+            editing={editing}
+          />
+        </AdvancedDetails>
         <SimpleStringListEditor
           label="Mots-clés"
           items={draft.seo.keywords}
