@@ -45,14 +45,18 @@ export function resolveSafeSettingsUploadFile(publicPath: string): string | null
   const noQuery = publicPath.trim().split("?")[0] ?? "";
   const segments = noQuery.split("/").filter(Boolean);
   const fileName = segments[3];
-  const abs = path.join(process.cwd(), "public", "uploads", "settings", "default", fileName);
-  const root = path.join(process.cwd(), "public", "uploads", "settings", "default");
-  const resolved = path.resolve(abs);
-  const resolvedRoot = path.resolve(root);
+  const resolvedRoot = path.resolve(getSettingsDefaultUploadDir());
+  const resolved = path.resolve(resolvedRoot, fileName);
   if (!resolved.startsWith(resolvedRoot + path.sep) && resolved !== resolvedRoot) return null;
   return resolved;
 }
 
+/**
+ * Dossier disque des médias uploadés. `SETTINGS_UPLOAD_DIR` permet de pointer vers un volume persistant
+ * (hors du dossier de build, conservé entre les déploiements).
+ */
 export function getSettingsDefaultUploadDir(): string {
+  const fromEnv = process.env.SETTINGS_UPLOAD_DIR?.trim();
+  if (fromEnv) return path.resolve(fromEnv);
   return path.join(process.cwd(), "public", "uploads", "settings", "default");
 }
