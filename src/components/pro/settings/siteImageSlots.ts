@@ -45,6 +45,16 @@ export const SITE_IMAGE_SLOTS: SiteImageSlot[] = [
     srcPath: "home.video.posterSrc",
   },
   {
+    id: "home-tarifs-bg",
+    label: "Fond de la section « Tarifs transparents »",
+    page: "Page d’accueil",
+    href: "/",
+    position: "section des trajets populaires (fond sombre), au milieu de la page",
+    recommended: "1920 × 1080 px (paysage)",
+    srcPath: "pricingDisplay.highlights.backgroundImageSrc",
+    altPath: "pricingDisplay.highlights.backgroundImageAlt",
+  },
+  {
     id: "home-cta",
     label: "Bannière de fin de page",
     page: "Page d’accueil",

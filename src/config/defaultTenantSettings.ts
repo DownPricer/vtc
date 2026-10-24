@@ -420,6 +420,8 @@ export const defaultTenantSettings: TenantSettingsV1 = {
       ctaSecondaryLabel: "Demander un devis gratuit",
     },
     highlights: {
+      backgroundImageSrc: "/images/s1/s1-2.png",
+      backgroundImageAlt: "Transferts aéroport Normandie",
       popularTransfersEnabled: true,
       popularTransfers: [
         { id: "h1", depart: "Le Havre", destination: "Orly", code: "ORY", prixAR: "480", prixAller: "260", duree: "~2h30", featured: false, enabled: true },

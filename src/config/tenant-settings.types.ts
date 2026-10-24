@@ -156,6 +156,9 @@ export type PricingHighlights = {
   madEnabled: boolean;
   madHourlyFrom: number;
   madSubtitle: string;
+  /** Image de fond de la section « Tarifs transparents » (accueil). Défaut : /images/s1/s1-2.png. */
+  backgroundImageSrc?: string;
+  backgroundImageAlt?: string;
 };
 
 /** Paramètres « vitrine » du calculateur (affichage / limites UI) — distinct du moteur de tarification. */

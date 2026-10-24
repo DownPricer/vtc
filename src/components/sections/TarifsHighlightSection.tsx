@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import { TenantPublicImage } from "@/components/media/TenantPublicImage";
 import { defaultTenantSettings } from "@/config/defaultTenantSettings";
 import type { TenantSettingsV1 } from "@/config/tenant-settings.types";
 
@@ -22,9 +22,9 @@ export function TarifsHighlightSection({ tenantSettings = defaultTenantSettings 
 
       {/* Background */}
       <div className="absolute inset-0 z-0">
-        <Image
-          src="/images/s1/s1-2.png"
-          alt="Transferts aéroport Normandie"
+        <TenantPublicImage
+          src={highlights.backgroundImageSrc || "/images/s1/s1-2.png"}
+          alt={highlights.backgroundImageAlt ?? "Transferts aéroport Normandie"}
           fill
           className="object-cover object-center"
           sizes="100vw"

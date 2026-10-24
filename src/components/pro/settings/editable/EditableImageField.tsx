@@ -111,8 +111,14 @@ export function EditableImageField({ label, value, onChange, editing, hint, altP
             <span aria-hidden>📍</span> <span className="font-medium text-[var(--pro-text)]">{where.page}</span> — {where.position}
           </span>
           {where.href ? (
-            <a href={where.href} target="_blank" rel="noopener noreferrer" className="font-medium text-[var(--pro-accent)] hover:underline">
-              Voir sur le site ↗
+            <a
+              href={where.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-[var(--pro-accent)] hover:underline"
+              title={editing ? "Le site public affiche la dernière version enregistrée, sans vos modifications en cours." : undefined}
+            >
+              {editing ? "Voir le site (version enregistrée) ↗" : "Voir sur le site ↗"}
             </a>
           ) : null}
         </p>
