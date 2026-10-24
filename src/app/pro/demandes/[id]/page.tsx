@@ -37,6 +37,11 @@ import {
   type DemandePaymentLinkData,
 } from "@/lib/proPaymentsClient";
 import { proApi } from "@/lib/proApi";
+import { CancelBookingDialog, ResolveRequestDialog } from "@/components/pro/payments/CancelBookingDialog";
+import { RefundDialog } from "@/components/pro/payments/RefundDialog";
+import { formatCents } from "@/components/pro/payments/ProModal";
+import { isCollectedPaymentStatus, isRefundablePaymentStatus } from "@/lib/leadPaymentStatusUi";
+import { labelRefundReason, labelRefundStatus, refundStatusBadgeClass } from "@/lib/proRefundsClient";
 
 type LeadStatus =
   | "new"
@@ -48,6 +53,7 @@ type LeadStatus =
   | "scheduled"
   | "completed"
   | "cancelled"
+  | "cancellation_requested"
   | "expired";
 
 type HistoryRow = {
@@ -71,6 +77,19 @@ type PaymentSnapshot = {
   checkoutExpiresAt: string | null;
   paidAt: string | null;
   createdAt: string;
+  applicationFeeAmount?: number;
+  refundedAmount?: number;
+  applicationFeeRefundedAmount?: number;
+  refunds?: Array<{
+    id: string;
+    amount: number;
+    currency: string;
+    status: string;
+    reason: string | null;
+    failureReason: string | null;
+    initiatedBy: string;
+    createdAt: string;
+  }>;
 };
 
 type LeadDetail = {
@@ -89,6 +108,14 @@ type LeadDetail = {
   payments?: PaymentSnapshot[];
   customerDecisionMailSentAt?: string | null;
   customerDecisionMailLastError?: string | null;
+  cancellationRequests?: Array<{
+    id: string;
+    status: "PENDING" | "ACCEPTED" | "REFUSED" | "MANUAL";
+    reason: string;
+    requestedAt: string;
+    resolvedAt: string | null;
+    resolutionNote: string | null;
+  }>;
   history: HistoryRow[];
 };
 
@@ -129,7 +156,13 @@ function paymentStatusExplanation(ps?: string | null): string {
     case "CANCELLED":
       return "Lien annule.";
     case "REFUNDED":
-      return "Paiement rembourse.";
+      return "Paiement totalement remboursé.";
+    case "PARTIALLY_REFUNDED":
+      return "Paiement partiellement remboursé.";
+    case "REFUND_PENDING":
+      return "Remboursement en cours : pas encore confirmé par Stripe.";
+    case "REFUND_FAILED":
+      return "Le dernier remboursement a échoué : aucune somme n’a été restituée.";
     default:
       return "";
   }
@@ -188,6 +221,11 @@ export default function ProDemandeDetailPage() {
   const [error, setError] = useState("");
   const [banner, setBanner] = useState("");
   const [busy, setBusy] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [acceptOpen, setAcceptOpen] = useState(false);
+  const [resolveDecision, setResolveDecision] = useState<"refuse" | "manual" | null>(null);
+  const [refundDialog, setRefundDialog] = useState<"full" | "partial" | null>(null);
+  const [showRefundHistory, setShowRefundHistory] = useState(false);
   const [paymentModeChoice, setPaymentModeChoice] = useState<"full" | "deposit">("full");
   const [paymentBusy, setPaymentBusy] = useState(false);
   const [paymentError, setPaymentError] = useState("");
@@ -240,6 +278,11 @@ export default function ProDemandeDetailPage() {
 
   async function patchStatus(next: LeadStatus) {
     if (!item) return;
+    // L'annulation passe par une fenêtre dédiée (motif, état du paiement, remboursement explicite).
+    if (next === "cancelled") {
+      setCancelOpen(true);
+      return;
+    }
     if (shouldConfirmStatus(next) && !window.confirm(confirmMessage(next))) return;
     setBusy(true);
     setError("");
@@ -340,7 +383,11 @@ export default function ProDemandeDetailPage() {
     [prestationRows]
   );
 
-  const paidPayment = useMemo(() => item?.payments?.find((p) => p.status === "PAID"), [item?.payments]);
+  const paidPayment = useMemo(() => item?.payments?.find((p) => isCollectedPaymentStatus(p.status)), [item?.payments]);
+  const pendingCancellation = useMemo(
+    () => item?.cancellationRequests?.find((r) => r.status === "PENDING") ?? null,
+    [item?.cancellationRequests]
+  );
   const pendingLinkPayment = useMemo(
     () => item?.payments?.find((p) => p.status === "LINK_SENT" || p.status === "PENDING"),
     [item?.payments]
@@ -422,6 +469,38 @@ export default function ProDemandeDetailPage() {
             {banner ? <ProAlert tone="success">{banner}</ProAlert> : null}
             {error ? <ProAlert tone="error">{error}</ProAlert> : null}
 
+            {item.status === "cancellation_requested" && pendingCancellation ? (
+              <ProPanel>
+                <ProSectionHeader
+                  eyebrow="Action requise"
+                  title="Demande d’annulation reçue"
+                  description={`Le client a demandé l’annulation le ${formatDateTime(pendingCancellation.requestedAt)}. Aucun remboursement n’est déclenché automatiquement : vous décidez.`}
+                />
+                <div className="mt-5 rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-5 py-4 text-sm leading-6 text-[var(--pro-text-soft)]">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Motif du client</p>
+                  <p className="mt-2 whitespace-pre-line text-[var(--pro-text)]">{pendingCancellation.reason}</p>
+                </div>
+                {paidPayment ? (
+                  <p className="mt-4 text-sm text-[var(--pro-text-soft)]">
+                    Paiement encaissé : <strong>{formatAmountFromCents(paidPayment.amount, paidPayment.currency)}</strong>
+                    {paidPayment.refundedAmount ? ` · déjà remboursé ${formatAmountFromCents(paidPayment.refundedAmount, paidPayment.currency)}` : ""}.
+                    Vous pouvez accepter l’annulation avec un remboursement intégral, partiel, ou sans remboursement.
+                  </p>
+                ) : null}
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <button type="button" onClick={() => setAcceptOpen(true)} className={`rounded-2xl px-5 py-3 text-sm font-semibold transition ${actionButtonClass("danger")}`}>
+                    Accepter l’annulation
+                  </button>
+                  <button type="button" onClick={() => setResolveDecision("refuse")} className={`rounded-2xl px-5 py-3 text-sm font-semibold transition ${actionButtonClass("neutral")}`}>
+                    Refuser
+                  </button>
+                  <button type="button" onClick={() => setResolveDecision("manual")} className={`rounded-2xl px-5 py-3 text-sm font-semibold transition ${actionButtonClass("neutral")}`}>
+                    Traiter manuellement
+                  </button>
+                </div>
+              </ProPanel>
+            ) : null}
+
             <div className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,1.32fr)_380px]">
               <div className="space-y-6">
                 <ProPanel>
@@ -492,21 +571,100 @@ export default function ProDemandeDetailPage() {
                         </div>
                       </div>
 
-                      {item.paymentStatus === "PAID" && paidPayment ? (
+                      {paidPayment ? (
                         <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-5 text-emerald-950">
-                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">Paiement valide</p>
-                          <p className="mt-3 text-sm">
-                            Montant encaisse : <span className="font-semibold">{formatAmountFromCents(paidPayment.amount, paidPayment.currency)}</span>
-                          </p>
-                          {paidPayment.stripeReceiptUrl?.trim() ? (
-                            <a
-                              href={paidPayment.stripeReceiptUrl.trim()}
-                              target="_blank"
-                              rel="noreferrer"
-                              className={`mt-4 inline-flex rounded-2xl px-4 py-2.5 text-sm font-semibold ${actionButtonClass("primary")}`}
-                            >
-                              Voir le recu Stripe
-                            </a>
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">Paiement</p>
+                          <dl className="mt-3 space-y-1.5 text-sm">
+                            <div className="flex justify-between gap-4">
+                              <dt>Montant payé</dt>
+                              <dd className="font-semibold tabular-nums">{formatAmountFromCents(paidPayment.amount, paidPayment.currency)}</dd>
+                            </div>
+                            <div className="flex justify-between gap-4">
+                              <dt>Montant remboursé</dt>
+                              <dd className="font-semibold tabular-nums">{formatAmountFromCents(paidPayment.refundedAmount ?? 0, paidPayment.currency)}</dd>
+                            </div>
+                            <div className="flex justify-between gap-4">
+                              <dt>Montant remboursable</dt>
+                              <dd className="font-semibold tabular-nums">
+                                {formatAmountFromCents(Math.max(0, paidPayment.amount - (paidPayment.refundedAmount ?? 0)), paidPayment.currency)}
+                              </dd>
+                            </div>
+                            <div className="flex justify-between gap-4">
+                              <dt>Commission plateforme</dt>
+                              <dd className="font-semibold tabular-nums">
+                                {formatAmountFromCents(paidPayment.applicationFeeAmount ?? 0, paidPayment.currency)}
+                                {paidPayment.applicationFeeRefundedAmount
+                                  ? ` (dont ${formatAmountFromCents(paidPayment.applicationFeeRefundedAmount, paidPayment.currency)} restituée)`
+                                  : ""}
+                              </dd>
+                            </div>
+                            <div className="flex justify-between gap-4">
+                              <dt>Statut Stripe</dt>
+                              <dd>
+                                <span className={`inline-flex rounded-md border px-2 py-1 text-xs font-semibold ${leadPaymentStatusBadgeClass(paidPayment.status)}`}>
+                                  {labelLeadPaymentStatus(paidPayment.status)}
+                                </span>
+                              </dd>
+                            </div>
+                          </dl>
+                          {paidPayment.status === "REFUND_PENDING" ? (
+                            <p className="mt-3 text-xs leading-5">Un remboursement est en cours : il n’est pas encore confirmé par Stripe. Le statut se met à jour automatiquement.</p>
+                          ) : null}
+                          {paidPayment.status === "REFUND_FAILED" ? (
+                            <p className="mt-3 text-xs leading-5">Le remboursement a échoué : aucune somme n’a été restituée. Vérifiez votre compte Stripe puis réessayez.</p>
+                          ) : null}
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            {paidPayment.stripeReceiptUrl?.trim() ? (
+                              <a
+                                href={paidPayment.stripeReceiptUrl.trim()}
+                                target="_blank"
+                                rel="noreferrer"
+                                className={`inline-flex rounded-2xl px-4 py-2.5 text-sm font-semibold ${actionButtonClass("primary")}`}
+                              >
+                                Voir le recu Stripe
+                              </a>
+                            ) : null}
+                            {isRefundablePaymentStatus(paidPayment.status) && paidPayment.amount - (paidPayment.refundedAmount ?? 0) > 0 ? (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => setRefundDialog("full")}
+                                  className="rounded-2xl border border-rose-300 bg-white px-4 py-2.5 text-sm font-semibold text-rose-800 transition hover:bg-rose-50"
+                                >
+                                  Remboursement intégral
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setRefundDialog("partial")}
+                                  className="rounded-2xl border border-rose-300 bg-white px-4 py-2.5 text-sm font-semibold text-rose-800 transition hover:bg-rose-50"
+                                >
+                                  Remboursement partiel
+                                </button>
+                              </>
+                            ) : null}
+                            {paidPayment.refunds?.length ? (
+                              <button
+                                type="button"
+                                onClick={() => setShowRefundHistory((v) => !v)}
+                                className="rounded-2xl border border-emerald-300 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-900 transition hover:bg-emerald-100"
+                              >
+                                {showRefundHistory ? "Masquer l’historique" : `Voir l’historique (${paidPayment.refunds.length})`}
+                              </button>
+                            ) : null}
+                          </div>
+                          {showRefundHistory && paidPayment.refunds?.length ? (
+                            <ul className="mt-4 divide-y divide-emerald-200 rounded-xl border border-emerald-200 bg-white/70 text-sm">
+                              {paidPayment.refunds.map((r) => (
+                                <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
+                                  <div>
+                                    <strong className="tabular-nums">{formatCents(r.amount, r.currency)}</strong>
+                                    <span className="ml-2 text-xs text-emerald-900">{labelRefundReason(r.reason)} · {formatDateTime(r.createdAt)}</span>
+                                    {r.failureReason ? <span className="block text-xs text-rose-800">Cause : {r.failureReason}</span> : null}
+                                  </div>
+                                  <span className={refundStatusBadgeClass(r.status)}>{labelRefundStatus(r.status)}</span>
+                                </li>
+                              ))}
+                            </ul>
                           ) : null}
                         </div>
                       ) : (
@@ -758,6 +916,47 @@ export default function ProDemandeDetailPage() {
                 </ProPanel>
               </div>
             </div>
+            <CancelBookingDialog
+              open={cancelOpen}
+              leadId={item.id}
+              clientName={getDisplayName(item.clientName)}
+              onClose={() => setCancelOpen(false)}
+              onDone={() => {
+                setBanner("Réservation annulée.");
+                void load();
+              }}
+            />
+            <CancelBookingDialog
+              open={acceptOpen}
+              leadId={item.id}
+              clientName={getDisplayName(item.clientName)}
+              acceptRequestReason={pendingCancellation?.reason ?? ""}
+              onClose={() => setAcceptOpen(false)}
+              onDone={() => {
+                setBanner("Annulation acceptée.");
+                void load();
+              }}
+            />
+            <ResolveRequestDialog
+              open={resolveDecision !== null}
+              leadId={item.id}
+              decision={resolveDecision ?? "refuse"}
+              onClose={() => setResolveDecision(null)}
+              onDone={() => {
+                setBanner(resolveDecision === "refuse" ? "Demande d’annulation refusée." : "Demande clôturée (traitement manuel).");
+                void load();
+              }}
+            />
+            {paidPayment && refundDialog ? (
+              <RefundDialog
+                open
+                paymentId={paidPayment.id}
+                clientName={getDisplayName(item.clientName)}
+                initialMode={refundDialog}
+                onClose={() => setRefundDialog(null)}
+                onDone={() => void load()}
+              />
+            ) : null}
           </>
       )}
     </ProGuard>

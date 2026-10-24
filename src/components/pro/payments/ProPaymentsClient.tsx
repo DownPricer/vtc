@@ -9,13 +9,23 @@ import { ProGhostButton } from "@/components/pro/ProListUi";
 import {
   type ProPaymentSettingsData,
   type ProStripeSnapshot,
+  type ProStripeUiStatus,
   ProPaymentsApiError,
   connectStripe,
   createStripeOnboardingLink,
   getPaymentSettings,
-  getStripeStatus,
   updatePaymentSettings,
 } from "@/lib/proPaymentsClient";
+import {
+  type ProStripeOverviewData,
+  createStripeLoginLink,
+  getStripeOverview,
+  isStripeUrl,
+  labelRefundStatus,
+  refundStatusBadgeClass,
+} from "@/lib/proRefundsClient";
+import { labelLeadPaymentStatus, leadPaymentStatusBadgeClass } from "@/lib/leadPaymentStatusUi";
+import { CancellationPolicyPanel } from "./CancellationPolicyPanel";
 
 type DepositUiKind = "percent" | "fixed";
 
@@ -41,37 +51,63 @@ function isReadyToCharge(stripe: ProStripeSnapshot): boolean {
   );
 }
 
-function headlineForStripe(stripe: ProStripeSnapshot): { title: string; hint: string; badge: string; tone: "ok" | "warn" | "bad" } {
-  if (!stripe.stripeAccountId) {
-    return {
-      title: "Non connecté",
-      hint: "Aucun compte Stripe n’est encore associé à votre espace.",
-      badge: "Non connecté",
-      tone: "bad",
-    };
+/** Statut d'affichage : celui calculé par l'API depuis l'état réel du compte, sinon déduit des drapeaux connus. */
+function deriveUiStatus(stripe: ProStripeSnapshot, live: ProStripeUiStatus | undefined): ProStripeUiStatus {
+  if (live) return live;
+  if (!stripe.stripeAccountId) return "NOT_CONNECTED";
+  if (stripe.onboardingStatus === "RESTRICTED") return "ACTION_REQUIRED";
+  if (stripe.chargesEnabled && stripe.payoutsEnabled && stripe.detailsSubmitted) return "ACTIVE";
+  if (stripe.chargesEnabled && !stripe.payoutsEnabled) return "PAYOUTS_SUSPENDED";
+  if (stripe.detailsSubmitted) return "VERIFICATION_NEEDED";
+  return "IN_PROGRESS";
+}
+
+function headlineForUiStatus(ui: ProStripeUiStatus): { title: string; hint: string; badge: string; tone: "ok" | "warn" | "bad" } {
+  switch (ui) {
+    case "NOT_CONNECTED":
+      return {
+        title: "Stripe non connecté",
+        hint: "Connectez votre compte Stripe pour accepter les paiements en ligne de vos clients et recevoir votre argent sur votre compte bancaire.",
+        badge: "Non connecté",
+        tone: "bad",
+      };
+    case "IN_PROGRESS":
+      return {
+        title: "Configuration en cours",
+        hint: "Votre compte Stripe est créé mais l’inscription n’est pas terminée. Reprenez-la pour activer les paiements.",
+        badge: "En cours",
+        tone: "warn",
+      };
+    case "VERIFICATION_NEEDED":
+      return {
+        title: "Vérification Stripe nécessaire",
+        hint: "Stripe vérifie vos informations ou en attend de nouvelles. Les paiements s’activent dès la validation.",
+        badge: "Vérification",
+        tone: "warn",
+      };
+    case "ACTIVE":
+      return {
+        title: "Paiements activés",
+        hint: "Votre compte peut recevoir des paiements par carte et vos versements bancaires sont actifs.",
+        badge: "Actif",
+        tone: "ok",
+      };
+    case "PAYOUTS_SUSPENDED":
+      return {
+        title: "Versements suspendus",
+        hint: "Vous pouvez encaisser mais Stripe ne verse pas encore l’argent sur votre compte bancaire. Vérifiez votre compte.",
+        badge: "Versements suspendus",
+        tone: "warn",
+      };
+    case "ACTION_REQUIRED":
+    default:
+      return {
+        title: "Action requise",
+        hint: "Stripe attend des informations ou signale un problème de conformité. Ouvrez la configuration pour le résoudre.",
+        badge: "Action requise",
+        tone: "warn",
+      };
   }
-  if (stripe.onboardingStatus === "RESTRICTED") {
-    return {
-      title: "Restreint / action requise",
-      hint: "Stripe signale des informations à compléter ou un problème de conformité.",
-      badge: "Action requise",
-      tone: "warn",
-    };
-  }
-  if (isReadyToCharge(stripe)) {
-    return {
-      title: "Prêt à encaisser",
-      hint: "Votre compte peut recevoir des paiements par carte.",
-      badge: "Actif",
-      tone: "ok",
-    };
-  }
-  return {
-    title: "Connexion à terminer",
-    hint: "Finalisez l’onboarding Stripe pour activer les encaissements.",
-    badge: "Action requise",
-    tone: "warn",
-  };
 }
 
 function errorMessage(e: unknown): string {
@@ -81,6 +117,15 @@ function errorMessage(e: unknown): string {
     }
     if (e.code === "STRIPE_CONNECT_URLS_NOT_CONFIGURED") {
       return "Les URLs de retour Stripe Connect ne sont pas configurées côté serveur.";
+    }
+    if (e.code === "STRIPE_ONBOARDING_INCOMPLETE") {
+      return "Terminez d’abord la configuration de votre compte Stripe pour ouvrir votre tableau de bord.";
+    }
+    if (e.code === "STRIPE_ACCOUNT_UNREACHABLE") {
+      return "Ce compte Stripe n’est plus accessible. Contactez le support de la plateforme.";
+    }
+    if (e.code === "STRIPE_DASHBOARD_UNSUPPORTED") {
+      return "Ce compte Stripe ne prend pas en charge le Dashboard Express.";
     }
     return e.message || "Erreur API";
   }
@@ -145,6 +190,9 @@ export function ProPaymentsClient() {
   const [loadError, setLoadError] = useState("");
 
   const [stripeUi, setStripeUi] = useState<ProStripeSnapshot | null>(null);
+  const [overview, setOverview] = useState<ProStripeOverviewData | null>(null);
+  const [loginBusy, setLoginBusy] = useState(false);
+  const [returnNotice, setReturnNotice] = useState<{ tone: "success" | "info" | "warning"; text: string } | null>(null);
 
   const [paymentOnlineEnabled, setPaymentOnlineEnabled] = useState(false);
   const [paymentMode, setPaymentMode] = useState<"FULL" | "DEPOSIT">("FULL");
@@ -192,6 +240,7 @@ export function ProPaymentsClient() {
         if (cancelled) return;
         applySettings(data);
         setLoadState("ready");
+        void handleStripeParams();
       })
       .catch((e) => {
         if (cancelled) return;
@@ -203,10 +252,11 @@ export function ProPaymentsClient() {
     };
   }, [applySettings]);
 
-  const stripeHeadline = useMemo(
-    () => (stripeUi ? headlineForStripe(stripeUi) : null),
-    [stripeUi]
+  const uiStatus = useMemo<ProStripeUiStatus | null>(
+    () => (stripeUi ? deriveUiStatus(stripeUi, overview?.status.uiStatus) : null),
+    [stripeUi, overview]
   );
+  const stripeHeadline = useMemo(() => (uiStatus ? headlineForUiStatus(uiStatus) : null), [uiStatus]);
 
   const currentSnapshot = JSON.stringify([paymentOnlineEnabled, paymentMode, depositUiKind, depositPercentInput, depositEurosInput]);
   const dirty = currentSnapshot !== savedSnapshot;
@@ -243,24 +293,68 @@ export function ProPaymentsClient() {
     };
   }, [paymentOnlineEnabled, paymentMode, depositUiKind, depositPercentInput, depositEurosInput]);
 
+  /** Relit le VRAI état du compte (API Stripe) : jamais déduit de la redirection du navigateur. */
+  const syncFromStripe = useCallback(async (): Promise<ProStripeOverviewData> => {
+    const ov = await getStripeOverview();
+    setOverview(ov);
+    const st = ov.status;
+    setStripeUi({
+      stripeAccountId: st.stripeAccountId,
+      chargesEnabled: st.chargesEnabled,
+      payoutsEnabled: st.payoutsEnabled,
+      detailsSubmitted: st.detailsSubmitted,
+      onboardingStatus: st.onboardingStatus,
+    });
+    return ov;
+  }, []);
+
+  /** Retour d'onboarding (?stripe=return) ou lien expiré (?stripe=refresh). */
+  async function handleStripeParams(): Promise<void> {
+    const flag = new URLSearchParams(window.location.search).get("stripe");
+    try {
+      const ov = await syncFromStripe();
+      if (flag === "return" || flag === "refresh") {
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+      if (flag === "return") {
+        const ui = ov.status.uiStatus;
+        if (ui === "ACTIVE") setReturnNotice({ tone: "success", text: "Stripe confirme que votre compte est actif : les paiements en ligne sont disponibles." });
+        else if (ui === "VERIFICATION_NEEDED") setReturnNotice({ tone: "info", text: "Merci ! Stripe vérifie vos informations. Les paiements seront activés dès la validation." });
+        else if (ui === "PAYOUTS_SUSPENDED") setReturnNotice({ tone: "warning", text: "Les paiements sont actifs mais les versements bancaires ne le sont pas encore. Vérifiez votre compte Stripe." });
+        else setReturnNotice({ tone: "warning", text: "La configuration n’est pas terminée : Stripe attend encore des informations. Reprenez-la avec « Terminer la configuration »." });
+      } else if (flag === "refresh") {
+        // Lien d'onboarding expiré : on en génère un nouveau (compte existant réutilisé, jamais de doublon).
+        await goToOnboarding();
+      }
+    } catch {
+      // le statut mis en cache de /payment-settings reste affiché
+    }
+  }
+
   async function handleRefreshStatus(): Promise<void> {
     setStripeCardError("");
     setRefreshOk("");
     setRefreshBusy(true);
     try {
-      const status = await getStripeStatus();
-      setStripeUi({
-        stripeAccountId: status.stripeAccountId,
-        chargesEnabled: status.chargesEnabled,
-        payoutsEnabled: status.payoutsEnabled,
-        detailsSubmitted: status.detailsSubmitted,
-        onboardingStatus: status.onboardingStatus,
-      });
-      setRefreshOk("Statut mis à jour.");
+      const ov = await syncFromStripe();
+      setRefreshOk(ov.statusSource === "stripe" ? "Statut mis à jour." : "Stripe est injoignable : dernier état connu affiché.");
     } catch (e) {
       setStripeCardError(errorMessage(e));
     } finally {
       setRefreshBusy(false);
+    }
+  }
+
+  async function openExpressDashboard(): Promise<void> {
+    setStripeCardError("");
+    setLoginBusy(true);
+    try {
+      const { url } = await createStripeLoginLink();
+      if (!isStripeUrl(url)) throw new Error("Lien Stripe inattendu.");
+      window.location.assign(url);
+    } catch (e) {
+      setStripeCardError(errorMessage(e));
+      setLoginBusy(false);
     }
   }
 
@@ -345,6 +439,7 @@ export function ProPaymentsClient() {
   }
 
   const ready = stripeUi ? isReadyToCharge(stripeUi) : false;
+  const dashboardAvailable = overview?.status.dashboardAvailable ?? Boolean(stripeUi?.detailsSubmitted);
 
   return (
     <ProGuard>
@@ -382,6 +477,11 @@ export function ProPaymentsClient() {
                   <ProAlert tone="error">{stripeCardError}</ProAlert>
                 </div>
               ) : null}
+              {returnNotice ? (
+                <div className="mb-4">
+                  <ProAlert tone={returnNotice.tone}>{returnNotice.text}</ProAlert>
+                </div>
+              ) : null}
 
               <div className="rounded-[9px] border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] p-[21px]">
                 <div className="flex flex-wrap items-start gap-3.5">
@@ -397,9 +497,9 @@ export function ProPaymentsClient() {
                 </div>
 
                 <div className="mt-[22px] grid gap-3 border-t border-[var(--pro-border)] pt-[19px] min-[521px]:grid-cols-2 min-[1051px]:grid-cols-4" aria-label="Vérifications Stripe">
-                  <CheckItem ok={stripeUi.chargesEnabled} title="Paiements par carte" okText="Activés" koText="Non activés" />
-                  <CheckItem ok={stripeUi.payoutsEnabled} title="Virements bancaires" okText="Activés" koText="Non activés" />
-                  <CheckItem ok={stripeUi.detailsSubmitted} title="Informations du compte" okText="Complètes" koText="À compléter" />
+                  <CheckItem ok={stripeUi.chargesEnabled} title="Paiements activés" okText="Oui" koText="Non" />
+                  <CheckItem ok={stripeUi.payoutsEnabled} title="Versements bancaires" okText="Oui" koText="Non" />
+                  <CheckItem ok={!(overview?.status.verificationNeeded ?? false) && stripeUi.detailsSubmitted} title="Vérification nécessaire" okText="Non" koText="Oui — à vérifier" />
                   <CheckItem ok={stripeUi.onboardingStatus === "COMPLETE"} title="Configuration Stripe" okText="Terminée" koText="À terminer" />
                 </div>
 
@@ -409,6 +509,12 @@ export function ProPaymentsClient() {
                     Statut d’onboarding : <span className="font-mono">{stripeUi.onboardingStatus}</span>
                   </p>
                   <p className="mt-1.5 break-all font-mono text-[11px]">Compte : {stripeUi.stripeAccountId ?? "—"}</p>
+                  {overview?.status.requirements ? (
+                    <p className="mt-1.5 leading-normal">
+                      Informations attendues : {overview.status.requirements.currentlyDueCount} · en retard : {overview.status.requirements.pastDueCount} · en cours de vérification : {overview.status.requirements.pendingVerificationCount ?? 0}
+                      {overview.status.requirements.disabledReason ? ` · motif Stripe : ${overview.status.requirements.disabledReason}` : ""}
+                    </p>
+                  ) : null}
                 </details>
               </div>
 
@@ -418,19 +524,34 @@ export function ProPaymentsClient() {
                 </ProGhostButton>
                 {!stripeUi.stripeAccountId ? (
                   <PrimaryButton disabled={stripeBusy} onClick={() => void handleConnectStripe()}>
-                    Connecter Stripe
+                    Connecter mon compte Stripe
                     <ProIcon name="arrow" className="h-4 w-4" />
                   </PrimaryButton>
-                ) : !ready ? (
-                  <PrimaryButton disabled={stripeBusy} onClick={() => void goToOnboarding()}>
-                    Terminer la configuration
-                    <ProIcon name="arrow" className="h-4 w-4" />
-                  </PrimaryButton>
-                ) : null}
+                ) : (
+                  <>
+                    {uiStatus !== "ACTIVE" ? (
+                      <PrimaryButton disabled={stripeBusy} onClick={() => void goToOnboarding()}>
+                        Terminer la configuration
+                        <ProIcon name="arrow" className="h-4 w-4" />
+                      </PrimaryButton>
+                    ) : null}
+                    {dashboardAvailable ? (
+                      <PrimaryButton disabled={loginBusy} onClick={() => void openExpressDashboard()}>
+                        {loginBusy ? "Ouverture…" : "Accéder à mon compte Stripe"}
+                        <ProIcon name="arrow" className="h-4 w-4" />
+                      </PrimaryButton>
+                    ) : null}
+                  </>
+                )}
                 <span role="status" aria-live="polite" className="text-xs text-[var(--pro-text-muted)]">
                   {refreshOk}
                 </span>
               </div>
+              {stripeUi.stripeAccountId && dashboardAvailable ? (
+                <p className="mt-2.5 text-xs text-[var(--pro-text-muted)]">
+                  « Accéder à mon compte Stripe » ouvre votre Dashboard Stripe Express (soldes, versements, remboursements, coordonnées bancaires) : vos informations bancaires se gèrent uniquement chez Stripe.
+                </p>
+              ) : null}
             </ProPanel>
 
             <ProPanel>
@@ -582,6 +703,61 @@ export function ProPaymentsClient() {
                 </div>
               </div>
             </ProPanel>
+
+            <ProPanel>
+              <ProSectionHeader
+                level="panel"
+                eyebrow="Activité"
+                title="Derniers paiements et remboursements"
+                description="Données de votre espace : aucun solde ni versement n’est affiché ici. Consultez votre Dashboard Stripe pour vos soldes."
+              />
+              <div className="grid gap-5 min-[1051px]:grid-cols-2">
+                <div>
+                  <h3 className="mb-2.5 text-sm font-bold text-[var(--pro-text)]">Derniers paiements</h3>
+                  {overview?.recentPayments.length ? (
+                    <ul className="divide-y divide-[var(--pro-border)] rounded-lg border border-[var(--pro-border)]">
+                      {overview.recentPayments.map((p) => (
+                        <li key={p.id} className="flex items-center justify-between gap-3 px-3.5 py-3 text-[13px]">
+                          <div className="min-w-0">
+                            <strong className="block truncate text-[var(--pro-text)]">{p.clientName || "Client"}</strong>
+                            <span className="text-xs text-[var(--pro-text-muted)]">{p.paidAt ? new Date(p.paidAt).toLocaleDateString("fr-FR") : "—"}</span>
+                          </div>
+                          <div className="flex shrink-0 flex-col items-end gap-1">
+                            <strong className="tabular-nums">{euro(p.amount / 100)}</strong>
+                            <span className={leadPaymentStatusBadgeClass(p.status)}>{labelLeadPaymentStatus(p.status)}</span>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-[13px] text-[var(--pro-text-muted)]">Aucun paiement encaissé pour le moment.</p>
+                  )}
+                </div>
+                <div>
+                  <h3 className="mb-2.5 text-sm font-bold text-[var(--pro-text)]">Derniers remboursements</h3>
+                  {overview?.recentRefunds.length ? (
+                    <ul className="divide-y divide-[var(--pro-border)] rounded-lg border border-[var(--pro-border)]">
+                      {overview.recentRefunds.map((r) => (
+                        <li key={r.id} className="flex items-center justify-between gap-3 px-3.5 py-3 text-[13px]">
+                          <div className="min-w-0">
+                            <strong className="block truncate text-[var(--pro-text)]">{r.clientName || "Client"}</strong>
+                            <span className="text-xs text-[var(--pro-text-muted)]">{new Date(r.createdAt).toLocaleDateString("fr-FR")}</span>
+                          </div>
+                          <div className="flex shrink-0 flex-col items-end gap-1">
+                            <strong className="tabular-nums">{euro(r.amount / 100)}</strong>
+                            <span className={refundStatusBadgeClass(r.status)}>{labelRefundStatus(r.status)}</span>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-[13px] text-[var(--pro-text-muted)]">Aucun remboursement.</p>
+                  )}
+                </div>
+              </div>
+            </ProPanel>
+
+            <CancellationPolicyPanel />
           </>
         ) : null}
       </div>

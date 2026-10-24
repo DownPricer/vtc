@@ -15,7 +15,8 @@ import {
   paginate,
   searchNormalize,
 } from "@/components/pro/ProListUi";
-import { labelLeadPaymentStatus, leadPaymentStatusBadgeClass } from "@/lib/leadPaymentStatusUi";
+import { RefundDialog } from "@/components/pro/payments/RefundDialog";
+import { isRefundablePaymentStatus, labelLeadPaymentStatus, leadPaymentStatusBadgeClass } from "@/lib/leadPaymentStatusUi";
 import { listProPayments, type ProPaymentsListData, type ProPaymentsListItem } from "@/lib/proPaymentsClient";
 
 const PER_PAGE = 6;
@@ -38,7 +39,10 @@ const STATUS_OPTIONS: Array<{ value: string; label: string }> = [
   { value: "FAILED", label: "Échec" },
   { value: "EXPIRED", label: "Expiré" },
   { value: "CANCELLED", label: "Annulé" },
-  { value: "REFUNDED", label: "Remboursé" },
+  { value: "REFUND_PENDING", label: "Remboursement en cours" },
+  { value: "PARTIALLY_REFUNDED", label: "Partiellement remboursé" },
+  { value: "REFUNDED", label: "Totalement remboursé" },
+  { value: "REFUND_FAILED", label: "Remboursement échoué" },
 ];
 
 function toDateInput(d: Date): string {
@@ -87,6 +91,29 @@ function ReceiptLink({ p }: { p: ProPaymentsListItem }) {
   );
 }
 
+function RefundButton({ p, onClick }: { p: ProPaymentsListItem; onClick: (p: ProPaymentsListItem) => void }) {
+  if (!isRefundablePaymentStatus(p.status)) return null;
+  return (
+    <button
+      type="button"
+      onClick={() => onClick(p)}
+      aria-label={`Rembourser ${p.clientName || "ce client"}`}
+      className="inline-flex min-h-[36px] items-center whitespace-nowrap rounded-[7px] border border-[var(--pro-danger-line)] bg-[var(--pro-panel)] px-2.5 text-xs font-bold text-[var(--pro-danger-title)] transition hover:bg-[var(--pro-danger-bg)]"
+    >
+      Rembourser
+    </button>
+  );
+}
+
+function RefundedHint({ p }: { p: ProPaymentsListItem }) {
+  if (!p.refundedAmount) return null;
+  return (
+    <small className="mt-0.5 block text-[11px] font-normal text-[var(--pro-text-muted)]">
+      dont {formatAmountFromCents(p.refundedAmount, p.currency)} remboursés
+    </small>
+  );
+}
+
 function StatTile({ label, value, hint, primary }: { label: string; value: string | number; hint?: string; primary?: boolean }) {
   return (
     <article
@@ -112,6 +139,8 @@ function ProTransactionsContent() {
   const [to, setTo] = useState("");
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
+  const [refundTarget, setRefundTarget] = useState<ProPaymentsListItem | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     setStatus(searchParams.get("status")?.trim() ?? "");
@@ -157,6 +186,8 @@ function ProTransactionsContent() {
               pendingCheckoutCount: d.summary?.pendingCheckoutCount ?? 0,
               failedCount: d.summary?.failedCount ?? 0,
               expiredCount: d.summary?.expiredCount ?? 0,
+              refundedTotalCents: d.summary?.refundedTotalCents ?? 0,
+              netTotalCents: d.summary?.netTotalCents ?? d.summary?.paidTotalCents ?? 0,
             },
           });
           setBusy(false);
@@ -171,7 +202,7 @@ function ProTransactionsContent() {
     return () => {
       cancelled = true;
     };
-  }, [status, from, to, rangeInvalid]);
+  }, [status, from, to, rangeInvalid, reloadKey]);
 
   const bars = useMemo(() => lastSixMonthBars(data?.monthlyPaid), [data?.monthlyPaid]);
   const activeMonth = useMemo(
@@ -227,8 +258,12 @@ function ProTransactionsContent() {
           </div>
 
           <div className="grid grid-cols-2 gap-[9px] sm:gap-3 min-[1201px]:grid-cols-4" aria-label="Indicateurs des paiements">
-            <StatTile primary label="Total encaissé" value={data ? formatAmountFromCents(data.summary.paidTotalCents, "eur") : "—"} hint="Uniquement les paiements validés" />
-            <StatTile label="Paiements validés" value={data?.summary.paidCount ?? "—"} hint="Réglés par les clients" />
+            <StatTile primary label="Total encaissé" value={data ? formatAmountFromCents(data.summary.paidTotalCents, "eur") : "—"} hint={data ? `${data.summary.paidCount} paiement(s) validé(s), avant remboursements` : "Paiements validés"} />
+            <StatTile
+              label="Remboursé"
+              value={data ? formatAmountFromCents(data.summary.refundedTotalCents ?? 0, "eur") : "—"}
+              hint={data ? `Net : ${formatAmountFromCents(data.summary.netTotalCents ?? data.summary.paidTotalCents, "eur")}` : "Remboursements confirmés"}
+            />
             <StatTile label="En attente" value={data?.summary.pendingCheckoutCount ?? "—"} hint="Liens envoyés ou en cours" />
             <StatTile
               label="Échecs / expirés"
@@ -351,7 +386,10 @@ function ProTransactionsContent() {
                           {p.leadRequestId}
                         </span>
                       </td>
-                      <td className={`${proTdClass} whitespace-nowrap font-bold tabular-nums`}>{formatAmountFromCents(p.amount, p.currency)}</td>
+                      <td className={`${proTdClass} whitespace-nowrap font-bold tabular-nums`}>
+                        {formatAmountFromCents(p.amount, p.currency)}
+                        <RefundedHint p={p} />
+                      </td>
                       <td className={proTdClass}>{modeLabel(p.mode)}</td>
                       <td className={proTdClass}>
                         <span className={leadPaymentStatusBadgeClass(p.status)}>{labelLeadPaymentStatus(p.status)}</span>
@@ -360,6 +398,7 @@ function ProTransactionsContent() {
                         <div className="flex items-center gap-[7px]">
                           <ProOpenLink href={`/pro/demandes/${p.leadRequestId}`} label={`Ouvrir le dossier de ${p.clientName || "ce client"}`} />
                           <ReceiptLink p={p} />
+                          <RefundButton p={p} onClick={setRefundTarget} />
                         </div>
                       </td>
                     </tr>
@@ -373,12 +412,13 @@ function ProTransactionsContent() {
                     key={p.id}
                     name={p.clientName || "—"}
                     badge={<span className={leadPaymentStatusBadgeClass(p.status)}>{labelLeadPaymentStatus(p.status)}</span>}
-                    route={`${formatAmountFromCents(p.amount, p.currency)} · ${modeLabel(p.mode)}`}
+                    route={`${formatAmountFromCents(p.amount, p.currency)} · ${modeLabel(p.mode)}${p.refundedAmount ? ` · ${formatAmountFromCents(p.refundedAmount, p.currency)} remboursés` : ""}`}
                     meta={[formatDateTime(p.createdAt), `Réf. ${p.leadRequestId}`]}
                     actions={
                       <>
                         <ProOpenLink href={`/pro/demandes/${p.leadRequestId}`} />
                         <ReceiptLink p={p} />
+                        <RefundButton p={p} onClick={setRefundTarget} />
                       </>
                     }
                   />
@@ -397,6 +437,17 @@ function ProTransactionsContent() {
             />
           )}
         </ProResultsPanel>
+
+        {refundTarget ? (
+          <RefundDialog
+            open
+            paymentId={refundTarget.id}
+            clientName={refundTarget.clientName}
+            initialMode="full"
+            onClose={() => setRefundTarget(null)}
+            onDone={() => setReloadKey((k) => k + 1)}
+          />
+        ) : null}
       </div>
     </ProGuard>
   );

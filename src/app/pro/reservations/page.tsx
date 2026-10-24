@@ -42,6 +42,7 @@ const STATUS_FILTERS = [
   { value: "accepted", label: "Accepté" },
   { value: "scheduled", label: "Planifié" },
   { value: "completed", label: "Terminé" },
+  { value: "cancellation_requested", label: "Annulation demandée" },
   { value: "cancelled", label: "Annulé" },
   { value: "refused", label: "Refusé" },
   { value: "archived", label: "Archivé" },

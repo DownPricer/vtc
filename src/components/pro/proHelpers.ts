@@ -17,6 +17,7 @@ export const statusLabels: Record<string, string> = {
   archived: "Archivé",
   completed: "Terminé",
   cancelled: "Annulé",
+  cancellation_requested: "Annulation demandée",
   expired: "Expiré",
   scheduled: "Planifié",
   refunded: "Remboursé",
@@ -214,6 +215,7 @@ export function statusBadgeClass(status?: string | null): string {
       return "pro-badge pro-badge--new";
     case "pending":
     case "unpaid":
+    case "cancellation_requested":
       return "pro-badge pro-badge--pending";
     case "accepted":
     case "paid":
@@ -297,6 +299,9 @@ export function statusActionList(status: string, kind: string): Array<{ action: 
   const normalizedStatus = normalizeText(status);
   const normalizedKind = normalizeText(kind);
   const out: Array<{ action: string; nextStatus: string; intent: "success" | "danger" | "info" | "warning" | "neutral" }> = [];
+
+  // Une demande d'annulation client se traite via le panneau dédié (accepter / refuser / manuel).
+  if (normalizedStatus === "cancellation_requested") return out;
 
   if (["new", "pending"].includes(normalizedStatus)) {
     out.push({ action: "accept", nextStatus: "accepted", intent: "success" });

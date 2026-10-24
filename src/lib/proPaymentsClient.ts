@@ -20,7 +20,7 @@ async function parseJsonRecord(res: Response): Promise<Record<string, unknown>> 
   }
 }
 
-async function parseProData<T>(res: Response): Promise<T> {
+export async function parseProData<T>(res: Response): Promise<T> {
   const json = await parseJsonRecord(res);
   const success = json.success === true;
   if (!success || !res.ok) {
@@ -51,10 +51,23 @@ export type ProPaymentSettingsData = {
   stripe: ProStripeSnapshot;
 };
 
+export type ProStripeUiStatus =
+  | "NOT_CONNECTED"
+  | "IN_PROGRESS"
+  | "VERIFICATION_NEEDED"
+  | "ACTIVE"
+  | "PAYOUTS_SUSPENDED"
+  | "ACTION_REQUIRED";
+
 export type ProStripeStatusData = ProStripeSnapshot & {
+  /** Statut dérivé de l'état réel du compte Stripe (jamais de la seule redirection navigateur). */
+  uiStatus?: ProStripeUiStatus;
+  verificationNeeded?: boolean;
+  dashboardAvailable?: boolean;
   requirements?: {
     currentlyDueCount: number;
     pastDueCount: number;
+    pendingVerificationCount?: number;
     disabledReason: string | null;
   };
 };
@@ -162,6 +175,10 @@ export type ProPaymentsListItem = {
   stripeReceiptUrl: string | null;
   leadRequestId: string;
   clientName: string;
+  refundedAmount?: number;
+  refundableAmount?: number;
+  applicationFeeAmount?: number;
+  applicationFeeRefundedAmount?: number;
 };
 
 export type ProPaymentsListData = {
@@ -169,6 +186,8 @@ export type ProPaymentsListData = {
   total: number;
   summary: {
     paidTotalCents: number;
+    refundedTotalCents?: number;
+    netTotalCents?: number;
     paidCount: number;
     pendingCheckoutCount: number;
     failedCount?: number;
