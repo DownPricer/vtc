@@ -8,7 +8,7 @@ import { translateAction } from "@/components/pro/proDisplay";
 import { ProIcon, type ProIconName } from "@/components/pro/ProIcons";
 import { ProThemeToggle } from "@/components/pro/ProThemeToggle";
 
-type NavLink = { href: string; label: string; icon: ProIconName; badge?: "newRequests" };
+type NavLink = { href: string; label: string; icon: ProIconName; badge?: "newRequests"; alsoActiveOn?: string[] };
 type NavGroup = { label: string; links: NavLink[] };
 
 const NAV_GROUPS: NavGroup[] = [
@@ -27,7 +27,7 @@ const NAV_GROUPS: NavGroup[] = [
     links: [
       { href: "/pro/tarifs", label: "Tarifs", icon: "tag" },
       { href: "/pro/site", label: "Site internet", icon: "globe" },
-      { href: "/pro/stripe", label: "Stripe / Paiements", icon: "card" },
+      { href: "/pro/stripe", label: "Stripe / Paiements", icon: "card", alsoActiveOn: ["/pro/paiements"] },
       { href: "/pro/transactions", label: "Transactions", icon: "arrows" },
       { href: "/pro/parametres", label: "Paramètres", icon: "settings" },
     ],
@@ -46,8 +46,12 @@ function isActive(pathname: string, href: string) {
   return pathname === base || pathname.startsWith(`${base}/`);
 }
 
+function isLinkActive(pathname: string, link: NavLink) {
+  return isActive(pathname, link.href) || (link.alsoActiveOn ?? []).some((href) => isActive(pathname, href));
+}
+
 function pageTitle(pathname: string) {
-  const match = NAV_LINKS.find((l) => isActive(pathname, l.href));
+  const match = NAV_LINKS.find((l) => isLinkActive(pathname, l));
   return match?.label ?? "Espace pro";
 }
 
@@ -102,7 +106,7 @@ function SidebarContent({
           <div key={group.label}>
             <p className="px-3 pb-2 pt-[17px] text-[11px] font-bold uppercase tracking-[0.12em] text-[#a5b5d1]">{group.label}</p>
             {group.links.map((link) => {
-              const active = isActive(pathname, link.href);
+              const active = isLinkActive(pathname, link);
               return (
                 <Link
                   key={link.href}

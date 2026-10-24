@@ -1,17 +1,28 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
-import { actionButtonClass, formatDateTime, mapApiErrorToFr } from "@/components/pro/proDisplay";
+import { formatDateTime, mapApiErrorToFr } from "@/components/pro/proDisplay";
 import { ProGuard } from "@/components/pro/ProGuard";
-import { EmptyState, ProPanel, ProSectionHeader } from "@/components/pro/ProUi";
+import { EmptyState, ProActionLink, ProAlert, ProField, ProPageHead, ProPanel, ProTable, proInputClass, proTdClass, proTrClass } from "@/components/pro/ProUi";
+import {
+  ProFilterPanel,
+  ProOpenLink,
+  ProPagination,
+  ProRequestCard,
+  ProResultsPanel,
+  ProSearchInput,
+  paginate,
+  searchNormalize,
+} from "@/components/pro/ProListUi";
 import { labelLeadPaymentStatus, leadPaymentStatusBadgeClass } from "@/lib/leadPaymentStatusUi";
 import { listProPayments, type ProPaymentsListData, type ProPaymentsListItem } from "@/lib/proPaymentsClient";
 
+const PER_PAGE = 6;
+
 function formatAmountFromCents(cents: number, currency: string): string {
   const eur = cents / 100;
-  const cur = currency.toLowerCase() === "eur" ? "EUR" : currency.toUpperCase();
+  const cur = currency.toLowerCase() === "eur" ? "€" : currency.toUpperCase();
   return `${eur.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${cur}`;
 }
 
@@ -30,6 +41,15 @@ const STATUS_OPTIONS: Array<{ value: string; label: string }> = [
   { value: "REFUNDED", label: "Remboursé" },
 ];
 
+function toDateInput(d: Date): string {
+  return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, "0"), String(d.getDate()).padStart(2, "0")].join("-");
+}
+
+function monthRange(key: string) {
+  const [year, month] = key.split("-").map(Number);
+  return { from: toDateInput(new Date(year, month - 1, 1)), to: toDateInput(new Date(year, month, 0)) };
+}
+
 function lastSixMonthBars(monthlyPaid: ProPaymentsListData["monthlyPaid"] | undefined) {
   const map = new Map((monthlyPaid ?? []).map((m) => [m.monthKey, m.totalCents]));
   const now = new Date();
@@ -44,8 +64,41 @@ function lastSixMonthBars(monthlyPaid: ProPaymentsListData["monthlyPaid"] | unde
     });
   }
   const max = Math.max(...out.map((o) => o.cents), 1);
-  const maxPx = 112;
-  return out.map((o) => ({ ...o, barPx: Math.max(6, Math.round((o.cents / max) * maxPx)) }));
+  return out.map((o) => ({ ...o, percent: Math.max(3, Math.round((o.cents / max) * 100)) }));
+}
+
+function receiptUrl(p: ProPaymentsListItem): string {
+  const url = p.stripeReceiptUrl?.trim() ?? "";
+  return url.startsWith("https://") ? url : "";
+}
+
+function ReceiptLink({ p }: { p: ProPaymentsListItem }) {
+  const url = receiptUrl(p);
+  if (!url) return null;
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex min-h-[36px] items-center whitespace-nowrap rounded-[7px] border border-[var(--pro-border)] bg-[var(--pro-panel)] px-2.5 text-xs font-bold text-[var(--pro-text)] transition hover:border-[var(--pro-border-strong)] hover:bg-[var(--pro-panel-muted)]"
+    >
+      Reçu Stripe
+    </a>
+  );
+}
+
+function StatTile({ label, value, hint, primary }: { label: string; value: string | number; hint?: string; primary?: boolean }) {
+  return (
+    <article
+      className={`flex min-h-[126px] flex-col items-start rounded-lg border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] p-[13px] sm:min-h-[124px] sm:p-[17px] ${
+        primary ? "border-t-[3px] border-t-[var(--pro-accent)]" : ""
+      }`}
+    >
+      <span className="text-[13px] font-bold">{label}</span>
+      <strong className="mb-1.5 mt-[11px] text-[21px] font-bold leading-none tabular-nums sm:text-[26px]">{value}</strong>
+      {hint ? <small className="text-[11px] leading-[1.4] text-[var(--pro-text-muted)]">{hint}</small> : null}
+    </article>
+  );
 }
 
 function ProTransactionsContent() {
@@ -57,6 +110,8 @@ function ProTransactionsContent() {
   const [status, setStatus] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [q, setQ] = useState("");
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     setStatus(searchParams.get("status")?.trim() ?? "");
@@ -66,17 +121,21 @@ function ProTransactionsContent() {
 
   const pushQuery = useCallback(
     (next: { status: string; from: string; to: string }) => {
-      const q = new URLSearchParams();
-      if (next.status) q.set("status", next.status);
-      if (next.from) q.set("from", next.from);
-      if (next.to) q.set("to", next.to);
-      const s = q.toString();
+      const params = new URLSearchParams();
+      if (next.status) params.set("status", next.status);
+      if (next.from) params.set("from", next.from);
+      if (next.to) params.set("to", next.to);
+      const s = params.toString();
+      setPage(1);
       router.replace(s ? `/pro/transactions?${s}` : "/pro/transactions", { scroll: false });
     },
     [router]
   );
 
+  const rangeInvalid = !!from && !!to && from > to;
+
   useEffect(() => {
+    if (rangeInvalid) return;
     let cancelled = false;
     setBusy(true);
     setError("");
@@ -112,104 +171,133 @@ function ProTransactionsContent() {
     return () => {
       cancelled = true;
     };
-  }, [status, from, to]);
+  }, [status, from, to, rangeInvalid]);
 
-  const items = data?.items ?? [];
   const bars = useMemo(() => lastSixMonthBars(data?.monthlyPaid), [data?.monthlyPaid]);
+  const activeMonth = useMemo(
+    () => bars.find((bar) => {
+      const range = monthRange(bar.key);
+      return range.from === from && range.to === to;
+    })?.key ?? null,
+    [bars, from, to]
+  );
 
-  function rowReceipt(p: ProPaymentsListItem) {
-    if (!p.stripeReceiptUrl?.trim()) return null;
-    return (
-      <a
-        href={p.stripeReceiptUrl.trim()}
-        target="_blank"
-        rel="noreferrer"
-        className={`inline-flex rounded-lg px-3 py-1.5 text-xs font-semibold ${actionButtonClass("neutral")}`}
-      >
-        Reçu Stripe
-      </a>
-    );
+  const items = useMemo(() => {
+    const all = rangeInvalid ? [] : data?.items ?? [];
+    const query = searchNormalize(q.trim());
+    if (!query) return all;
+    return all.filter((p) => [p.clientName, p.leadRequestId, p.id].map(searchNormalize).join(" ").includes(query));
+  }, [data?.items, q, rangeInvalid]);
+
+  const { pageItems, page: currentPage, pages } = paginate(items, page, PER_PAGE);
+  const hasFilters = !!q.trim() || !!status || !!from || !!to;
+  const failedTotal = (data?.summary.failedCount ?? 0) + (data?.summary.expiredCount ?? 0);
+
+  function clearFilters() {
+    setQ("");
+    setPage(1);
+    pushQuery({ status: "", from: "", to: "" });
   }
+
+  const countLabel = rangeInvalid
+    ? "Corrigez la période sélectionnée"
+    : `${items.length} transaction${items.length > 1 ? "s" : ""} affichée${items.length > 1 ? "s" : ""}${data ? ` sur ${data.items.length}` : ""}`;
 
   return (
     <ProGuard>
-      <ProPanel>
-          <ProSectionHeader
-            eyebrow="Encaissements"
-            title="Historique des paiements"
-            description="Suivez les paiements en ligne, les reçus Stripe et les paiements en attente."
-            action={
-              <Link
-                href="/pro/paiements"
-                className="inline-flex rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-2 text-sm font-semibold text-[var(--pro-accent)] hover:bg-[var(--pro-accent-soft)]"
-              >
-                Réglages Stripe
-              </Link>
-            }
-          />
-      </ProPanel>
+      <div className="space-y-5">
+        <ProPageHead
+          eyebrow="Encaissements"
+          title="Historique des paiements"
+          description="Suivez les paiements reçus, les liens envoyés et les opérations à vérifier."
+          action={
+            <ProActionLink href="/pro/paiements" withArrow>
+              Réglages Stripe
+            </ProActionLink>
+          }
+        />
 
-      {error ? <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
+        {error ? <ProAlert tone="error">{error}</ProAlert> : null}
 
-      <ProPanel>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-4">
-            <div className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Total encaissé</p>
-              <p className="mt-2 text-lg font-bold text-[var(--pro-text)]">
-                {data ? formatAmountFromCents(data.summary.paidTotalCents, "eur") : "—"}
-              </p>
-              <p className="mt-1 text-[11px] text-[var(--pro-text-soft)]">Selon filtres (statut payé)</p>
-            </div>
-            <div className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Paiements payés</p>
-              <p className="mt-2 text-lg font-bold text-[var(--pro-text)]">{data?.summary.paidCount ?? "—"}</p>
-            </div>
-            <div className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">En attente</p>
-              <p className="mt-2 text-lg font-bold text-[var(--pro-text)]">{data?.summary.pendingCheckoutCount ?? "—"}</p>
-              <p className="mt-1 text-[11px] text-[var(--pro-text-soft)]">Lien envoyé ou en cours</p>
-            </div>
-            <div className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Échecs / expirés</p>
-              <p className="mt-2 text-lg font-bold text-[var(--pro-text)]">
-                {data ? (data.summary.failedCount ?? 0) + (data.summary.expiredCount ?? 0) : "—"}
-              </p>
-              <p className="mt-1 text-[11px] text-[var(--pro-text-soft)]">
-                {data ? `${data.summary.failedCount ?? 0} échec(s) · ${data.summary.expiredCount ?? 0} expiré(s)` : ""}
-              </p>
-            </div>
+        <ProPanel>
+          <div className="mb-5">
+            <p className="mb-1.5 text-xs font-extrabold uppercase tracking-[0.1em] text-[var(--pro-eyebrow)]">Vue globale</p>
+            <h2 className="mb-[5px] text-xl font-bold tracking-[-0.025em] text-[var(--pro-text)] sm:text-[22px]">Encaissements en un coup d’œil</h2>
+            <p className="text-[13px] text-[var(--pro-text-muted)]">Ces chiffres suivent les filtres de statut et de période appliqués ci-dessous.</p>
           </div>
 
-          <div className="mt-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Encaissements par mois (payé)</p>
-            <p className="mt-1 text-sm text-[var(--pro-text-soft)]">Six derniers mois — montants TTC encaissés.</p>
-            <div className="mt-4 flex items-end gap-2 sm:gap-3">
-              {bars.map((b) => (
-                <div key={b.key} className="flex min-w-0 flex-1 flex-col items-center gap-2">
-                  <div className="flex h-[120px] w-full items-end justify-center rounded-t-lg bg-[var(--pro-panel-muted)] px-1">
-                    <div
-                      className="w-[min(100%,52px)] rounded-t-md bg-[var(--pro-accent)]/90"
-                      style={{ height: `${b.barPx}px` }}
-                      title={`${b.label} : ${formatAmountFromCents(b.cents, "eur")}`}
+          <div className="grid grid-cols-2 gap-[9px] sm:gap-3 min-[1201px]:grid-cols-4" aria-label="Indicateurs des paiements">
+            <StatTile primary label="Total encaissé" value={data ? formatAmountFromCents(data.summary.paidTotalCents, "eur") : "—"} hint="Uniquement les paiements validés" />
+            <StatTile label="Paiements validés" value={data?.summary.paidCount ?? "—"} hint="Réglés par les clients" />
+            <StatTile label="En attente" value={data?.summary.pendingCheckoutCount ?? "—"} hint="Liens envoyés ou en cours" />
+            <StatTile
+              label="Échecs / expirés"
+              value={data ? failedTotal : "—"}
+              hint={data ? `${data.summary.failedCount ?? 0} échec(s) · ${data.summary.expiredCount ?? 0} expiré(s)` : "À vérifier si nécessaire"}
+            />
+          </div>
+
+          <div className="mb-4 mt-[26px] flex flex-col items-start justify-between gap-3.5 border-t border-[var(--pro-border)] pt-[21px] sm:flex-row sm:items-end">
+            <div>
+              <h3 className="mb-1 text-[17px] font-bold text-[var(--pro-text)]">Encaissements par mois</h3>
+              <p className="text-xs text-[var(--pro-text-muted)]">Six derniers mois · montants réellement encaissés</p>
+            </div>
+            <span className="text-xs text-[var(--pro-text-muted)]">Sélectionnez un mois pour filtrer la liste</span>
+          </div>
+
+          <div className="grid min-h-[168px] grid-cols-6 items-end gap-1 sm:gap-2.5" aria-label="Encaissements par mois">
+            {bars.map((bar) => {
+              const active = activeMonth === bar.key;
+              return (
+                <button
+                  key={bar.key}
+                  type="button"
+                  aria-pressed={active}
+                  aria-label={`${bar.label} : ${formatAmountFromCents(bar.cents, "eur")} encaissés. Filtrer ce mois.`}
+                  onClick={() => (active ? pushQuery({ status, from: "", to: "" }) : pushQuery({ status, ...monthRange(bar.key) }))}
+                  className="group flex h-[168px] flex-col items-stretch justify-end gap-1.5 text-center text-[var(--pro-text)]"
+                >
+                  <span className="text-[10px] font-bold tabular-nums sm:text-xs">{bar.cents ? formatAmountFromCents(bar.cents, "eur") : "0 €"}</span>
+                  <span
+                    className={`flex h-[110px] items-end overflow-hidden rounded-[5px] bg-[var(--pro-panel-muted)] ${
+                      active ? "outline outline-2 outline-offset-2 outline-[var(--pro-accent)]" : ""
+                    }`}
+                  >
+                    <span
+                      className={`block min-h-[3px] w-full rounded-t-[5px] transition-colors ${active ? "bg-[#82acff]" : "bg-[#4f8cf5] group-hover:bg-[#82acff]"}`}
+                      style={{ height: `${bar.percent}%` }}
                     />
-                  </div>
-                  <span className="max-w-full truncate text-center text-[10px] font-medium uppercase tracking-wide text-[var(--pro-text-muted)]">
-                    {b.label}
                   </span>
-                </div>
-              ))}
-            </div>
+                  <span className="whitespace-nowrap text-[9px] font-bold uppercase text-[var(--pro-text-muted)] sm:text-[11px]">{bar.label}</span>
+                </button>
+              );
+            })}
           </div>
+        </ProPanel>
 
-          <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-12">
+        <ProFilterPanel
+          title="Retrouver une opération"
+          description="Recherchez un client ou une référence, puis affinez par statut ou par date."
+          active={hasFilters}
+          onReset={clearFilters}
+          gridClassName="grid gap-3.5 sm:grid-cols-2 min-[1201px]:grid-cols-[minmax(220px,1.5fr)_minmax(170px,1fr)_repeat(2,minmax(145px,0.8fr))]"
+        >
+          <ProSearchInput
+            value={q}
+            onChange={(value) => {
+              setQ(value);
+              setPage(1);
+            }}
+            placeholder="Client ou référence"
+          />
+          <ProField label="Statut">
             <select
               value={status}
               onChange={(e) => {
-                const v = e.target.value;
-                setStatus(v);
-                pushQuery({ status: v, from, to });
+                setStatus(e.target.value);
+                pushQuery({ status: e.target.value, from, to });
               }}
-              className="min-w-0 rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel)] px-4 py-3 text-sm text-[var(--pro-text)] xl:col-span-4"
+              className={proInputClass}
             >
               {STATUS_OPTIONS.map((o) => (
                 <option key={o.value || "all"} value={o.value}>
@@ -217,112 +305,99 @@ function ProTransactionsContent() {
                 </option>
               ))}
             </select>
+          </ProField>
+          <ProField label="Du">
             <input
               type="date"
               value={from}
               onChange={(e) => {
-                const v = e.target.value;
-                setFrom(v);
-                pushQuery({ status, from: v, to });
+                setFrom(e.target.value);
+                pushQuery({ status, from: e.target.value, to });
               }}
-              className="min-w-0 rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel)] px-4 py-3 text-sm text-[var(--pro-text)] xl:col-span-4"
+              className={proInputClass}
             />
+          </ProField>
+          <ProField label="Au">
             <input
               type="date"
               value={to}
               onChange={(e) => {
-                const v = e.target.value;
-                setTo(v);
-                pushQuery({ status, from, to: v });
+                setTo(e.target.value);
+                pushQuery({ status, from, to: e.target.value });
               }}
-              className="min-w-0 rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel)] px-4 py-3 text-sm text-[var(--pro-text)] xl:col-span-4"
+              className={proInputClass}
             />
-          </div>
-        </ProPanel>
+          </ProField>
+        </ProFilterPanel>
+        {rangeInvalid ? (
+          <p role="alert" className="-mt-2 text-xs text-[var(--pro-danger-title)]">
+            La date de début doit précéder la date de fin.
+          </p>
+        ) : null}
 
-        <ProPanel className="min-w-0">
-          {busy ? <p className="text-sm text-[var(--pro-text-muted)]">Chargement…</p> : null}
-          {!busy && !items.length ? <EmptyState message="Aucun paiement pour ces filtres." /> : null}
-          {!busy && items.length > 0 ? (
+        <ProResultsPanel title="Liste des transactions" count={busy ? "Chargement des paiements…" : countLabel} side={<span className="hidden md:inline">Plus récentes en premier</span>}>
+          {pageItems.length ? (
             <>
-              <div className="hidden xl:block min-w-0 overflow-hidden">
-                <table className="w-full min-w-0 table-fixed border-collapse text-left text-sm">
-                  <thead className="border-b border-[var(--pro-border)] text-xs uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">
-                    <tr>
-                      <th className="w-[18%] py-3 pl-0 pr-2 font-semibold">Date</th>
-                      <th className="w-[20%] py-3 px-2 font-semibold">Client</th>
-                      <th className="w-[14%] py-3 px-2 font-semibold">Réf.</th>
-                      <th className="w-[12%] py-3 px-2 font-semibold">Montant</th>
-                      <th className="w-[10%] py-3 px-2 font-semibold">Mode</th>
-                      <th className="w-[14%] py-3 px-2 font-semibold">Statut</th>
-                      <th className="w-[12%] py-3 pl-2 pr-0 font-semibold">Actions</th>
+              <div className="hidden xl:block">
+                <ProTable minWidth={1000} headers={["Date", "Client", "Référence", "Montant", "Mode", "Statut", "Actions"]}>
+                  {pageItems.map((p) => (
+                    <tr key={p.id} className={proTrClass}>
+                      <td className={`${proTdClass} whitespace-nowrap`}>{formatDateTime(p.createdAt)}</td>
+                      <td className={proTdClass}>
+                        <strong className="line-clamp-2 break-words font-bold">{p.clientName || "—"}</strong>
+                      </td>
+                      <td className={proTdClass}>
+                        <span className="inline-block max-w-[160px] truncate align-bottom font-mono text-xs text-[var(--pro-text-muted)]" title={p.leadRequestId}>
+                          {p.leadRequestId}
+                        </span>
+                      </td>
+                      <td className={`${proTdClass} whitespace-nowrap font-bold tabular-nums`}>{formatAmountFromCents(p.amount, p.currency)}</td>
+                      <td className={proTdClass}>{modeLabel(p.mode)}</td>
+                      <td className={proTdClass}>
+                        <span className={leadPaymentStatusBadgeClass(p.status)}>{labelLeadPaymentStatus(p.status)}</span>
+                      </td>
+                      <td className={proTdClass}>
+                        <div className="flex items-center gap-[7px]">
+                          <ProOpenLink href={`/pro/demandes/${p.leadRequestId}`} label={`Ouvrir le dossier de ${p.clientName || "ce client"}`} />
+                          <ReceiptLink p={p} />
+                        </div>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {items.map((p) => (
-                      <tr key={p.id} className="border-b border-[var(--pro-border)]/60 last:border-b-0">
-                        <td className="py-3 align-top text-[var(--pro-text-muted)]">{formatDateTime(p.createdAt)}</td>
-                        <td className="py-3 align-top font-medium text-[var(--pro-text)]">
-                          <span className="line-clamp-2 break-words">{p.clientName || "—"}</span>
-                        </td>
-                        <td className="py-3 align-top font-mono text-[11px] text-[var(--pro-text-soft)]">
-                          <span className="break-all">{p.leadRequestId}</span>
-                        </td>
-                        <td className="py-3 align-top font-semibold text-[var(--pro-accent)]">{formatAmountFromCents(p.amount, p.currency)}</td>
-                        <td className="py-3 align-top text-[var(--pro-text-soft)]">{modeLabel(p.mode)}</td>
-                        <td className="py-3 align-top">
-                          <span
-                            className={`inline-flex max-w-full rounded-full border px-2.5 py-1 text-xs font-semibold ${leadPaymentStatusBadgeClass(p.status)}`}
-                          >
-                            {labelLeadPaymentStatus(p.status)}
-                          </span>
-                        </td>
-                        <td className="py-3 align-top">
-                          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                            <Link
-                              href={`/pro/demandes/${p.leadRequestId}`}
-                              className={`inline-flex justify-center rounded-lg px-3 py-1.5 text-center text-xs font-semibold ${actionButtonClass("primary")}`}
-                            >
-                              Ouvrir
-                            </Link>
-                            {rowReceipt(p)}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                  ))}
+                </ProTable>
               </div>
 
-              <div className="grid grid-cols-1 gap-3 xl:hidden 2xl:grid-cols-2">
-                {items.map((p) => (
-                  <div key={p.id} className="rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="font-semibold text-[var(--pro-text)]">{p.clientName || "—"}</p>
-                        <p className="mt-1 text-xs text-[var(--pro-text-muted)]">{formatDateTime(p.createdAt)}</p>
-                      </div>
-                      <span
-                        className={`inline-flex shrink-0 rounded-full border px-2.5 py-1 text-xs font-semibold ${leadPaymentStatusBadgeClass(p.status)}`}
-                      >
-                        {labelLeadPaymentStatus(p.status)}
-                      </span>
-                    </div>
-                    <p className="mt-2 font-mono text-[11px] text-[var(--pro-text-soft)]">Réf. {p.leadRequestId}</p>
-                    <p className="mt-2 text-lg font-bold text-[var(--pro-accent)]">{formatAmountFromCents(p.amount, p.currency)}</p>
-                    <p className="text-xs text-[var(--pro-text-soft)]">{modeLabel(p.mode)}</p>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <Link href={`/pro/demandes/${p.leadRequestId}`} className={`flex-1 rounded-xl py-2.5 text-center text-sm font-semibold ${actionButtonClass("primary")}`}>
-                        Ouvrir
-                      </Link>
-                      {rowReceipt(p)}
-                    </div>
-                  </div>
+              <div className="grid gap-2.5 xl:hidden">
+                {pageItems.map((p) => (
+                  <ProRequestCard
+                    key={p.id}
+                    name={p.clientName || "—"}
+                    badge={<span className={leadPaymentStatusBadgeClass(p.status)}>{labelLeadPaymentStatus(p.status)}</span>}
+                    route={`${formatAmountFromCents(p.amount, p.currency)} · ${modeLabel(p.mode)}`}
+                    meta={[formatDateTime(p.createdAt), `Réf. ${p.leadRequestId}`]}
+                    actions={
+                      <>
+                        <ProOpenLink href={`/pro/demandes/${p.leadRequestId}`} />
+                        <ReceiptLink p={p} />
+                      </>
+                    }
+                  />
                 ))}
               </div>
+
+              <ProPagination page={currentPage} pages={pages} onPage={setPage} />
             </>
-          ) : null}
-      </ProPanel>
+          ) : busy || rangeInvalid ? null : (
+            <EmptyState
+              icon="search"
+              title="Aucune transaction trouvée"
+              message="Essayez une autre recherche ou retirez un filtre."
+              actionLabel={hasFilters ? "Effacer les filtres" : undefined}
+              onAction={hasFilters ? clearFilters : undefined}
+            />
+          )}
+        </ProResultsPanel>
+      </div>
     </ProGuard>
   );
 }

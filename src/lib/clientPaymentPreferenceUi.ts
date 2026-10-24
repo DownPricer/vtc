@@ -1,11 +1,11 @@
 export function labelClientOnlinePaymentPreference(v: unknown): string {
-  if (v === true) return "Paiement en ligne demande";
+  if (v === true) return "Paiement en ligne demandé";
   if (v === false) return "Paiement sur place";
-  return "Non renseigne";
+  return "Non renseigné";
 }
 
 export function clientOnlinePaymentPreferenceBadgeClass(v: unknown): string {
-  if (v === true) return "border-emerald-300 bg-emerald-50 text-emerald-900";
-  if (v === false) return "border-slate-300 bg-slate-100 text-slate-800";
-  return "border-[var(--pro-border)] bg-[var(--pro-panel-muted)] text-[var(--pro-text-soft)]";
+  if (v === true) return "pro-badge pro-badge--accepted";
+  if (v === false) return "pro-badge pro-badge--archived";
+  return "pro-badge pro-badge--neutral";
 }

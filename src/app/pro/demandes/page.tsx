@@ -1,11 +1,23 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ProGuard } from "@/components/pro/ProGuard";
-import { EmptyState, ProActionLink, ProAlert, ProField, ProPanel, ProSectionHeader, ProTable, proInputClass } from "@/components/pro/ProUi";
+import { EmptyState, ProActionLink, ProAlert, ProField, ProPageHead, ProTable, proInputClass, proTdClass, proTrClass } from "@/components/pro/ProUi";
 import {
-  formatDateTime,
+  ProGhostButton,
+  ProFilterPanel,
+  ProOpenLink,
+  ProPagination,
+  ProRequestCard,
+  ProResultsPanel,
+  ProSearchInput,
+  ProSummaryCard,
+  ProSummaryGrid,
+  formatShortDateTime,
+  paginate,
+  searchNormalize,
+} from "@/components/pro/ProListUi";
+import {
   formatPrice,
   getDisplayName,
   getJourneySummary,
@@ -15,10 +27,6 @@ import {
   mapApiErrorToFr,
   statusBadgeClass,
 } from "@/components/pro/proDisplay";
-import {
-  clientOnlinePaymentPreferenceBadgeClass,
-  labelClientOnlinePaymentPreference,
-} from "@/lib/clientPaymentPreferenceUi";
 import { labelLeadPaymentStatus, leadPaymentStatusBadgeClass } from "@/lib/leadPaymentStatusUi";
 import { proApi } from "@/lib/proApi";
 
@@ -37,139 +45,34 @@ type LeadRow = {
   clientWantsOnlinePayment?: boolean | null;
 };
 
+const PER_PAGE = 6;
+
 const STATUS_FILTERS = [
   { value: "", label: "Tous les statuts" },
   { value: "new", label: "Nouveau" },
   { value: "pending", label: "En attente" },
-  { value: "accepted", label: "Accepte" },
-  { value: "refused", label: "Refuse" },
-  { value: "processed", label: "Traite" },
-  { value: "scheduled", label: "Planifie" },
-  { value: "completed", label: "Termine" },
-  { value: "cancelled", label: "Annule" },
-  { value: "archived", label: "Archive" },
+  { value: "accepted", label: "Accepté" },
+  { value: "refused", label: "Refusé" },
+  { value: "processed", label: "Traité" },
+  { value: "scheduled", label: "Planifié" },
+  { value: "completed", label: "Terminé" },
+  { value: "cancelled", label: "Annulé" },
+  { value: "archived", label: "Archivé" },
 ];
+
+type SummaryKey = "all" | "new" | "pending" | "booking" | "quote";
 
 function usefulText(value?: string | null): string {
   return isUsefulValue(value) ? String(value).trim() : "";
 }
 
-function countByStatus(rows: LeadRow[], status: string): number {
-  return rows.filter((row) => row.status === status).length;
+function tarifOf(row: LeadRow): string {
+  const raw = row.pricingResult && (row.pricingResult as Record<string, unknown>).tarif;
+  return isUsefulValue(raw) ? formatPrice(raw) : "";
 }
 
-function countByKind(rows: LeadRow[], kind: string): number {
-  return rows.filter((row) => row.kind === kind).length;
-}
-
-function RequestMobileCard({ row }: { row: LeadRow }) {
-  const journey = getJourneySummary(row.flatPayload);
-  const tarif = isUsefulValue(row.pricingResult && (row.pricingResult as Record<string, unknown>).tarif)
-    ? formatPrice((row.pricingResult as Record<string, unknown>).tarif)
-    : "";
-
-  return (
-    <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4 transition hover:border-[var(--pro-border-strong)] hover:bg-[var(--pro-panel-strong)]">
-      <div className="flex flex-col gap-4 xl:grid xl:grid-cols-[minmax(0,1.4fr)_minmax(180px,0.8fr)_minmax(180px,0.7fr)_auto] xl:items-start">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="font-semibold text-[var(--pro-text)]">{getDisplayName(row.clientName)}</p>
-              <p className="mt-1 text-sm text-[var(--pro-text-muted)]">
-                {labelKind(row.kind)} · Recu le {formatDateTime(row.createdAt)}
-              </p>
-            </div>
-            <span className={`inline-flex rounded-md border px-2 py-1 text-xs font-semibold ${statusBadgeClass(row.status)}`}>
-              {labelStatus(row.status)}
-            </span>
-          </div>
-
-          {journey ? <p className="mt-4 text-sm leading-6 text-[var(--pro-text-soft)]">{journey}</p> : null}
-
-          <div className="mt-4 flex flex-wrap gap-2 text-xs">
-            {usefulText(row.clientPhone) ? (
-              <span className="rounded-md border border-[var(--pro-border)] bg-[var(--pro-panel)] px-2 py-1 text-[var(--pro-text-soft)]">{usefulText(row.clientPhone)}</span>
-            ) : null}
-            {usefulText(row.clientEmail) ? (
-              <span className="rounded-md border border-[var(--pro-border)] bg-[var(--pro-panel)] px-2 py-1 text-[var(--pro-text-soft)]">{usefulText(row.clientEmail)}</span>
-            ) : null}
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Paiement</p>
-          <span className={`inline-flex rounded-md border px-2 py-1 text-xs font-semibold ${leadPaymentStatusBadgeClass(row.paymentStatus)}`}>
-            {labelLeadPaymentStatus(row.paymentStatus)}
-          </span>
-          <div>
-            <span
-              className={`inline-flex rounded-md border px-2 py-1 text-xs font-semibold ${clientOnlinePaymentPreferenceBadgeClass(row.clientWantsOnlinePayment)}`}
-            >
-              {labelClientOnlinePaymentPreference(row.clientWantsOnlinePayment)}
-            </span>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Montant</p>
-          <p className="text-lg font-semibold text-[var(--pro-accent)]">{tarif || "Aucun montant"}</p>
-          {row.scheduledStart ? <p className="text-sm text-[var(--pro-text-soft)]">Prevu : {formatDateTime(row.scheduledStart)}</p> : null}
-        </div>
-
-        <div className="flex items-center xl:justify-end">
-          <Link
-            href={`/pro/demandes/${row.id}`}
-            className="inline-flex items-center justify-center rounded-xl bg-[var(--pro-accent)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[color-mix(in_srgb,var(--pro-accent)_88%,black_12%)]"
-          >
-            Ouvrir
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function RequestTable({ rows }: { rows: LeadRow[] }) {
-  return (
-    <ProTable headers={["Date demande", "Client", "Type", "Trajet", "Date course", "Montant", "Statut", "Paiement", "Action"]}>
-      {rows.map((row) => {
-        const journey = getJourneySummary(row.flatPayload);
-        const tarif = isUsefulValue(row.pricingResult && (row.pricingResult as Record<string, unknown>).tarif)
-          ? formatPrice((row.pricingResult as Record<string, unknown>).tarif)
-          : "—";
-        return (
-          <tr key={row.id} className="bg-[var(--pro-panel)] transition hover:bg-[var(--pro-panel-muted)]">
-            <td className="px-4 py-3 align-top text-[var(--pro-text-muted)]">{formatDateTime(row.createdAt)}</td>
-            <td className="px-4 py-3 align-top">
-              <p className="font-semibold text-[var(--pro-text)]">{getDisplayName(row.clientName)}</p>
-              <p className="mt-1 text-xs text-[var(--pro-text-muted)]">{usefulText(row.clientEmail) || usefulText(row.clientPhone) || "Coordonnées non renseignées"}</p>
-            </td>
-            <td className="px-4 py-3 align-top text-[var(--pro-text-soft)]">{labelKind(row.kind)}</td>
-            <td className="max-w-[280px] px-4 py-3 align-top text-[var(--pro-text-soft)]">
-              <span className="line-clamp-2">{journey || "Trajet non renseigné"}</span>
-            </td>
-            <td className="px-4 py-3 align-top text-[var(--pro-text-muted)]">{row.scheduledStart ? formatDateTime(row.scheduledStart) : "—"}</td>
-            <td className="px-4 py-3 align-top font-semibold text-[var(--pro-text)]">{tarif}</td>
-            <td className="px-4 py-3 align-top">
-              <span className={`inline-flex rounded-md border px-2 py-1 text-xs font-semibold ${statusBadgeClass(row.status)}`}>
-                {labelStatus(row.status)}
-              </span>
-            </td>
-            <td className="px-4 py-3 align-top">
-              <span className={`inline-flex rounded-md border px-2 py-1 text-xs font-semibold ${leadPaymentStatusBadgeClass(row.paymentStatus)}`}>
-                {labelLeadPaymentStatus(row.paymentStatus)}
-              </span>
-            </td>
-            <td className="px-4 py-3 align-top">
-              <Link href={`/pro/demandes/${row.id}`} className="inline-flex rounded-lg bg-[var(--pro-accent)] px-3 py-2 text-xs font-semibold text-white">
-                Ouvrir
-              </Link>
-            </td>
-          </tr>
-        );
-      })}
-    </ProTable>
-  );
+function Badge({ className, children }: { className: string; children: string }) {
+  return <span className={className}>{children}</span>;
 }
 
 export default function ProDemandesPage() {
@@ -177,12 +80,12 @@ export default function ProDemandesPage() {
   const [kind, setKind] = useState("");
   const [status, setStatus] = useState("");
   const [q, setQ] = useState("");
+  const [page, setPage] = useState(1);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     const currentKind = params.get("kind");
     const currentStatus = params.get("status");
@@ -190,123 +93,210 @@ export default function ProDemandesPage() {
     if (currentStatus) setStatus(currentStatus);
   }, []);
 
-  const query = useMemo(() => {
-    const params = new URLSearchParams();
-    if (kind) params.set("kind", kind);
-    if (status) params.set("status", status);
-    if (q) params.set("q", q);
-    return params.toString();
-  }, [kind, status, q]);
-
   useEffect(() => {
     setLoading(true);
-    proApi(`/requests${query ? `?${query}` : ""}`)
+    proApi("/requests")
       .then((json) => {
         setRows((json.data as LeadRow[]) || []);
         setError("");
       })
       .catch((e) => setError(mapApiErrorToFr((e as Error).message)))
       .finally(() => setLoading(false));
-  }, [query, refreshKey]);
+  }, [refreshKey]);
+
+  const sorted = useMemo(
+    () => rows.slice().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    [rows]
+  );
+
+  const counts = useMemo(
+    () => ({
+      all: rows.length,
+      new: rows.filter((r) => r.status === "new").length,
+      pending: rows.filter((r) => r.status === "pending").length,
+      booking: rows.filter((r) => r.kind === "reservation").length,
+      quote: rows.filter((r) => r.kind === "devis").length,
+    }),
+    [rows]
+  );
+
+  const filtered = useMemo(() => {
+    const query = searchNormalize(q.trim());
+    return sorted.filter((row) => {
+      const searchable = [row.id, row.clientName, row.clientEmail, row.clientPhone, getJourneySummary(row.flatPayload)].map(searchNormalize).join(" ");
+      return (!query || searchable.includes(query)) && (!kind || row.kind === kind) && (!status || row.status === status);
+    });
+  }, [sorted, q, kind, status]);
+
+  const { pageItems, page: currentPage, pages } = paginate(filtered, page, PER_PAGE);
+
+  const selected: SummaryKey | "" = q.trim()
+    ? ""
+    : kind === "reservation" && !status
+      ? "booking"
+      : kind === "devis" && !status
+        ? "quote"
+        : !kind && status === "new"
+          ? "new"
+          : !kind && status === "pending"
+            ? "pending"
+            : !kind && !status
+              ? "all"
+              : "";
+
+  function applySummary(key: SummaryKey) {
+    setQ("");
+    setKind(key === "booking" ? "reservation" : key === "quote" ? "devis" : "");
+    setStatus(key === "new" ? "new" : key === "pending" ? "pending" : "");
+    setPage(1);
+  }
+
+  function clearFilters() {
+    setQ("");
+    setKind("");
+    setStatus("");
+    setPage(1);
+  }
+
+  const hasFilters = !!q.trim() || !!kind || !!status;
+  const countLabel = `${filtered.length} dossier${filtered.length > 1 ? "s" : ""} affiché${filtered.length > 1 ? "s" : ""} sur ${rows.length}`;
 
   return (
     <ProGuard>
-      <ProPanel>
-        <ProSectionHeader
+      <div className="space-y-5">
+        <ProPageHead
+          eyebrow="Gestion des dossiers"
           title="Demandes"
-          description="Liste opérationnelle des contacts, devis et réservations avec filtres, priorités visibles et ouverture rapide des fiches."
-          action={<ProActionLink href="/pro/dashboard">Retour au tableau de bord</ProActionLink>}
+          description="Retrouvez les demandes, les devis et les réservations au même endroit."
+          action={
+            <div className="flex flex-wrap gap-2">
+              <ProGhostButton onClick={() => setRefreshKey((value) => value + 1)}>Rafraîchir</ProGhostButton>
+              <ProActionLink href="/pro/dashboard">Tableau de bord</ProActionLink>
+            </div>
+          }
         />
 
-        <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-5">
-          <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Total</p>
-            <p className="mt-2 text-2xl font-semibold text-[var(--pro-text)]">{rows.length}</p>
-          </div>
-          <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Nouveaux</p>
-            <p className="mt-2 text-2xl font-semibold text-[var(--pro-text)]">{countByStatus(rows, "new")}</p>
-          </div>
-          <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">En attente</p>
-            <p className="mt-2 text-2xl font-semibold text-[var(--pro-text)]">{countByStatus(rows, "pending")}</p>
-          </div>
-          <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Réservations</p>
-            <p className="mt-2 text-2xl font-semibold text-[var(--pro-text)]">{countByKind(rows, "reservation")}</p>
-          </div>
-          <div className="rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--pro-text-muted)]">Devis</p>
-            <p className="mt-2 text-2xl font-semibold text-[var(--pro-text)]">{countByKind(rows, "devis")}</p>
-          </div>
-        </div>
-      </ProPanel>
+        {error ? <ProAlert tone="error">{error}</ProAlert> : null}
 
-      <ProPanel>
-          <ProSectionHeader
-            eyebrow="Filtres"
-            title="Trouver la bonne demande"
-            description="Recherchez par client, téléphone ou e-mail, puis filtrez par type ou statut."
-            action={
-              <button
-                type="button"
-                onClick={() => setRefreshKey((value) => value + 1)}
-                className="inline-flex items-center justify-center rounded-2xl border border-[var(--pro-border-strong)] bg-[var(--pro-panel-muted)] px-4 py-2.5 text-sm font-semibold text-[var(--pro-text)] transition hover:bg-[var(--pro-panel-strong)]"
-              >
-                Rafraîchir
-              </button>
-            }
+        <ProSummaryGrid>
+          <ProSummaryCard label="Total" value={counts.all} hint="Tous les dossiers" selected={selected === "all"} onClick={() => applySummary("all")} />
+          <ProSummaryCard label="Nouvelles" value={counts.new} hint="À consulter" selected={selected === "new"} onClick={() => applySummary("new")} />
+          <ProSummaryCard label="En attente" value={counts.pending} hint="À suivre" selected={selected === "pending"} onClick={() => applySummary("pending")} />
+          <ProSummaryCard label="Réservations" value={counts.booking} hint="Courses demandées" selected={selected === "booking"} onClick={() => applySummary("booking")} />
+          <ProSummaryCard label="Devis" value={counts.quote} hint="À chiffrer ou envoyés" selected={selected === "quote"} onClick={() => applySummary("quote")} />
+        </ProSummaryGrid>
+
+        <ProFilterPanel
+          title="Trouver une demande"
+          description="Recherchez un client ou un trajet, puis affinez les résultats."
+          active={hasFilters}
+          onReset={clearFilters}
+        >
+          <ProSearchInput
+            value={q}
+            onChange={(value) => {
+              setQ(value);
+              setPage(1);
+            }}
+            placeholder="Nom, e-mail, téléphone ou trajet"
           />
+          <ProField label="Type">
+            <select
+              value={kind}
+              onChange={(e) => {
+                setKind(e.target.value);
+                setPage(1);
+              }}
+              className={proInputClass}
+            >
+              <option value="">Tous les types</option>
+              <option value="reservation">Réservation</option>
+              <option value="devis">Devis</option>
+              <option value="contact">Contact</option>
+            </select>
+          </ProField>
+          <ProField label="Statut">
+            <select
+              value={status}
+              onChange={(e) => {
+                setStatus(e.target.value);
+                setPage(1);
+              }}
+              className={proInputClass}
+            >
+              {STATUS_FILTERS.map((item) => (
+                <option key={item.value || "all"} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </ProField>
+        </ProFilterPanel>
 
-          <div className="mt-6 grid grid-cols-1 gap-3 xl:grid-cols-12">
-            <ProField label="Recherche" className="xl:col-span-5">
-              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nom, e-mail, téléphone ou trajet" className={proInputClass} />
-            </ProField>
-            <ProField label="Type" className="xl:col-span-3">
-              <select value={kind} onChange={(e) => setKind(e.target.value)} className={proInputClass}>
-                <option value="">Tous les types</option>
-                <option value="contact">Contact</option>
-                <option value="devis">Devis</option>
-                <option value="reservation">Réservation</option>
-              </select>
-            </ProField>
-            <ProField label="Statut" className="xl:col-span-4">
-              <select value={status} onChange={(e) => setStatus(e.target.value)} className={proInputClass}>
-                {STATUS_FILTERS.map((item) => (
-                  <option key={item.value || "all"} value={item.value}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
-            </ProField>
-          </div>
-      </ProPanel>
-
-      {error ? <ProAlert tone="error">{error}</ProAlert> : null}
-      {loading ? <ProAlert tone="info">Chargement des demandes...</ProAlert> : null}
-
-      <ProPanel>
-          <ProSectionHeader
-            title="Liste des demandes"
-            description="Vue large et lisible pour parcourir les dossiers sans tableau serre ni informations techniques inutiles."
-          />
-
-          <div className="mt-6">
-            {rows.length ? (
-              <>
-                <div className="hidden xl:block">
-                  <RequestTable rows={rows} />
-                </div>
-                <div className="space-y-3 xl:hidden">
-                  {rows.map((row) => (
-                    <RequestMobileCard key={row.id} row={row} />
+        <ProResultsPanel title="Liste des demandes" count={loading ? "Chargement des demandes…" : countLabel} side={<span className="hidden md:inline">Plus récentes en premier</span>}>
+          {pageItems.length ? (
+            <>
+              <div className="hidden xl:block">
+                <ProTable
+                  minWidth={1080}
+                  headers={["Demande", "Client", "Type", "Trajet", "Date course", "Montant", "Statut", "Paiement", <span key="a" className="sr-only">Action</span>]}
+                >
+                  {pageItems.map((row) => (
+                    <tr key={row.id} className={proTrClass}>
+                      <td className={`${proTdClass} whitespace-nowrap`}>{formatShortDateTime(row.createdAt)}</td>
+                      <td className={proTdClass}>
+                        <strong className="block font-bold">{getDisplayName(row.clientName)}</strong>
+                        <small className="mt-[3px] block break-words text-xs text-[var(--pro-text-muted)]">
+                          {usefulText(row.clientEmail) || usefulText(row.clientPhone) || "Coordonnées non renseignées"}
+                        </small>
+                      </td>
+                      <td className={proTdClass}>{labelKind(row.kind)}</td>
+                      <td className={`${proTdClass} max-w-[260px]`}>
+                        <span className="line-clamp-2">{getJourneySummary(row.flatPayload) || "Trajet non renseigné"}</span>
+                      </td>
+                      <td className={`${proTdClass} whitespace-nowrap`}>{formatShortDateTime(row.scheduledStart)}</td>
+                      <td className={`${proTdClass} whitespace-nowrap font-bold tabular-nums`}>{tarifOf(row) || "—"}</td>
+                      <td className={proTdClass}>
+                        <Badge className={statusBadgeClass(row.status)}>{labelStatus(row.status)}</Badge>
+                      </td>
+                      <td className={proTdClass}>
+                        <Badge className={leadPaymentStatusBadgeClass(row.paymentStatus)}>{labelLeadPaymentStatus(row.paymentStatus)}</Badge>
+                      </td>
+                      <td className={proTdClass}>
+                        <ProOpenLink href={`/pro/demandes/${row.id}`} label={`Ouvrir la demande de ${getDisplayName(row.clientName)}`} />
+                      </td>
+                    </tr>
                   ))}
-                </div>
-              </>
-            ) : null}
-            {!rows.length && !loading ? <EmptyState message="Aucune demande ne correspond a ces filtres." /> : null}
-          </div>
-      </ProPanel>
+                </ProTable>
+              </div>
+
+              <div className="grid gap-2.5 xl:hidden">
+                {pageItems.map((row) => (
+                  <ProRequestCard
+                    key={row.id}
+                    name={getDisplayName(row.clientName)}
+                    badge={<Badge className={statusBadgeClass(row.status)}>{labelStatus(row.status)}</Badge>}
+                    route={getJourneySummary(row.flatPayload) || "Trajet à préciser"}
+                    meta={[labelKind(row.kind), formatShortDateTime(row.scheduledStart || row.createdAt, false), labelLeadPaymentStatus(row.paymentStatus)]}
+                    amount={tarifOf(row)}
+                    actions={<ProOpenLink href={`/pro/demandes/${row.id}`} />}
+                  />
+                ))}
+              </div>
+
+              <ProPagination page={currentPage} pages={pages} onPage={setPage} />
+            </>
+          ) : loading ? null : (
+            <EmptyState
+              icon="search"
+              title="Aucune demande trouvée"
+              message={hasFilters ? "Essayez un autre terme ou retirez un filtre." : "Les nouvelles demandes apparaîtront ici."}
+              actionLabel={hasFilters ? "Effacer les filtres" : undefined}
+              onAction={hasFilters ? clearFilters : undefined}
+            />
+          )}
+        </ProResultsPanel>
+      </div>
     </ProGuard>
   );
 }

@@ -1,19 +1,19 @@
 export function labelLeadPaymentStatus(raw?: string | null): string {
   switch (raw) {
     case "LINK_SENT":
-      return "Lien envoye";
+      return "Lien envoyé";
     case "PAID":
-      return "Paiement valide";
+      return "Paiement validé";
     case "FAILED":
-      return "Echec";
+      return "Échec";
     case "PENDING":
       return "En cours";
     case "EXPIRED":
-      return "Expire";
+      return "Expiré";
     case "REFUNDED":
-      return "Rembourse";
+      return "Remboursé";
     case "CANCELLED":
-      return "Annule";
+      return "Annulé";
     case "NONE":
     default:
       return "Aucun paiement en ligne";
@@ -23,21 +23,20 @@ export function labelLeadPaymentStatus(raw?: string | null): string {
 export function leadPaymentStatusBadgeClass(raw?: string | null): string {
   switch (raw) {
     case "PAID":
-      return "border-emerald-300 bg-emerald-50 text-emerald-800";
+      return "pro-badge pro-badge--accepted";
     case "LINK_SENT":
-      return "border-violet-300 bg-violet-50 text-violet-900";
+      return "pro-badge pro-badge--planned";
     case "FAILED":
-      return "border-rose-300 bg-rose-50 text-rose-800";
-    case "EXPIRED":
-      return "border-slate-300 bg-slate-100 text-slate-700";
     case "CANCELLED":
-      return "border-orange-300 bg-orange-50 text-orange-900";
+      return "pro-badge pro-badge--refused";
+    case "EXPIRED":
+      return "pro-badge pro-badge--archived";
     case "REFUNDED":
-      return "border-amber-300 bg-amber-50 text-amber-900";
+      return "pro-badge pro-badge--pending";
     case "PENDING":
-      return "border-sky-300 bg-sky-50 text-sky-900";
+      return "pro-badge pro-badge--done";
     case "NONE":
     default:
-      return "border-[var(--pro-border)] bg-[var(--pro-panel-muted)] text-[var(--pro-text-soft)]";
+      return "pro-badge pro-badge--neutral";
   }
 }

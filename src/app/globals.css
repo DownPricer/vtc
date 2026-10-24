@@ -598,6 +598,8 @@ select.dashboard-input option,
   --pro-danger-line: #f4b7c0;
   --pro-danger-bg: #fff3f4;
   --pro-danger-icon: #ffdde2;
+  --pro-input-border: #cbd6e7;
+  --pro-th: #485e7d;
   --pro-shadow: 0 10px 28px rgb(21 39 72 / 4%);
 }
 
@@ -624,8 +626,57 @@ select.dashboard-input option,
   --pro-danger-line: #7b3649;
   --pro-danger-bg: #341e2a;
   --pro-danger-icon: #633040;
+  --pro-input-border: #3b5075;
+  --pro-th: #bdcdea;
   --pro-shadow: 0 10px 28px rgb(0 0 0 / 9%);
 }
+
+/* Badges de statut de l'espace pro (clair + sombre), repris de la maquette. */
+.pro-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 3px 8px;
+  border: 1px solid;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.pro-badge--new { border-color: #a8c5fb; background: #eaf2ff; color: #17458c; }
+.pro-badge--pending { border-color: #f2cb8a; background: #fff6e7; color: #8b530d; }
+.pro-badge--accepted { border-color: #9edcba; background: #e9f8ef; color: #146342; }
+.pro-badge--done { border-color: #a6d8ef; background: #edf9ff; color: #175a7a; }
+.pro-badge--refused { border-color: #f0b4bf; background: #fff0f2; color: #9d2636; }
+.pro-badge--planned { border-color: #afc1ff; background: #eef1ff; color: #314a96; }
+.pro-badge--archived { border-color: #cbd4e0; background: #f0f2f7; color: #506078; }
+.pro-badge--neutral { border-color: var(--pro-border); background: var(--pro-panel-muted); color: var(--pro-text-muted); }
+.pro-theme-dark .pro-badge--new { border-color: #4777b8; background: #213e6a; color: #c9dcff; }
+.pro-theme-dark .pro-badge--pending { border-color: #87642a; background: #49391e; color: #ffda9d; }
+.pro-theme-dark .pro-badge--accepted { border-color: #337b5e; background: #183e34; color: #baf0d0; }
+.pro-theme-dark .pro-badge--done { border-color: #3c7898; background: #193b50; color: #bbebff; }
+.pro-theme-dark .pro-badge--refused { border-color: #955069; background: #532634; color: #ffd0da; }
+.pro-theme-dark .pro-badge--planned { border-color: #5b79b8; background: #283963; color: #d0ddff; }
+.pro-theme-dark .pro-badge--archived { border-color: #596982; background: #2a3445; color: #d6e0ef; }
+
+/* Teintes d'état (icône, pastille, badge) : prêt / à compléter / manquant. */
+.pro-tone--ok { border-color: #83d0a9; background: #e5f6ed; color: #137047; }
+.pro-tone--warn { border-color: #e8bd74; background: #fff3df; color: #8a520d; }
+.pro-tone--bad { border-color: #e8a3af; background: #fff0f2; color: #9b2a3a; }
+.pro-theme-dark .pro-tone--ok { border-color: #367a5f; background: #193e34; color: #b9efd1; }
+.pro-theme-dark .pro-tone--warn { border-color: #8a6b34; background: #49391e; color: #ffdc9f; }
+.pro-theme-dark .pro-tone--bad { border-color: #955069; background: #532634; color: #ffd0da; }
+
+/* Alertes (succès / erreur / avertissement / info). */
+.pro-alert--success { border-color: #a7e3c3; background: #ecfaf2; color: #146342; }
+.pro-alert--error { border-color: #f4b7c0; background: #fff3f4; color: #9d2636; }
+.pro-alert--warning { border-color: #e8bd74; background: #fff5e5; color: #75450d; }
+.pro-alert--info { border-color: #bfd5ff; background: #ecf3ff; color: #244b91; }
+.pro-theme-dark .pro-alert--success { border-color: #337b5e; background: #183e34; color: #baf0d0; }
+.pro-theme-dark .pro-alert--error { border-color: #7b3649; background: #341e2a; color: #ffd0da; }
+.pro-theme-dark .pro-alert--warning { border-color: #8a6b34; background: #49391e; color: #ffdc9f; }
+.pro-theme-dark .pro-alert--info { border-color: #385a93; background: #1d3154; color: #c1d5fc; }
 
 @media print {
   .no-print,

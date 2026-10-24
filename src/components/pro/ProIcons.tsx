@@ -64,6 +64,13 @@ const ICON_PATHS = {
     </>
   ),
   chart: <path d="M5 20v-8m7 8V4m7 16v-5" />,
+  search: (
+    <>
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-4-4" />
+    </>
+  ),
+  check: <path d="m4 12 5 5L20 6" />,
   clock: (
     <>
       <circle cx="12" cy="12" r="9" />

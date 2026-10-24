@@ -49,6 +49,7 @@ export function ProSectionHeader({
     return (
       <div className="mb-[18px] flex items-start justify-between gap-4 border-b border-[var(--pro-border)] pb-[18px]">
         <div className="min-w-0">
+          {eyebrow ? <p className="mb-1.5 text-xs font-extrabold uppercase tracking-[0.1em] text-[var(--pro-eyebrow)]">{eyebrow}</p> : null}
           <h2 className="text-lg font-bold leading-[1.3] tracking-[-0.025em] text-[var(--pro-text)] sm:text-[21px]">{title}</h2>
           {description ? <p className="mt-1.5 text-[13px] leading-[1.45] text-[var(--pro-text-muted)]">{description}</p> : null}
         </div>
@@ -104,16 +105,7 @@ export function ProAlert({
   tone: "success" | "error" | "info" | "warning";
   children: ReactNode;
 }) {
-  const toneClass =
-    tone === "success"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-      : tone === "error"
-        ? "border-rose-200 bg-rose-50 text-rose-800"
-        : tone === "warning"
-          ? "border-amber-200 bg-amber-50 text-amber-900"
-          : "border-sky-200 bg-sky-50 text-sky-800";
-
-  return <div className={`rounded-xl border px-4 py-3 text-sm ${toneClass}`}>{children}</div>;
+  return <div className={`rounded-lg border px-4 py-3 text-[13px] leading-normal pro-alert--${tone}`}>{children}</div>;
 }
 
 /** Bandeau « session expirée » de la maquette : propose de se reconnecter. */
@@ -296,14 +288,17 @@ export function EmptyState({
   icon,
   actionLabel,
   actionHref,
+  onAction,
 }: {
   message: string;
   title?: string;
   icon?: ProIconName;
   actionLabel?: string;
   actionHref?: string;
+  /** Action sous forme de bouton (ex. « Effacer les filtres »), à la place d'un lien. */
+  onAction?: () => void;
 }) {
-  if (!title && !icon) {
+  if (!title && !icon && !onAction) {
     return (
       <p className="rounded-lg border border-dashed border-[var(--pro-border-strong)] bg-[var(--pro-panel-muted)] px-5 py-10 text-center text-sm text-[var(--pro-text-muted)]">
         {message}
@@ -325,6 +320,15 @@ export function EmptyState({
           {actionLabel} →
         </Link>
       ) : null}
+      {actionLabel && onAction && !actionHref ? (
+        <button
+          type="button"
+          onClick={onAction}
+          className="mt-3 inline-flex min-h-[38px] items-center rounded-[7px] border border-[var(--pro-border)] bg-[var(--pro-panel)] px-[13px] text-xs font-bold text-[var(--pro-text)] transition hover:border-[var(--pro-border-strong)] hover:bg-[var(--pro-panel-muted)]"
+        >
+          {actionLabel}
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -340,29 +344,35 @@ export function ProField({
 }) {
   return (
     <label className={`block ${className}`}>
-      <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--pro-text-muted)]">{label}</span>
+      <span className="block text-[13px] font-bold text-[var(--pro-text)]">{label}</span>
       <div className="mt-2">{children}</div>
     </label>
   );
 }
 
 export const proInputClass =
-  "w-full rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3 text-sm text-[var(--pro-text)] placeholder:text-[var(--pro-text-muted)] focus:border-[var(--pro-accent)] focus:outline-none";
+  "w-full min-h-[45px] rounded-[7px] border border-[var(--pro-input-border)] bg-[var(--pro-panel-muted)] px-[13px] py-2.5 text-sm text-[var(--pro-text)] placeholder:text-[var(--pro-text-muted)] focus:border-[var(--pro-accent)] focus:outline focus:outline-[3px] focus:outline-[rgb(72_132_247/18%)]";
+
+/** Cellule et ligne de tableau (ProTable) : mêmes espacements que les maquettes. */
+export const proTdClass = "px-3 py-[15px] align-middle text-[13px] leading-[1.4] text-[var(--pro-text)]";
+export const proTrClass = "transition hover:bg-[var(--pro-panel-muted)]";
 
 export function ProTable({
   headers,
   children,
+  minWidth = 960,
 }: {
   headers: ReactNode[];
   children: ReactNode;
+  minWidth?: number;
 }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-[var(--pro-border)]">
-      <table className="w-full min-w-[960px] border-collapse text-left text-sm">
-        <thead className="bg-[var(--pro-panel-muted)] text-xs uppercase tracking-[0.16em] text-[var(--pro-text-muted)]">
+    <div className="overflow-x-auto rounded-lg border border-[var(--pro-border)]">
+      <table className="w-full border-collapse text-left" style={{ minWidth }}>
+        <thead className="bg-[var(--pro-panel-muted)] text-[11px] font-extrabold uppercase tracking-[0.08em] text-[var(--pro-th)]">
           <tr>
             {headers.map((header, index) => (
-              <th key={index} className="border-b border-[var(--pro-border)] px-4 py-3 font-semibold">
+              <th key={index} className="whitespace-nowrap px-3 py-[15px] font-extrabold">
                 {header}
               </th>
             ))}

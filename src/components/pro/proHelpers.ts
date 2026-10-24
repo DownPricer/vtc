@@ -211,29 +211,29 @@ export function formatValue(label: string, value: unknown): { label: string; val
 export function statusBadgeClass(status?: string | null): string {
   switch (normalizeText(status)) {
     case "new":
-      return "border-amber-300/70 bg-amber-50 text-amber-900";
+      return "pro-badge pro-badge--new";
     case "pending":
     case "unpaid":
-      return "border-orange-300/70 bg-orange-50 text-orange-900";
+      return "pro-badge pro-badge--pending";
     case "accepted":
-    case "scheduled":
     case "paid":
     case "sent":
-      return "border-emerald-300/70 bg-emerald-50 text-emerald-900";
+      return "pro-badge pro-badge--accepted";
+    case "scheduled":
+      return "pro-badge pro-badge--planned";
     case "refused":
     case "cancelled":
     case "failed":
-      return "border-rose-300/70 bg-rose-50 text-rose-900";
+      return "pro-badge pro-badge--refused";
     case "processed":
     case "completed":
-      return "border-sky-300/70 bg-sky-50 text-sky-900";
+      return "pro-badge pro-badge--done";
     case "archived":
     case "refunded":
-      return "border-slate-300/70 bg-slate-100 text-slate-700";
     case "expired":
-      return "border-stone-300/70 bg-stone-100 text-stone-700";
+      return "pro-badge pro-badge--archived";
     default:
-      return "border-slate-200 bg-slate-100 text-slate-700";
+      return "pro-badge pro-badge--neutral";
   }
 }
 
