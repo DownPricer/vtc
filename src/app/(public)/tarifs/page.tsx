@@ -155,7 +155,10 @@ export default async function TarifsPage() {
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 leading-tight tracking-tight [text-shadow:0_2px_4px_rgba(0,0,0,0.85),0_8px_32px_rgba(0,0,0,0.55)]">
               {pricing.heroTitle}
               <br />
-              <span className="text-gradient drop-shadow-[0_2px_12px_rgba(0,0,0,0.75)]">{pricing.heroTitleHighlight}</span>
+              {/* text-shadow hérité du h1 transparaît à travers le texte en dégradé → on le coupe, l'ombre passe par un filter sur le wrapper */}
+              <span className="inline-block drop-shadow-[0_2px_10px_rgba(0,0,0,0.7)]">
+                <span className="text-gradient [text-shadow:none]">{pricing.heroTitleHighlight}</span>
+              </span>
             </h1>
             <p className="text-gray-200/95 text-base md:text-lg max-w-lg leading-relaxed mb-8 [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">
               {pricing.heroIntro}

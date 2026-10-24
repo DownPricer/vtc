@@ -28,9 +28,9 @@ export function HeroSection({ tenantSettings = defaultTenantSettings }: Props) {
         {/* Couche sombre globale */}
         <div className="absolute inset-0 bg-black/25" />
         {/* Dégradé bas → haut (lisibilité texte) */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-black/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/30" />
         {/* Dégradé gauche (desktop) */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/15 to-transparent hidden md:block" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/35 to-transparent hidden md:block" />
         {/* Ligne orange bas */}
         <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
       </div>
@@ -54,10 +54,10 @@ export function HeroSection({ tenantSettings = defaultTenantSettings }: Props) {
           </h1>
 
           {/* Sous-titre */}
-          <p className="animate-fade-up delay-100 text-gray-300 text-sm md:text-base leading-relaxed mb-2 max-w-sm md:max-w-md">
+          <p className="animate-fade-up delay-100 text-white text-sm md:text-base font-medium leading-relaxed mb-2 max-w-sm md:max-w-md [text-shadow:0_1px_3px_rgba(0,0,0,0.9),0_2px_16px_rgba(0,0,0,0.6)]">
             {hero.subtitle}
           </p>
-          <p className="animate-fade-up delay-100 text-gray-400 text-xs md:text-sm leading-relaxed mb-6 md:mb-8 max-w-sm md:max-w-md">
+          <p className="animate-fade-up delay-100 text-gray-200 text-xs md:text-sm leading-relaxed mb-6 md:mb-8 max-w-sm md:max-w-md [text-shadow:0_1px_3px_rgba(0,0,0,0.9),0_2px_12px_rgba(0,0,0,0.6)]">
             {hero.bullets}
           </p>
 
@@ -71,7 +71,7 @@ export function HeroSection({ tenantSettings = defaultTenantSettings }: Props) {
                   className={
                     idx === 0
                       ? "animate-glow-pulse flex items-center justify-center gap-2.5 rounded-xl bg-primary px-7 py-4 text-sm font-bold text-white shadow-glow-lg transition-all duration-300 hover:bg-primary-dark active:scale-95"
-                      : "flex items-center justify-center gap-2.5 rounded-xl border border-white/20 px-7 py-4 text-sm font-medium text-white transition-all duration-300 hover:border-primary/50 hover:bg-white/5 active:scale-95"
+                      : "flex items-center justify-center gap-2.5 rounded-xl border border-white/40 bg-black/40 px-7 py-4 text-sm font-semibold text-white backdrop-blur-sm transition-all duration-300 hover:border-primary/60 hover:bg-black/55 active:scale-95"
                   }
                 >
                   {idx === 0 ? (
