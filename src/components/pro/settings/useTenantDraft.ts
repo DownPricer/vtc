@@ -14,6 +14,13 @@ export function useTenantDraft(initial: TenantSettingsV1) {
 
   const isDirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(baselineRef.current), [draft]);
 
+  /** Clés racines du brouillon qui diffèrent de la dernière version enregistrée. */
+  const dirtyKeys = useMemo(() => {
+    const base = baselineRef.current as Record<string, unknown>;
+    const cur = draft as Record<string, unknown>;
+    return Object.keys(cur).filter((k) => JSON.stringify(cur[k]) !== JSON.stringify(base[k])) as (keyof TenantSettingsV1)[];
+  }, [draft]);
+
   const enterEdit = useCallback(() => setEditing(true), []);
 
   const cancelEdit = useCallback(() => {
@@ -34,6 +41,7 @@ export function useTenantDraft(initial: TenantSettingsV1) {
     setDraft,
     editing,
     isDirty,
+    dirtyKeys,
     enterEdit,
     cancelEdit,
     syncFromServer,

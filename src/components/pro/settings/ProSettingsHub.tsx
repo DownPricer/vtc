@@ -45,7 +45,7 @@ export function ProSettingsHub() {
         ))}
       </div>
       <p className="mt-4 text-xs text-[var(--pro-text-muted)]">
-        Besoin d’options plus techniques (badges, FAQ, juridique) ? Consultez la section « Réglages avancés » ci-dessous.
+        Besoin d’options plus techniques (badges, FAQ, juridique) ? Ouvrez la section « Réglages avancés » ci-dessous.
       </p>
     </ProPanel>
   );
