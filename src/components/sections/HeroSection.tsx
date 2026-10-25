@@ -13,7 +13,8 @@ export function HeroSection({ tenantSettings = defaultTenantSettings }: Props) {
   const heroCtas = hero.ctas.filter((c) => c.enabled);
 
   return (
-    <section className="relative h-svh flex flex-col justify-center overflow-hidden bg-black">
+    // Mobile : hauteur = écran moins le bandeau, min-h (et non h) pour que le contenu ne passe pas sous la barre d'actions (pb-28).
+    <section className="relative flex min-h-[calc(100svh-4.1rem)] flex-col justify-center overflow-hidden bg-black pb-28 pt-8 md:min-h-svh md:pb-0 md:pt-0">
 
       {/* ── Image de fond ── */}
       <div className="absolute inset-0 z-0">
@@ -71,7 +72,7 @@ export function HeroSection({ tenantSettings = defaultTenantSettings }: Props) {
                   className={
                     idx === 0
                       ? "animate-glow-pulse flex items-center justify-center gap-2.5 rounded-xl bg-primary px-7 py-4 text-sm font-bold text-white shadow-glow-lg transition-all duration-300 hover:bg-primary-dark active:scale-95"
-                      : "flex items-center justify-center gap-2.5 rounded-xl border border-white/40 bg-black/40 px-7 py-4 text-sm font-semibold text-white backdrop-blur-sm transition-all duration-300 hover:border-primary/60 hover:bg-black/55 active:scale-95"
+                      : "flex items-center justify-center gap-2.5 rounded-xl border border-white bg-white px-7 py-4 text-sm font-bold text-neutral-900 shadow-[0_8px_24px_rgba(0,0,0,0.35)] transition-all duration-300 hover:bg-white/90 active:scale-95"
                   }
                 >
                   {idx === 0 ? (
@@ -79,7 +80,7 @@ export function HeroSection({ tenantSettings = defaultTenantSettings }: Props) {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                   ) : (
-                    <svg className="h-4 w-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-4 w-4 text-primary-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   )}

@@ -1,8 +1,8 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import Link from "next/link";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { siteConfig, type SiteConfig } from "@/config/site.config";
 import { trackEvent } from "@/lib/telemetryClient";
@@ -88,6 +88,16 @@ export function Header({ runtimeSite }: HeaderProps) {
     setMobileOpen(false);
   }, [pathname]);
 
+  // Le menu mobile se cale sous le bandeau, quelle que soit sa hauteur (logo agrandi inclus).
+  const headerRef = useRef<HTMLElement>(null);
+  const [menuTop, setMenuTop] = useState(64);
+  useEffect(() => {
+    const measure = () => setMenuTop(headerRef.current?.offsetHeight ?? 64);
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [mobileOpen, site.branding.logoScale]);
+
   useEffect(() => {
     if (mobileOpen) {
       document.body.style.overflow = "hidden";
@@ -105,21 +115,21 @@ export function Header({ runtimeSite }: HeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-dark/95 backdrop-blur-md border-b border-white/8">
+      <header ref={headerRef} className="sticky top-0 z-50 bg-dark/95 backdrop-blur-md border-b border-white/8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between gap-3 min-h-16 py-2 lg:min-h-16 lg:py-2">
-            <Link href="/" className="flex items-center gap-2.5 shrink-0 min-w-0 self-center">
+            <Link href="/" className="flex min-w-0 items-center gap-2.5 self-center">
               {/* Hauteur pilotée par le réglage « taille du logo » ; largeur automatique (logos larges inclus). */}
               {/* eslint-disable-next-line @next/next/no-img-element -- hauteur libre + ratio inconnu */}
               <img
                 src={site.branding.logoSrc}
                 alt={site.branding.logoAlt}
-                className="block w-auto object-contain"
-                style={{ height: logoPx, maxWidth: `min(${logoPx * 4}px, 45vw)` }}
+                className="block h-[min(var(--logo-h),48px)] w-auto shrink-0 object-contain lg:h-[var(--logo-h)]"
+                style={{ "--logo-h": `${logoPx}px`, maxWidth: `min(${logoPx * 4}px, 40vw)` } as CSSProperties}
               />
-              <div className="flex flex-col leading-none">
-                <span className="text-white font-bold text-base">{site.commercialName}</span>
-                <span className="text-primary text-[10px] font-semibold tracking-wider">{site.tagline}</span>
+              <div className="flex min-w-0 flex-col leading-none">
+                <span className="truncate text-white font-bold text-base">{site.commercialName}</span>
+                <span className="truncate text-primary text-[10px] font-semibold tracking-wider">{site.tagline}</span>
               </div>
             </Link>
 
@@ -199,7 +209,8 @@ export function Header({ runtimeSite }: HeaderProps) {
       >
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
         <div
-          className={`absolute top-16 left-0 right-0 bottom-0 bg-dark border-t border-white/8 transition-transform duration-300 ${
+          style={{ top: menuTop }}
+          className={`absolute left-0 right-0 bottom-0 bg-dark border-t border-white/8 transition-transform duration-300 ${
             mobileOpen ? "translate-y-0" : "-translate-y-4"
           } overflow-y-auto`}
         >
