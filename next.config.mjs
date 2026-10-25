@@ -1,5 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  /**
+   * Photos de flotte : servies par l'API centrale (`/media/vehicles/<tenant>/<fichier>.webp`).
+   * La réécriture garde des URLs relatives (même origine que le site, domaines personnalisés inclus).
+   */
+  async rewrites() {
+    const api = (process.env.NEXT_PUBLIC_API_URL || "").trim().replace(/\/+$/, "");
+    return api ? [{ source: "/media/:path*", destination: `${api}/media/:path*` }] : [];
+  },
   async headers() {
     return [
       {

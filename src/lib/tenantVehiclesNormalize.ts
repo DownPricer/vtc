@@ -1,8 +1,12 @@
 import type { FeaturedVehicle, TenantSettingsV1, VehicleListItem } from "@/config/tenant-settings.types";
 
-/** Chemins médias déposés depuis le dashboard (évite l’optimiseur Next sur la preview). */
+/**
+ * Chemins médias déposés depuis le dashboard (évite l’optimiseur Next) :
+ * anciens uploads `/uploads/settings/…` et photos de flotte `/media/vehicles/…` (déjà redimensionnées en WebP côté API).
+ */
 export function isTenantDashboardUploadPath(src: string): boolean {
-  return src.trim().startsWith("/uploads/settings/");
+  const s = src.trim();
+  return s.startsWith("/uploads/settings/") || s.startsWith("/media/");
 }
 
 export function vehicleToFeatured(v: VehicleListItem): FeaturedVehicle {
@@ -34,8 +38,10 @@ export function normalizeTenantVehicles<T extends TenantSettingsV1>(settings: T)
 
   for (const it of items) {
     if (typeof it.enabled !== "boolean") it.enabled = true;
-    if (!Array.isArray(it.gallery) || it.gallery.length === 0) {
-      it.gallery = veh.featured.gallery?.length ? veh.featured.gallery.map((g) => ({ ...g })) : [];
+    if (!Array.isArray(it.gallery)) it.gallery = [];
+    // Ancien format uniquement : une flotte issue de la base (`source: "fleet"`) n'emprunte JAMAIS les photos d'un autre véhicule.
+    if (it.gallery.length === 0 && veh.source !== "fleet" && veh.featured.gallery?.length) {
+      it.gallery = veh.featured.gallery.map((g) => ({ ...g }));
     }
     if (typeof it.passengerMax !== "number" || !Number.isFinite(it.passengerMax)) {
       it.passengerMax = Math.max(1, veh.featured.passengerMax || 1);

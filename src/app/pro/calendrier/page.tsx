@@ -6,6 +6,13 @@ import { EmptyState, ProActionLink, ProAlert, ProField, ProPageHead, ProPanel, p
 import { ProGhostButton, ProOpenLink, ProSearchInput, searchNormalize } from "@/components/pro/ProListUi";
 import { formatPrice, getDisplayName, getJourneySummary, isUsefulValue, labelStatus, mapApiErrorToFr, statusBadgeClass } from "@/components/pro/proDisplay";
 import { proApi } from "@/lib/proApi";
+import {
+  BLOCK_REASON_LABELS,
+  getVehicleCalendar,
+  listProVehicles,
+  type CalendarOccupation,
+  type ProVehicle,
+} from "@/lib/proVehiclesClient";
 
 type CalendarItem = {
   id: string;
@@ -17,7 +24,12 @@ type CalendarItem = {
   scheduledEnd?: string | null;
   flatPayload: Record<string, unknown>;
   pricingResult?: Record<string, unknown> | null;
+  vehicleId?: string | null;
+  vehicleSnapshot?: { name?: string } | null;
 };
+
+const dayKey = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 const PERIODS = [
   { value: 7, label: "Les 7 prochains jours" },
@@ -70,6 +82,9 @@ function CalendarRow({ item }: { item: CalendarItem }) {
         <div className="flex flex-wrap items-center gap-x-3 gap-y-[7px] text-xs text-[var(--pro-text-muted)]">
           <span>{name}</span>
           <span className={`${statusBadgeClass(item.status)} !min-h-[23px] !text-[11px]`}>{labelStatus(item.status)}</span>
+          {item.vehicleSnapshot?.name || item.flatPayload?.Vehicule ? (
+            <span>Véhicule : {item.vehicleSnapshot?.name ?? String(item.flatPayload?.Vehicule)}</span>
+          ) : null}
         </div>
       </div>
       <div className="flex items-center justify-between gap-3 border-t border-[var(--pro-border)] pt-2.5 min-[521px]:col-start-2 min-[521px]:border-0 min-[521px]:pt-0 min-[951px]:col-start-3">
@@ -129,6 +144,15 @@ export default function ProCalendrierPage() {
   const [status, setStatus] = useState("");
   const [period, setPeriod] = useState(30);
   const [q, setQ] = useState("");
+  const [vehicles, setVehicles] = useState<ProVehicle[]>([]);
+  const [vehicleFilter, setVehicleFilter] = useState("");
+  const [occupations, setOccupations] = useState<CalendarOccupation[]>([]);
+
+  // Filtre véhicule pré-sélectionné via /pro/calendrier?vehicule=<id> (liens de la page Véhicules).
+  useEffect(() => {
+    const v = new URLSearchParams(window.location.search).get("vehicule");
+    if (v) setVehicleFilter(v);
+  }, []);
 
   const today = useMemo(() => startOfDay(new Date()), []);
   const to = useMemo(() => endOfDay(addDays(today, period)), [today, period]);
@@ -150,16 +174,34 @@ export default function ProCalendrierPage() {
     load();
   }, [load]);
 
+  // Flotte + occupations (réservations confirmées et immobilisations) sur la période affichée.
+  useEffect(() => {
+    let cancelled = false;
+    listProVehicles()
+      .then((v) => !cancelled && setVehicles(v))
+      .catch(() => undefined);
+    getVehicleCalendar(dayKey(today), dayKey(addDays(today, Math.min(period, 99))), vehicleFilter || undefined)
+      .then((r) => !cancelled && setOccupations(r.occupations))
+      .catch(() => !cancelled && setOccupations([]));
+    return () => {
+      cancelled = true;
+    };
+  }, [today, period, vehicleFilter]);
+
   const filtered = useMemo(() => {
     const query = searchNormalize(q.trim());
     return items
       .filter((item) => parseDate(item.scheduledStart))
       .filter((item) => {
         const searchable = [item.id, item.clientName, item.clientEmail, item.clientPhone, getJourneySummary(item.flatPayload)].map(searchNormalize).join(" ");
-        return (!query || searchable.includes(query)) && (!status || item.status === status);
+        return (
+          (!query || searchable.includes(query)) &&
+          (!status || item.status === status) &&
+          (!vehicleFilter || item.vehicleId === vehicleFilter)
+        );
       })
       .sort((a, b) => new Date(a.scheduledStart || "").getTime() - new Date(b.scheduledStart || "").getTime());
-  }, [items, q, status]);
+  }, [items, q, status, vehicleFilter]);
 
   const inRange = (item: CalendarItem, from: Date | null, until: Date | null) => {
     const d = parseDate(item.scheduledStart);
@@ -173,7 +215,7 @@ export default function ProCalendrierPage() {
   const weekItems = filtered.filter((item) => inRange(item, todayEnd, weekEnd));
   const laterItems = filtered.filter((item) => inRange(item, weekEnd, null));
 
-  const hasFilters = !!q.trim() || !!status || period !== 30;
+  const hasFilters = !!q.trim() || !!status || period !== 30 || !!vehicleFilter;
   const fmt = (d: Date, withYear = false) =>
     new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", ...(withYear ? { year: "numeric" } : {}) }).format(d);
 
@@ -181,7 +223,20 @@ export default function ProCalendrierPage() {
     setQ("");
     setStatus("");
     setPeriod(30);
+    setVehicleFilter("");
   }
+
+  const todayKey = dayKey(today);
+  const fleetToday = vehicles
+    .filter((v) => !v.archived && (!vehicleFilter || v.id === vehicleFilter))
+    .map((v) => {
+      const occ = occupations.find((o) => o.vehicleId === v.id && o.day === todayKey);
+      return { v, state: occ ? (occ.blockId ? ("blocked" as const) : ("booked" as const)) : ("free" as const), occ };
+    });
+  const blockedDays = occupations.filter((o) => o.blockId);
+  const blockedByVehicle = vehicles
+    .map((v) => ({ v, days: blockedDays.filter((o) => o.vehicleId === v.id).map((o) => o.day).sort() }))
+    .filter((x) => x.days.length > 0);
 
   return (
     <ProGuard>
@@ -217,7 +272,7 @@ export default function ProCalendrierPage() {
             </div>
           </div>
 
-          <div className="grid items-end gap-[15px] md:grid-cols-2 min-[1201px]:grid-cols-[minmax(230px,1.4fr)_minmax(185px,1fr)_minmax(170px,1fr)_auto]">
+          <div className="grid items-end gap-[15px] md:grid-cols-2 min-[1201px]:grid-cols-[minmax(230px,1.4fr)_repeat(3,minmax(170px,1fr))_auto]">
             <ProSearchInput value={q} onChange={setQ} placeholder="Client ou trajet" />
             <ProField label="Afficher">
               <select value={period} onChange={(e) => setPeriod(Number(e.target.value))} className={proInputClass}>
@@ -228,6 +283,20 @@ export default function ProCalendrierPage() {
                 ))}
               </select>
             </ProField>
+            {vehicles.length > 0 ? (
+              <ProField label="Véhicule">
+                <select value={vehicleFilter} onChange={(e) => setVehicleFilter(e.target.value)} className={proInputClass}>
+                  <option value="">Tous les véhicules</option>
+                  {vehicles
+                    .filter((v) => !v.archived)
+                    .map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name}
+                      </option>
+                    ))}
+                </select>
+              </ProField>
+            ) : null}
             <ProField label="Statut">
               <select value={status} onChange={(e) => setStatus(e.target.value)} className={proInputClass}>
                 {STATUS_FILTERS.map((o) => (
@@ -244,6 +313,43 @@ export default function ProCalendrierPage() {
             ) : null}
           </div>
         </ProPanel>
+
+        {fleetToday.length > 0 ? (
+          <ProPanel>
+            <div className="mb-[17px] border-b border-[var(--pro-border)] pb-4">
+              <p className="mb-[5px] text-xs font-extrabold uppercase tracking-[0.1em] text-[var(--pro-eyebrow)]">Flotte</p>
+              <h2 className="text-lg font-bold tracking-[-0.025em] text-[var(--pro-text)] sm:text-[21px]">Véhicules aujourd’hui</h2>
+              <p className="mt-1 text-[13px] text-[var(--pro-text-muted)]">Un véhicule est réservé pour toute la journée de sa course confirmée.</p>
+            </div>
+            <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              {fleetToday.map(({ v, state, occ }) => (
+                <li key={v.id} className="flex items-center justify-between gap-3 rounded-lg border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-4 py-3">
+                  <span className="min-w-0 truncate text-sm font-semibold text-[var(--pro-text)]">{v.name}</span>
+                  <span
+                    className={`shrink-0 text-xs font-bold ${
+                      state === "free" ? "text-emerald-600" : state === "booked" ? "text-[var(--pro-accent)]" : "text-red-600"
+                    }`}
+                  >
+                    {state === "free" ? "Disponible" : state === "booked" ? "Réservé" : `Immobilisé · ${BLOCK_REASON_LABELS[occ!.block?.reason ?? "other"]}`}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            {blockedByVehicle.length > 0 ? (
+              <div className="mt-4 rounded-lg border border-dashed border-[var(--pro-border-strong)] px-4 py-3 text-[13px] text-[var(--pro-text-muted)]">
+                <p className="mb-1 font-semibold text-[var(--pro-text)]">Immobilisations sur la période</p>
+                <ul className="space-y-0.5">
+                  {blockedByVehicle.map(({ v, days }) => (
+                    <li key={v.id}>
+                      {v.name} : {days.length} jour{days.length > 1 ? "s" : ""} ({days[0].split("-").reverse().join("/")}
+                      {days.length > 1 ? ` → ${days[days.length - 1].split("-").reverse().join("/")}` : ""})
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </ProPanel>
+        ) : null}
 
         {!loading && !filtered.length ? (
           <EmptyState

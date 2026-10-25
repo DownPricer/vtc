@@ -86,6 +86,13 @@ export type VehicleListItem = FeaturedVehicle & {
   enabled: boolean;
   /** Libellé court bagages / capacité (affichage vitrine). */
   baggageLabel?: string;
+  /** Champs enrichis, fournis par la flotte en base (table Vehicle) ; absents pour un tenant non migré. */
+  brand?: string | null;
+  model?: string | null;
+  category?: string | null;
+  description?: string | null;
+  features?: string[];
+  surcharge?: { mode: "none" | "fixed" | "per_km" | "percent_km"; value: number; label: string };
 };
 
 export type TestimonialItem = {
@@ -502,6 +509,8 @@ export type TenantSettingsV1 = {
   };
 
   vehicles: {
+    /** `"fleet"` : liste dérivée de la table Vehicle (API) ; absent : ancien format stocké dans les paramètres. */
+    source?: "fleet";
     featuredVehicleId: string;
     /** Copie du véhicule « vitrine » (mis en avant) — dérivée de `items` via normalisation. */
     featured: FeaturedVehicle;

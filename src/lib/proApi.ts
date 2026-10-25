@@ -62,6 +62,8 @@ async function authFetch(path: string, init?: RequestInit, withAuth = true): Pro
     ...getSiteDomainHeader(),
     ...(init?.headers as Record<string, string>),
   };
+  // Envoi de fichier : le navigateur doit poser lui-même le Content-Type multipart (avec sa frontière).
+  if (typeof FormData !== "undefined" && init?.body instanceof FormData) delete headers["Content-Type"];
   if (withAuth && token) headers.Authorization = `Bearer ${token}`;
 
   return fetch(`${baseUrl}/api${path}`, {

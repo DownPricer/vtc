@@ -25,6 +25,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Gestion",
     links: [
+      { href: "/pro/vehicules", label: "Véhicules", icon: "car" },
       { href: "/pro/tarifs", label: "Tarifs", icon: "tag" },
       { href: "/pro/site", label: "Site internet", icon: "globe" },
       { href: "/pro/stripe", label: "Stripe / Paiements", icon: "card", alsoActiveOn: ["/pro/paiements"] },

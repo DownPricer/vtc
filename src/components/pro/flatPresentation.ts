@@ -31,6 +31,9 @@ const LABELS: Record<string, string> = {
   Organisation: "Organisation",
   NomSociete: "Societe",
   Societe: "Societe",
+  Vehicule: "Vehicule",
+  TarifTrajet: "Tarif du trajet",
+  SupplementVehicule: "Supplement vehicule",
   TarifTotal: "Tarif total",
   "Paye": "Paiement recu",
   "Payé": "Paiement recu",
@@ -40,6 +43,7 @@ const LABELS: Record<string, string> = {
 const PRESTATION_KEYS = [
   "TypeService",
   "TypeTrajet",
+  "Vehicule",
   "RésuméTrajet",
   "ResumeTrajet",
   "AdresseDepart_1",
@@ -94,5 +98,5 @@ export function prestationRowsFromFlat(flat: Record<string, unknown>): UiRow[] {
 }
 
 export function paiementRowsFromFlat(flat: Record<string, unknown>): UiRow[] {
-  return ["Payé", "Paye", "PaymentMethode", "TarifTotal"].map((key) => row(key, flat)).filter(Boolean) as UiRow[];
+  return ["Payé", "Paye", "PaymentMethode", "TarifTrajet", "SupplementVehicule", "TarifTotal"].map((key) => row(key, flat)).filter(Boolean) as UiRow[];
 }

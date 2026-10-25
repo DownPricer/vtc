@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { buildSiteConfigFromTenant } from "@/config/siteConfigFromTenant";
 import { getEnabledVehicleItems } from "@/lib/tenantVehiclesNormalize";
 import { TenantPublicImage } from "@/components/media/TenantPublicImage";
+import { VehicleGalleryButton } from "@/components/vehicles/VehicleGalleryButton";
 import { buildBusinessConfigFromTenant } from "@/config/businessConfigFromTenant";
 import { seoConfig } from "@/config/seo.config";
 import { getPublicSiteUrl } from "@/lib/siteUrl";
@@ -171,11 +172,15 @@ export default async function AProposPage() {
                 const thumb = veh.gallery[0];
                 return (
                   <div key={veh.id} className="flex gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 transition-colors hover:border-primary/25">
-                    <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-lg bg-black/40">
+                    <VehicleGalleryButton
+                      title={veh.name}
+                      photos={veh.gallery.map((g) => ({ src: g.src, alt: g.alt }))}
+                      className="relative h-20 w-28 shrink-0 overflow-hidden rounded-lg bg-black/40"
+                    >
                       {thumb?.src?.trim() ? (
                         <TenantPublicImage src={thumb.src} alt={thumb.alt || veh.name} fill className="object-cover" sizes="112px" />
                       ) : null}
-                    </div>
+                    </VehicleGalleryButton>
                     <div className="min-w-0">
                       <p className="font-bold text-white text-sm">{veh.name}</p>
                       <p className="text-[11px] text-gray-500 mt-0.5">

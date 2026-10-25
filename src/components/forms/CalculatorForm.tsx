@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import { AddressAutocomplete } from "./AddressAutocomplete";
 import { postCentralApi } from "@/lib/centralApi";
 import { trackEvent } from "@/lib/telemetryClient";
+import { VehiclePicker } from "./VehiclePicker";
+import type { PublicVehicleOption } from "@/lib/publicVehiclesClient";
 
 type TypeService = "Transfert Aéroport" | "Trajet Classique" | "MAD Evenementiel";
 type TypeTrajet = "Aller Simple" | "Aller/Retour" | "A/R + Mise à disposition";
@@ -298,6 +300,9 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitStatus, setSubmitStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  /** Véhicule choisi : SEUL champ véhicule envoyé à l'API (le prix, le supplément et la disponibilité sont décidés côté serveur). */
+  const [vehicleId, setVehicleId] = useState("");
+  const [fleet, setFleet] = useState<PublicVehicleOption[]>([]);
 
   const [isEntreprise, setIsEntreprise] = useState(false);
   const [client, setClient] = useState({ nom: "", prenom: "", telephone: "", email: "", nomSociete: "", adresseSociete: "" });
@@ -394,6 +399,36 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
   const isARMAD = typeTrajet === "A/R + Mise à disposition";
   const isAeroAR = transfertAeroport.TAtrajet === "Aller/Retour";
 
+  const isoDay = (v: string) => (/^\d{4}-\d{2}-\d{2}$/.test(v) ? v : undefined);
+  const vehicleDate = isoDay(
+    typeService === "Trajet Classique"
+      ? trajetClassique.TCallerdate
+      : typeService === "Transfert Aéroport"
+        ? transfertAeroport.TAallerdate
+        : madEvenementiel.DateEvenement
+  );
+  const vehicleDateEnd = isoDay(
+    typeService === "Trajet Classique" && isAR
+      ? trajetClassique.TCretourdate
+      : typeService === "Transfert Aéroport" && isAeroAR
+        ? transfertAeroport.TAretourdate
+        : ""
+  );
+  const vehiclePassengers =
+    typeService === "Trajet Classique"
+      ? Number(trajetClassique.TCpassagers || 0)
+      : typeService === "Transfert Aéroport"
+        ? Number(transfertAeroport.TApassagers || 0)
+        : 0;
+  const vehicleBags =
+    typeService === "Trajet Classique"
+      ? Math.max(Number(trajetClassique.TCbagagesaller || 0), Number(trajetClassique.TCbagagesretour || 0))
+      : typeService === "Transfert Aéroport"
+        ? Math.max(Number(transfertAeroport.TAbagagesaller || 0), Number(transfertAeroport.TAbagagesretour || 0))
+        : 0;
+  const maxPassengers = Math.max(4, ...fleet.map((v) => v.passengerMax));
+  const hasFleet = fleet.length > 0;
+
   const clearTarifPreview = useCallback(() => {
     setTarif(null);
     setTarifResult(null);
@@ -401,7 +436,7 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
   }, []);
 
   /** Validation métier avant tout appel API (tarif, devis, réservation). */
-  const validateTripBeforeApi = useCallback((): string | null => {
+  const validateTripOnly = useCallback((): string | null => {
     if (typeService === "Trajet Classique") {
       const departErr = validateAutocompleteAddress(trajetClassique.TCallerpriseencharge, "depart");
       if (departErr) return departErr;
@@ -477,6 +512,13 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
     tcRetourAdresseDifferente,
   ]);
 
+  const validateTripBeforeApi = useCallback((): string | null => {
+    const tripError = validateTripOnly();
+    if (tripError) return tripError;
+    if (fleet.length > 0 && !vehicleId) return "Choisissez un véhicule pour continuer.";
+    return null;
+  }, [validateTripOnly, fleet.length, vehicleId]);
+
   const buildPayload = useCallback(() => {
     const clientData: Record<string, string> = { nom: client.nom, prenom: client.prenom, telephone: client.telephone, email: client.email };
     if (isEntreprise) { clientData.nomSociete = client.nomSociete; clientData.adresseSociete = client.adresseSociete; clientData.organisation = "Professionnel"; }
@@ -487,6 +529,7 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
 
     const payload: Record<string, unknown> = {
       vtcBaseAddress: vtcBaseAddress.trim(),
+      ...(vehicleId ? { vehicleId } : {}),
       client: clientData,
       general: {
         TypeService: typeService,
@@ -576,6 +619,7 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
     tcRetourAdresseDifferente,
     paymentOnlineEnabled,
     clientWantsOnlinePayment,
+    vehicleId,
   ]);
 
   const fetchTarif = useCallback(async () => {
@@ -644,6 +688,22 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
     madEvenementiel,
     aeroportDepartCode,
   ]);
+
+  // Changer de véhicule modifie le prix : on redemande le calcul à l'API (jamais de calcul de prix côté navigateur).
+  const fetchTarifRef = useRef(fetchTarif);
+  fetchTarifRef.current = fetchTarif;
+  const previousVehicleId = useRef(vehicleId);
+  useEffect(() => {
+    if (previousVehicleId.current === vehicleId) return;
+    previousVehicleId.current = vehicleId;
+    if (tarifResult == null) return;
+    if (vehicleId && !isDevis) void fetchTarifRef.current();
+    else {
+      setTarif(null);
+      setTarifResult(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- uniquement sur changement de véhicule
+  }, [vehicleId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -788,7 +848,7 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
               <div>
                 <FieldLabel>Nombre de passagers</FieldLabel>
                 <div className="flex items-center gap-4">
-                  <PassagerStepper value={transfertAeroport.TApassagers} max={4}
+                  <PassagerStepper value={transfertAeroport.TApassagers} max={maxPassengers}
                     onChange={(v) => setTransfertAeroport(t => ({ ...t, TApassagers: v }))} />
                   <span className="text-gray-500 text-sm">max. 4</span>
                 </div>
@@ -950,7 +1010,7 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
               <div>
                 <FieldLabel>Nombre de passagers</FieldLabel>
                 <div className="flex items-center gap-4">
-                  <PassagerStepper value={trajetClassique.TCpassagers} max={4}
+                  <PassagerStepper value={trajetClassique.TCpassagers} max={maxPassengers}
                     onChange={(v) => setTrajetClassique(t => ({ ...t, TCpassagers: v }))} />
                   <span className="text-gray-500 text-sm">max. 4</span>
                 </div>
@@ -1084,10 +1144,24 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
         )}
       </div>
 
+      {/* ── Choix du véhicule (affiché seulement si l'entreprise a des véhicules actifs) ── */}
+      <div className={hasFleet ? "dashboard-card rounded-2xl p-5 md:p-6" : "hidden"}>
+        {hasFleet ? <SectionHeader step="3" title="Choisissez votre véhicule" icon={<IconCar />} /> : null}
+        <VehiclePicker
+          value={vehicleId}
+          onChange={(id) => setVehicleId(id)}
+          onLoaded={setFleet}
+          date={vehicleDate}
+          dateEnd={vehicleDateEnd}
+          passengers={vehiclePassengers}
+          bags={vehicleBags}
+        />
+      </div>
+
       {/* ── ÉTAPE 3 : Estimation du tarif — MODE RÉSERVATION (avant les coordonnées) ── */}
       {!isDevis && (
         <div className="dashboard-card rounded-2xl p-5 md:p-6">
-          <SectionHeader step="3" title="Estimation du tarif" icon={
+          <SectionHeader step={hasFleet ? "4" : "3"} title="Estimation du tarif" icon={
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
           } />
           {missingTarif.length > 0 && (
@@ -1105,6 +1179,25 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
             <div className="odometer-display mt-5 rounded-xl p-6 text-center relative overflow-hidden">
               <div className="stitch-line absolute top-0 left-4 right-4" />
               <p className="text-[10px] text-primary/60 uppercase tracking-[0.2em] font-bold mb-2">Tarif indicatif</p>
+              {(() => {
+                const v = tarifResult?.vehicle as
+                  | { name: string; tarifBase: number; surcharge: { amount: number; applicable: boolean; note?: string } }
+                  | null
+                  | undefined;
+                if (!v) return null;
+                return (
+                  <div className="mx-auto mb-4 max-w-xs space-y-1 text-left text-xs text-gray-400" aria-label="Détail du tarif">
+                    <p className="flex justify-between gap-4"><span>Tarif du trajet</span><span className="tabular-nums text-gray-200">{v.tarifBase} €</span></p>
+                    {v.surcharge.amount > 0 ? (
+                      <p className="flex justify-between gap-4"><span>Supplément {v.name}</span><span className="tabular-nums text-primary">+{v.surcharge.amount} €</span></p>
+                    ) : v.surcharge.note ? (
+                      <p className="text-[11px] text-gray-500">{v.surcharge.note}</p>
+                    ) : (
+                      <p className="flex justify-between gap-4"><span>{v.name}</span><span className="text-gray-300">Tarif standard</span></p>
+                    )}
+                  </div>
+                );
+              })()}
               <p className="text-5xl font-black text-white tabular-nums tracking-tight price-display-glow">{tarif} <span className="text-primary text-3xl font-bold">€</span></p>
               <div className="stitch-line mt-3 mb-2" />
               <p className="text-gray-500 text-[10px] uppercase tracking-widest">Prix fixe TTC · Bagages inclus · Prise en charge à domicile</p>
@@ -1116,7 +1209,7 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
 
       {/* ── Coordonnées : Étape 3 (devis) / Étape 4 (réservation, après le tarif) ── */}
       <div className="dashboard-card rounded-2xl p-5 md:p-6">
-        <SectionHeader step={isDevis ? "3" : "4"} title="Vos coordonnées" icon={<IconUser />} />
+        <SectionHeader step={String((isDevis ? 3 : 4) + (hasFleet ? 1 : 0))} title="Vos coordonnées" icon={<IconUser />} />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div><FieldLabel required>Nom</FieldLabel>
             <StyledInput icon={<IconUser />} required value={client.nom} name="nom" autoComplete="family-name"

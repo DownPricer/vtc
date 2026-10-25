@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { buildSiteConfigFromTenant } from "@/config/siteConfigFromTenant";
 import { getEnabledVehicleItems } from "@/lib/tenantVehiclesNormalize";
 import { TenantPublicImage } from "@/components/media/TenantPublicImage";
+import { VehicleGalleryButton } from "@/components/vehicles/VehicleGalleryButton";
 import { seoConfig } from "@/config/seo.config";
 import { getPublicSiteUrl } from "@/lib/siteUrl";
 import { getPublicTenantSettings } from "@/lib/publicTenantSettingsClient";
@@ -195,11 +196,15 @@ export default async function ServicesPage() {
                   const thumb = veh.gallery[0];
                   return (
                     <li key={veh.id} className="flex gap-3 rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
-                      <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-md bg-black/40">
+                      <VehicleGalleryButton
+                        title={veh.name}
+                        photos={veh.gallery.map((g) => ({ src: g.src, alt: g.alt }))}
+                        className="relative h-16 w-24 shrink-0 overflow-hidden rounded-md bg-black/40"
+                      >
                         {thumb?.src?.trim() ? (
                           <TenantPublicImage src={thumb.src} alt={thumb.alt || veh.name} fill className="object-cover" sizes="96px" />
                         ) : null}
-                      </div>
+                      </VehicleGalleryButton>
                       <div className="min-w-0">
                         <p className="font-bold text-white text-sm">{veh.name}</p>
                         <p className="text-[11px] text-gray-500">

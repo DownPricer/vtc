@@ -38,6 +38,7 @@ import {
 } from "@/lib/proPaymentsClient";
 import { proApi } from "@/lib/proApi";
 import { CancelBookingDialog, ResolveRequestDialog } from "@/components/pro/payments/CancelBookingDialog";
+import { LeadVehiclePanel } from "@/components/pro/vehicles/LeadVehiclePanel";
 import { RefundDialog } from "@/components/pro/payments/RefundDialog";
 import { formatCents } from "@/components/pro/payments/ProModal";
 import { isCollectedPaymentStatus, isRefundablePaymentStatus } from "@/lib/leadPaymentStatusUi";
@@ -103,6 +104,9 @@ type LeadDetail = {
   operatorNote?: string | null;
   flatPayload: Record<string, unknown>;
   pricingResult?: Record<string, unknown> | null;
+  vehicleId?: string | null;
+  scheduledStart?: string | null;
+  scheduledEnd?: string | null;
   paymentStatus?: string | null;
   clientWantsOnlinePayment?: boolean | null;
   payments?: PaymentSnapshot[];
@@ -524,6 +528,18 @@ export default function ProDemandeDetailPage() {
                     <EmptyState message="Aucune information de prestation disponible." />
                   )}
                 </ProPanel>
+
+                {item.kind !== "contact" ? (
+                  <LeadVehiclePanel
+                    leadId={item.id}
+                    status={item.status}
+                    vehicleId={item.vehicleId}
+                    scheduledStart={item.scheduledStart}
+                    scheduledEnd={item.scheduledEnd}
+                    pricingResult={item.pricingResult}
+                    onChanged={load}
+                  />
+                ) : null}
 
                 {clientComment ? (
                   <ProPanel>

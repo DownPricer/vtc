@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { prestationRowsFromFlat } from "@/components/pro/flatPresentation";
+import { QuoteVehiclePhoto, QuoteVehiclePricing } from "@/components/pro/vehicles/QuoteVehicle";
 import { ProGuard } from "@/components/pro/ProGuard";
 import { formatDateTime, formatPrice, getDisplayName, isUsefulValue, labelKind, labelStatus } from "@/components/pro/proDisplay";
 import { defaultTenantSettings } from "@/config/defaultTenantSettings";
@@ -208,8 +209,11 @@ export default function ProDevisPrintPage() {
               )}
             </section>
 
+            <QuoteVehiclePhoto pricing={item.pricingResult} />
+
             <section className="print-card mt-8 border-t border-slate-200 pt-6">
               <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">Prix</h2>
+              <QuoteVehiclePricing pricing={item.pricingResult} />
               <div className="mt-4 flex flex-wrap items-baseline justify-between gap-4">
                 <p className="text-2xl font-bold text-slate-900">{tarifTtc} TTC</p>
                 <p className="max-w-md text-xs leading-relaxed text-slate-500">
