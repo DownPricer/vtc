@@ -750,3 +750,9 @@ select.dashboard-input option,
 @keyframes introFadeOut {
   to { opacity: 0; visibility: hidden; }
 }
+/* Petits écrans : espacement des lettres réduit (6 px dépasse la largeur d'un téléphone et fait déborder le texte). */
+@media (max-width: 480px) {
+  @keyframes introTextIn {
+    to { opacity: 0.75; transform: translateY(0); letter-spacing: 2px; }
+  }
+}

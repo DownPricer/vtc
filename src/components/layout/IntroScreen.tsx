@@ -106,6 +106,7 @@ export function IntroScreen({ runtimeSite }: IntroScreenProps) {
       style={{
         position: "fixed",
         inset: 0,
+        height: "100dvh",
         zIndex: 9999,
         background: "#000",
         display: "flex",
@@ -276,6 +277,10 @@ export function IntroScreen({ runtimeSite }: IntroScreenProps) {
           flexDirection: "column",
           alignItems: "center",
           gap: "20px",
+          width: "100%",
+          maxWidth: "100%",
+          boxSizing: "border-box",
+          padding: "0 20px",
         }}
       >
         <Image
@@ -285,6 +290,9 @@ export function IntroScreen({ runtimeSite }: IntroScreenProps) {
           height={200}
           priority
           style={{
+            width: "min(200px, 52vw)",
+            height: "auto",
+            aspectRatio: "1 / 1",
             objectFit: "contain",
             borderRadius: "50%",
             opacity: 0,
@@ -312,9 +320,13 @@ export function IntroScreen({ runtimeSite }: IntroScreenProps) {
           id="intro-tagline"
           style={{
             fontFamily: "system-ui, sans-serif",
-            fontSize: "0.78rem",
+            fontSize: "clamp(0.62rem, 2.7vw, 0.78rem)",
+            lineHeight: 1.6,
             letterSpacing: "2px",
             textTransform: "uppercase",
+            textAlign: "center",
+            maxWidth: "min(100%, 520px)",
+            overflowWrap: "anywhere",
             color: "rgba(255,255,255,0.6)",
             opacity: 0,
             transform: "translateY(12px)",
