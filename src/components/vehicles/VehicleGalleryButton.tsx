@@ -16,6 +16,7 @@ type Props = {
  * Zone cliquable (photo / carte) qui ouvre la galerie plein écran.
  * Ne doit entourer QUE le visuel : les liens et boutons voisins (Réserver, etc.) restent en dehors, donc sans effet sur la galerie.
  * Sans photo exploitable, rien n'est cliquable.
+ * La largeur est laissée à l'appelant (`w-full`, `w-24`…) : aucune largeur imposée ici, sinon une vignette à largeur fixe s'étire sur toute la ligne.
  */
 export function VehicleGalleryButton({ title, photos, startIndex = 0, className = "", children }: Props) {
   const [open, setOpen] = useState(false);
@@ -30,7 +31,7 @@ export function VehicleGalleryButton({ title, photos, startIndex = 0, className 
         onClick={() => setOpen(true)}
         aria-label={label}
         aria-haspopup="dialog"
-        className={`block w-full cursor-zoom-in text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${className}`}
+        className={`block cursor-zoom-in text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${className}`}
       >
         {children}
       </button>

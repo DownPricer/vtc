@@ -190,7 +190,7 @@ export function ServicesSection({ tenantSettings = defaultTenantSettings }: Prop
                     title={vehicle.name}
                     photos={gallery.map((g) => ({ src: g.src, alt: g.alt }))}
                     startIndex={i}
-                    className={`relative h-full overflow-hidden rounded-xl group ${i === 0 ? "col-span-1 row-span-2" : ""}`}
+                    className={`relative h-full w-full overflow-hidden rounded-xl group ${i === 0 ? "col-span-1 row-span-2" : ""}`}
                   >
                     <TenantPublicImage
                       src={img.src}
