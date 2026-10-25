@@ -91,8 +91,8 @@ function Field({ label, hint, children, className = "" }: { label: string; hint?
 
 function Toggle({ label, checked, onChange, hint }: { label: string; checked: boolean; onChange: (v: boolean) => void; hint?: string }) {
   return (
-    <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-3 py-2.5">
-      <input type="checkbox" className="mt-0.5 h-4 w-4" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+    <label className="flex min-h-[48px] cursor-pointer items-start gap-3 rounded-lg border border-[var(--pro-border)] bg-[var(--pro-panel-muted)] px-3 py-3 has-[:checked]:border-[var(--pro-accent)]/50 has-[:checked]:bg-[var(--pro-accent-soft)]">
+      <input type="checkbox" className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--pro-accent)]"checked={checked} onChange={(e) => onChange(e.target.checked)} />
       <span>
         <span className="block text-sm font-medium text-[var(--pro-text)]">{label}</span>
         {hint ? <span className="block text-xs text-[var(--pro-text-muted)]">{hint}</span> : null}
@@ -255,11 +255,11 @@ export function VehicleEditorClient({ vehicleId }: { vehicleId: string }) {
           title={isNew ? "Nouveau véhicule" : form.name || "Véhicule"}
           description="Renseignez l'essentiel : le client voit le nom, les photos, la capacité et le supplément éventuel."
           action={
-            <div className="flex gap-2">
-              <Link href="/pro/vehicules" className={proBtnSecondaryClass}>
-                Retour à la flotte
+            <div className="flex w-full gap-2 sm:w-auto">
+              <Link href="/pro/vehicules" className={`${proBtnSecondaryClass} inline-flex min-h-[44px] flex-1 items-center justify-center sm:flex-none`}>
+                ← Flotte
               </Link>
-              <button type="button" onClick={save} disabled={saving || !loaded} className={proBtnPrimaryClass}>
+              <button type="button" onClick={save} disabled={saving || !loaded} className={`${proBtnPrimaryClass} hidden min-h-[44px] sm:inline-flex sm:items-center`}>
                 {saving ? "Enregistrement…" : "Enregistrer"}
               </button>
             </div>
@@ -365,7 +365,7 @@ export function VehicleEditorClient({ vehicleId }: { vehicleId: string }) {
                         form.surchargeMode === m ? "border-[var(--pro-accent)] bg-[var(--pro-accent-soft)]" : "border-[var(--pro-border)] bg-[var(--pro-panel-muted)]"
                       }`}
                     >
-                      <input type="radio" name="surcharge" className="mt-1" checked={form.surchargeMode === m} onChange={() => set("surchargeMode", m)} />
+                      <input type="radio" name="surcharge" className="mt-1 h-4 w-4 shrink-0 accent-[var(--pro-accent)]"checked={form.surchargeMode === m} onChange={() => set("surchargeMode", m)} />
                       <span>
                         <span className="block text-sm font-semibold text-[var(--pro-text)]">{SURCHARGE_LABELS[m]}</span>
                         <span className="block text-xs text-[var(--pro-text-muted)]">{SURCHARGE_HELP[m]}</span>
@@ -446,11 +446,11 @@ export function VehicleEditorClient({ vehicleId }: { vehicleId: string }) {
               </details>
             </ProPanel>
 
-            <div className="flex justify-end gap-2">
-              <Link href="/pro/vehicules" className={proBtnSecondaryClass}>
+            <div className="sticky bottom-0 z-20 -mx-[18px] flex items-center justify-end gap-2 border-t border-[var(--pro-border)] bg-[var(--pro-panel)]/95 px-[18px] py-3 backdrop-blur pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+              <Link href="/pro/vehicules" className={`${proBtnSecondaryClass} inline-flex min-h-[46px] items-center justify-center sm:min-h-0`}>
                 Annuler
               </Link>
-              <button type="button" onClick={save} disabled={saving || !loaded} className={proBtnPrimaryClass}>
+              <button type="button" onClick={save} disabled={saving || !loaded} className={`${proBtnPrimaryClass} min-h-[46px] flex-1 sm:min-h-0 sm:flex-none`}>
                 {saving ? "Enregistrement…" : "Enregistrer"}
               </button>
             </div>

@@ -89,7 +89,7 @@ export function ProPageHead({
         <h1 className="mb-[9px] text-[clamp(29px,2.6vw,38px)] font-bold leading-[1.16] tracking-[-0.045em] text-[var(--pro-text)]">{title}</h1>
         {description ? <p className="max-w-[690px] text-[15px] leading-normal text-[var(--pro-text-muted)]">{description}</p> : null}
       </div>
-      {action ? <div className="shrink-0">{action}</div> : null}
+      {action ? <div className="w-full shrink-0 sm:w-auto">{action}</div> : null}
     </div>
   );
 }
