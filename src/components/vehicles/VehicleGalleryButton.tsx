@@ -5,6 +5,8 @@ import { VehicleLightbox, type LightboxPhoto } from "./VehicleLightbox";
 
 type Props = {
   title: string;
+  /** Ligne de caractéristiques affichée sous le nom dans la galerie. */
+  subtitle?: string;
   photos: LightboxPhoto[];
   /** Photo affichée à l'ouverture (index dans `photos`). */
   startIndex?: number;
@@ -18,7 +20,7 @@ type Props = {
  * Sans photo exploitable, rien n'est cliquable.
  * La largeur est laissée à l'appelant (`w-full`, `w-24`…) : aucune largeur imposée ici, sinon une vignette à largeur fixe s'étire sur toute la ligne.
  */
-export function VehicleGalleryButton({ title, photos, startIndex = 0, className = "", children }: Props) {
+export function VehicleGalleryButton({ title, subtitle, photos, startIndex = 0, className = "", children }: Props) {
   const [open, setOpen] = useState(false);
   const usable = photos.filter((p) => p.src?.trim());
   if (usable.length === 0) return <div className={className}>{children}</div>;
@@ -38,6 +40,7 @@ export function VehicleGalleryButton({ title, photos, startIndex = 0, className 
       {open ? (
         <VehicleLightbox
           title={title}
+          subtitle={subtitle}
           photos={usable}
           startIndex={Math.min(startIndex, usable.length - 1)}
           onClose={() => setOpen(false)}

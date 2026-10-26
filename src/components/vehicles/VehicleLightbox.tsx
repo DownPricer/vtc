@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-export type LightboxPhoto = { src: string; alt?: string };
+export type LightboxPhoto = { src: string; alt?: string; caption?: string };
 
 type Props = {
   title: string;
+  subtitle?: string;
   photos: LightboxPhoto[];
   startIndex?: number;
   onClose: () => void;
@@ -15,7 +16,7 @@ type Props = {
 const SWIPE_THRESHOLD_PX = 48;
 
 /** Galerie plein écran : flèches, clavier (←/→/Échap), balayage tactile, miniatures, focus piégé, défilement de page verrouillé. */
-export function VehicleLightbox({ title, photos, startIndex = 0, onClose }: Props) {
+export function VehicleLightbox({ title, subtitle, photos, startIndex = 0, onClose }: Props) {
   const count = photos.length;
   const [index, setIndex] = useState(() => Math.min(Math.max(startIndex, 0), Math.max(count - 1, 0)));
   const [mounted, setMounted] = useState(false);
@@ -87,16 +88,18 @@ export function VehicleLightbox({ title, photos, startIndex = 0, onClose }: Prop
       role="dialog"
       aria-modal="true"
       aria-label={`Photos — ${title}`}
-      className="fixed inset-0 z-[1000] flex flex-col bg-black/95 backdrop-blur-sm"
+      className="fixed inset-0 z-[1000] flex flex-col bg-black/[0.97] backdrop-blur-sm"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-6">
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-white sm:text-base">{title}</p>
-          <p className="text-xs text-gray-400" aria-live="polite">
+          <p className="truncate text-base font-bold text-white sm:text-lg">{title}</p>
+          {subtitle ? <p className="truncate text-xs text-gray-300 sm:text-sm">{subtitle}</p> : null}
+          <p className="text-xs text-gray-500" aria-live="polite">
             Photo {index + 1} / {count}
+            {current.caption?.trim() ? ` · ${current.caption.trim()}` : ""}
           </p>
         </div>
         <button
@@ -155,7 +158,7 @@ export function VehicleLightbox({ title, photos, startIndex = 0, onClose }: Prop
             key={current.src}
             src={current.src}
             alt={current.alt || `${title} — photo ${index + 1}`}
-            className="max-h-full max-w-full select-none object-contain"
+            className="h-full w-full select-none object-contain"
             draggable={false}
             onError={() => setFailed((f) => ({ ...f, [index]: true }))}
           />

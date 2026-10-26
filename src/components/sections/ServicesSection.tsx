@@ -3,8 +3,7 @@ import { buildSiteConfigFromTenant } from "@/config/siteConfigFromTenant";
 import { defaultTenantSettings } from "@/config/defaultTenantSettings";
 import type { TenantSettingsV1 } from "@/config/tenant-settings.types";
 import { getEnabledVehicleItems } from "@/lib/tenantVehiclesNormalize";
-import { TenantPublicImage } from "@/components/media/TenantPublicImage";
-import { VehicleGalleryButton } from "@/components/vehicles/VehicleGalleryButton";
+import { VehicleCard } from "@/components/vehicles/VehicleCard";
 
 const icons = {
   plane: (
@@ -30,19 +29,6 @@ const icons = {
   ),
 } as const;
 
-function renderVehicleTitle(name: string) {
-  const suffix = " Initiale Paris";
-  if (name.endsWith(suffix)) {
-    const prefix = name.slice(0, -suffix.length);
-    return (
-      <>
-        {prefix} <span className="text-gradient">Initiale Paris</span>
-      </>
-    );
-  }
-  return name;
-}
-
 type Props = { tenantSettings?: TenantSettingsV1 };
 
 export function ServicesSection({ tenantSettings = defaultTenantSettings }: Props) {
@@ -51,7 +37,6 @@ export function ServicesSection({ tenantSettings = defaultTenantSettings }: Prop
   const commitments = t.home.commitments;
   const services = commitments.items.filter((x) => x.enabled);
   const vehicle = t.vehicles.featured;
-  const gallery = vehicle.gallery;
   const fleet = getEnabledVehicleItems(t);
   const multiFleet = fleet.length > 1;
 
@@ -122,7 +107,7 @@ export function ServicesSection({ tenantSettings = defaultTenantSettings }: Prop
           <div className="flex items-end justify-between mb-5">
             <div>
               <h3 className="text-lg sm:text-xl md:text-2xl font-black text-white mb-0.5">
-                {multiFleet ? "Nos véhicules" : renderVehicleTitle(vehicle.name)}
+                {multiFleet ? "Nos véhicules" : "Votre véhicule"}
               </h3>
               <p className="text-gray-600 text-xs">{multiFleet ? `${fleet.length} véhicules disponibles` : vehicle.headline}</p>
             </div>
@@ -137,99 +122,11 @@ export function ServicesSection({ tenantSettings = defaultTenantSettings }: Prop
             </Link>
           </div>
 
-          {multiFleet ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {fleet.map((veh) => {
-                const img = veh.gallery[0];
-                return (
-                  <div
-                    key={veh.id}
-                    className="overflow-hidden rounded-xl border border-white/[0.07] bg-white/[0.02] transition-colors hover:border-primary/30"
-                  >
-                    <VehicleGalleryButton
-                      title={veh.name}
-                      photos={veh.gallery.map((g) => ({ src: g.src, alt: g.alt }))}
-                      className="relative aspect-[16/10] w-full bg-black/30"
-                    >
-                      {img?.src?.trim() ? (
-                        <TenantPublicImage
-                          src={img.src}
-                          alt={img.alt || veh.name}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 1024px) 50vw, 33vw"
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-[11px] text-gray-500">Photo à venir</div>
-                      )}
-                      {veh.gallery.filter((g) => g.src?.trim()).length > 1 ? (
-                        <span className="absolute bottom-2 right-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
-                          {veh.gallery.filter((g) => g.src?.trim()).length} photos
-                        </span>
-                      ) : null}
-                    </VehicleGalleryButton>
-                    <div className="p-4">
-                      <p className="font-bold text-white">{renderVehicleTitle(veh.name)}</p>
-                      <p className="mt-1 text-[11px] text-gray-500">
-                        {veh.passengerMax} passagers max.
-                        {veh.baggageLabel?.trim() ? ` · ${veh.baggageLabel.trim()}` : ""}
-                      </p>
-                      {veh.highlightText?.trim() ? (
-                        <p className="mt-2 line-clamp-2 text-xs text-gray-500">{veh.highlightText.trim()}</p>
-                      ) : null}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <>
-              <div className="hidden md:grid grid-cols-3 grid-rows-2 gap-2 h-[400px]">
-                {gallery.slice(0, 6).map((img, i) => (
-                  <VehicleGalleryButton
-                    key={i}
-                    title={vehicle.name}
-                    photos={gallery.map((g) => ({ src: g.src, alt: g.alt }))}
-                    startIndex={i}
-                    className={`relative h-full w-full overflow-hidden rounded-xl group ${i === 0 ? "col-span-1 row-span-2" : ""}`}
-                  >
-                    <TenantPublicImage
-                      src={img.src}
-                      alt={img.alt}
-                      fill
-                      className="object-cover transition-transform duration-700 group-hover:scale-110"
-                      sizes="(max-width: 1280px) 33vw, 400px"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className="absolute bottom-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <span className="text-white text-[10px] font-semibold bg-black/50 backdrop-blur-sm px-2 py-0.5 rounded-full">
-                        {img.tag}
-                      </span>
-                    </div>
-                  </VehicleGalleryButton>
-                ))}
-              </div>
-
-              <div className="md:hidden flex gap-2 overflow-x-auto no-scrollbar scroll-snap-x -mx-5 px-5 pb-2">
-                {gallery.map((img, i) => (
-                  <div key={i} className="flex-shrink-0 w-56 h-36" style={{ scrollSnapAlign: "start" }}>
-                    <VehicleGalleryButton
-                      title={vehicle.name}
-                      photos={gallery.map((g) => ({ src: g.src, alt: g.alt }))}
-                      startIndex={i}
-                      className="relative h-full w-full rounded-lg overflow-hidden"
-                    >
-                      <TenantPublicImage src={img.src} alt={img.alt} fill className="object-cover" sizes="224px" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                      <span className="absolute bottom-1.5 left-1.5 text-white text-[10px] font-semibold bg-black/40 px-1.5 py-0.5 rounded-full">
-                        {img.tag}
-                      </span>
-                    </VehicleGalleryButton>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
+          <div className={multiFleet ? "grid gap-4 sm:grid-cols-2 lg:grid-cols-3" : ""}>
+            {fleet.map((veh) => (
+              <VehicleCard key={veh.id} vehicle={veh} wide={!multiFleet} />
+            ))}
+          </div>
         </div>
         )}
 
