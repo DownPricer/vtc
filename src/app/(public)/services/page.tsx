@@ -218,9 +218,9 @@ export default async function ServicesPage() {
                 })}
               </ul>
             </>
-          ) : (
+          ) : fleet.length > 0 ? (
             <p className="text-white font-bold text-base mb-1">{featuredVehicle.name}</p>
-          )}
+          ) : null}
           <p className="text-gray-500 text-sm mb-3">{comfort.bullets}</p>
           <div className="flex flex-wrap gap-2">
             {comfort.paymentChips.map((m) => (

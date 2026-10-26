@@ -116,7 +116,8 @@ export function ServicesSection({ tenantSettings = defaultTenantSettings }: Prop
           </div>
         </div>
 
-        {/* Véhicule(s) */}
+        {/* Véhicule(s) : masqué tant que le tenant n'a aucun véhicule actif */}
+        {fleet.length > 0 && (
         <div className="mb-10">
           <div className="flex items-end justify-between mb-5">
             <div>
@@ -230,6 +231,7 @@ export function ServicesSection({ tenantSettings = defaultTenantSettings }: Prop
             </>
           )}
         </div>
+        )}
 
         {/* CTA */}
         <div className="text-center">

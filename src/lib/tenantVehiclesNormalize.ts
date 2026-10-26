@@ -28,11 +28,16 @@ export function vehicleToFeatured(v: VehicleListItem): FeaturedVehicle {
 export function normalizeTenantVehicles<T extends TenantSettingsV1>(settings: T): T {
   const out = structuredClone(settings) as T;
   const veh = out.vehicles;
+  // Flotte pilotée par la base : une liste vide veut dire « aucun véhicule », jamais un véhicule d'exemple.
+  const fleetMode = veh?.source === "fleet";
+  if (fleetMode && !veh.featured) {
+    veh.featured = { id: "", name: "", headline: "", passengerMax: 1, highlightText: "", paymentChips: [], gallery: [] };
+  }
   if (!veh?.featured) return out;
 
   let items: VehicleListItem[] = Array.isArray(veh.items) ? veh.items.map((x) => ({ ...x })) : [];
 
-  if (items.length === 0) {
+  if (items.length === 0 && !fleetMode) {
     items = [{ ...veh.featured, enabled: true, baggageLabel: "" }];
   }
 

@@ -194,7 +194,7 @@ export default async function AProposPage() {
               })}
             </div>
           </>
-        ) : (
+        ) : fleet.length === 0 ? null : (
           <>
             <div className="flex items-center gap-4 mb-6">
               <div className="flex-1 h-px bg-white/[0.06]" />
