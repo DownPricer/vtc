@@ -443,9 +443,11 @@ export default function ProDemandeDetailPage() {
                 title={`${labelKind(item.kind)} · ${getDisplayName(item.clientName)}`}
                 description="Vue operateur restructuree pour lire rapidement le dossier, agir sur le statut et suivre le paiement."
                 action={
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
                     {item.kind !== "contact" && itineraryLegs.length > 0 ? <ItineraryMenu legs={itineraryLegs} /> : null}
-                    <ProActionLink href="/pro/demandes">Retour aux demandes</ProActionLink>
+                    <div className="w-full sm:w-auto [&>a]:w-full sm:[&>a]:w-auto">
+                      <ProActionLink href="/pro/demandes">Retour aux demandes</ProActionLink>
+                    </div>
                   </div>
                 }
               />

@@ -104,13 +104,13 @@ export function ItineraryMenu({ legs }: { legs: Leg[] }) {
     app === "waze" ? wazeUrl(step.destination) : app === "google" ? googleMapsUrl(step.origin, step.destination) : appleMapsUrl(step.origin, step.destination);
 
   return (
-    <div ref={rootRef} className="relative">
+    <div ref={rootRef} className="relative w-full sm:w-auto">
       <button
         type="button"
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[var(--pro-accent)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pro-accent)] focus-visible:ring-offset-2"
+        className="inline-flex min-h-[44px] w-full items-center justify-center gap-[9px] whitespace-nowrap rounded-[7px] border border-transparent bg-[var(--pro-accent)] px-[17px] text-[13px] font-bold text-white shadow-[0_4px_12px_rgb(37_99_235/14%)] transition hover:bg-[var(--pro-accent-hover)] active:translate-y-px focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-[#79a8ff] sm:w-auto"
       >
         <ProIcon name="arrow" className="h-[18px] w-[18px] -rotate-45" />
         Itinéraire
@@ -120,10 +120,24 @@ export function ItineraryMenu({ legs }: { legs: Leg[] }) {
       </button>
 
       {open ? (
-        <div
-          id={panelId}
-          className="absolute right-0 z-30 mt-2 w-[min(92vw,360px)] rounded-xl border border-[var(--pro-border)] bg-[var(--pro-panel)] p-3 shadow-[var(--pro-shadow)]"
-        >
+        <>
+          {/* Voile : mobile uniquement (le panneau est alors une feuille en bas d'écran). */}
+          <div className="fixed inset-0 z-40 bg-black/45 sm:hidden" aria-hidden="true" onClick={() => setOpen(false)} />
+          <div
+            id={panelId}
+            className="fixed inset-x-3 bottom-3 z-50 max-h-[85dvh] overflow-y-auto overscroll-contain rounded-2xl border border-[var(--pro-border)] bg-[var(--pro-panel)] p-4 shadow-[0_18px_50px_rgb(0_0_0/35%)] sm:absolute sm:inset-x-auto sm:bottom-auto sm:left-0 sm:z-30 sm:mt-2 sm:max-h-none sm:w-[360px] sm:overflow-visible sm:rounded-xl sm:p-3 sm:shadow-[var(--pro-shadow)] xl:left-auto xl:right-0"
+          >
+          <div className="mb-3 flex items-center justify-between sm:hidden">
+            <p className="text-sm font-bold text-[var(--pro-text)]">Ouvrir l&apos;itinéraire</p>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              aria-label="Fermer"
+              className="grid h-9 w-9 place-items-center rounded-full border border-[var(--pro-border)] text-[var(--pro-text)]"
+            >
+              ✕
+            </button>
+          </div>
           {steps.length > 1 ? (
             <fieldset className="mb-3">
               <legend className="mb-1.5 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[var(--pro-eyebrow)]">Destination</legend>
@@ -180,7 +194,8 @@ export function ItineraryMenu({ legs }: { legs: Leg[] }) {
               </li>
             ))}
           </ul>
-        </div>
+          </div>
+        </>
       ) : null}
     </div>
   );
