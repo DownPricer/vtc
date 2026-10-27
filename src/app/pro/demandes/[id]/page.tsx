@@ -39,6 +39,7 @@ import {
 import { proApi } from "@/lib/proApi";
 import { CancelBookingDialog, ResolveRequestDialog } from "@/components/pro/payments/CancelBookingDialog";
 import { LeadVehiclePanel } from "@/components/pro/vehicles/LeadVehiclePanel";
+import { ItineraryMenu, legsFromFlat } from "@/components/pro/ItineraryMenu";
 import { RefundDialog } from "@/components/pro/payments/RefundDialog";
 import { formatCents } from "@/components/pro/payments/ProModal";
 import { isCollectedPaymentStatus, isRefundablePaymentStatus } from "@/lib/leadPaymentStatusUi";
@@ -378,6 +379,7 @@ export default function ProDemandeDetailPage() {
 
   const flatPayload = useMemo(() => (item?.flatPayload ?? {}) as Record<string, unknown>, [item?.flatPayload]);
   const extrasClient = useMemo(() => clientRowsFromFlat(flatPayload), [flatPayload]);
+  const itineraryLegs = useMemo(() => legsFromFlat(flatPayload), [flatPayload]);
   const prestationRows = useMemo(() => prestationRowsFromFlat(flatPayload), [flatPayload]);
   const paymentFlatRows = useMemo(() => paiementRowsFromFlat(flatPayload), [flatPayload]);
   const clientComment = useMemo(() => commentFromFlat(flatPayload), [flatPayload]);
@@ -440,7 +442,12 @@ export default function ProDemandeDetailPage() {
                 eyebrow="Fiche demande"
                 title={`${labelKind(item.kind)} · ${getDisplayName(item.clientName)}`}
                 description="Vue operateur restructuree pour lire rapidement le dossier, agir sur le statut et suivre le paiement."
-                action={<ProActionLink href="/pro/demandes">Retour aux demandes</ProActionLink>}
+                action={
+                  <div className="flex flex-wrap items-center gap-2">
+                    {item.kind !== "contact" && itineraryLegs.length > 0 ? <ItineraryMenu legs={itineraryLegs} /> : null}
+                    <ProActionLink href="/pro/demandes">Retour aux demandes</ProActionLink>
+                  </div>
+                }
               />
 
               <div className="mt-6 flex flex-wrap items-center gap-3">
