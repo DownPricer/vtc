@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Hors ligne</title>
+    <style>
+      :root { color-scheme: light dark; }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: #f5f7fb;
+        color: #10192d;
+        text-align: center;
+      }
+      main { max-width: 360px; }
+      h1 { margin: 0 0 8px; font-size: 20px; }
+      p { margin: 0 0 24px; font-size: 15px; line-height: 1.5; color: #5a6679; }
+      button {
+        min-height: 44px;
+        padding: 0 22px;
+        border: 0;
+        border-radius: 8px;
+        background: #2860e8;
+        color: #fff;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      @media (prefers-color-scheme: dark) {
+        body { background: #0c1424; color: #e8eefb; }
+        p { color: #a5b5d1; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Vous êtes hors ligne</h1>
+      <p>La connexion est indisponible. Vos demandes et réservations s'afficheront dès que le réseau sera de retour.</p>
+      <button type="button" onclick="location.reload()">Réessayer</button>
+    </main>
+  </body>
+</html>

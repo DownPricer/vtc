@@ -4,9 +4,11 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { logoutPro, proApi } from "@/lib/proApi";
+import { disablePush } from "@/lib/proPushClient";
 import { translateAction } from "@/components/pro/proDisplay";
 import { ProIcon, type ProIconName } from "@/components/pro/ProIcons";
 import { ProThemeToggle } from "@/components/pro/ProThemeToggle";
+import { ProInstallButton } from "@/components/pro/ProInstallButton";
 
 type NavLink = { href: string; label: string; icon: ProIconName; badge?: "newRequests"; alsoActiveOn?: string[] };
 type NavGroup = { label: string; links: NavLink[] };
@@ -134,6 +136,7 @@ function SidebarContent({
 
       <div className="mt-auto border-t border-white/[0.11] px-2.5 py-[15px]">
         <ProThemeToggle variant="sidebar" />
+        <ProInstallButton className={FOOTER_ITEM} />
         <Link href="/" target="_blank" rel="noopener noreferrer" onClick={onNavigate} className={FOOTER_ITEM}>
           <ProIcon name="globe" className="h-4 w-4" />
           Voir le site
@@ -141,6 +144,8 @@ function SidebarContent({
         <button
           type="button"
           onClick={async () => {
+            // Avant la déconnexion (le jeton sert à supprimer l'abonnement) : un appareil déconnecté ne reçoit plus rien.
+            await disablePush();
             await logoutPro();
             router.replace("/pro/login");
             onNavigate?.();

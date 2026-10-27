@@ -24,6 +24,14 @@ const nextConfig = {
         ],
       },
       {
+        // Le navigateur doit toujours revalider le service worker pour détecter les mises à jour.
+        source: "/pro/sw.js",
+        headers: [
+          { key: "Content-Type", value: "application/javascript; charset=utf-8" },
+          { key: "Cache-Control", value: "no-cache, max-age=0, must-revalidate" },
+        ],
+      },
+      {
         source: "/images/(.*)",
         headers: [
           { key: "Cache-Control", value: "public, max-age=31536000, immutable" },

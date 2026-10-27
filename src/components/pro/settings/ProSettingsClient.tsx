@@ -12,6 +12,7 @@ import {
   putProTenantSettingsToApi,
 } from "@/lib/proSettingsClient";
 import { ProSettingsAppearancePanel } from "./ProSettingsAppearancePanel";
+import { ProNotificationsPanel } from "./ProNotificationsPanel";
 import { ProSettingsHub } from "./ProSettingsHub";
 import { proBtnPrimaryClass, proBtnSecondaryClass } from "./editable/proFieldStyles";
 import type { SettingsTabId } from "./SettingsTabs";
@@ -186,6 +187,7 @@ export function ProSettingsClient({ tenant, mailMeta, siteFeatures }: ProSetting
     <ProGuard>
       <ProSettingsAppearancePanel commercialName={draft.general.commercialName} />
       <ProSettingsHub />
+      <ProNotificationsPanel />
 
       <ProPanel id={ANCHOR}>
         <ProSectionHeader
