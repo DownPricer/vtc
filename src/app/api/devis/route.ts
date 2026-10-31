@@ -51,7 +51,12 @@ export async function POST(request: Request) {
       roundTripRulesLength: pricingConfig.classicTrip?.distanceRulesRoundTrip?.length,
     });
 
-    const res = await postCentralApiServer("devis", centralPayload, request.headers.get("x-site-domain") ?? request.headers.get("host"));
+    const res = await postCentralApiServer(
+      "devis",
+      centralPayload,
+      request.headers.get("x-site-domain") ?? request.headers.get("host"),
+      request.headers
+    );
     const json = await res.json().catch(() => ({}));
     if (isPricingConfigValidationFailure(res.status, json)) {
       console.error(
