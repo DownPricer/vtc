@@ -334,6 +334,8 @@ export function mapRefundErrorToFr(e: unknown): string {
       return e.message || "Stripe a refusé le remboursement.";
     case "STRIPE_UNCERTAIN":
       return "La réponse de Stripe n'a pas pu être lue. Le remboursement n'est pas dupliqué si vous réessayez : cliquez de nouveau sur « Confirmer ».";
+    case "REFUND_UNCERTAIN":
+      return "Le remboursement n'a pas pu être confirmé. Réessayez : ne créez pas une nouvelle demande.";
     case "STRIPE_UNREACHABLE":
       return "Stripe est momentanément injoignable. Réessayez dans un instant.";
     case "PAYMENT_AMOUNT_MISMATCH":

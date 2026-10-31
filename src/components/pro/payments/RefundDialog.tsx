@@ -12,6 +12,7 @@ import {
   type CreateRefundResult,
   type ProRefundPreview,
 } from "@/lib/proRefundsClient";
+import { shouldPreserveClientRequestId } from "@/lib/preserveRefundClientRequestId";
 import { ModalPrimaryButton, ModalSecondaryButton, ProModal, SummaryLine, formatCents, parseEurosToCents } from "./ProModal";
 
 type Phase = "form" | "done";
@@ -126,7 +127,7 @@ export function RefundDialog({
       onDone();
     } catch (e) {
       // Échec définitif : nouvelle intention possible. Résultat incertain : on garde le même identifiant.
-      if (e instanceof ProPaymentsApiError && e.code !== "STRIPE_UNCERTAIN" && e.code !== "STRIPE_UNREACHABLE") {
+      if (e instanceof ProPaymentsApiError && !shouldPreserveClientRequestId(e.code)) {
         requestId.current = newClientRequestId();
         changedRef.current = true;
       }

@@ -15,6 +15,7 @@ import {
   type CancelResult,
   type RefundPlan,
 } from "@/lib/proRefundsClient";
+import { shouldPreserveClientRequestId } from "@/lib/preserveRefundClientRequestId";
 import { ModalPrimaryButton, ModalSecondaryButton, ProModal, SummaryLine, formatCents, parseEurosToCents } from "./ProModal";
 
 type RefundChoice = "none" | "full" | "partial";
@@ -141,7 +142,7 @@ export function CancelBookingDialog({
       setResult(res);
       onDone();
     } catch (e) {
-      if (e instanceof ProPaymentsApiError && e.code !== "STRIPE_UNCERTAIN" && e.code !== "STRIPE_UNREACHABLE") {
+      if (e instanceof ProPaymentsApiError && !shouldPreserveClientRequestId(e.code)) {
         requestId.current = newClientRequestId();
       }
       setError(mapRefundErrorToFr(e));
