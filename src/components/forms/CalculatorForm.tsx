@@ -660,10 +660,16 @@ export function CalculatorForm({ mode = "reservation", vtcBaseAddress, paymentOn
           throttleMs: 1500,
         });
       } else {
-        setError(result.ok ? "Impossible de calculer le tarif" : result.message);
+        // Pas de prix de repli : afficher le message API (ex. adresse introuvable / distance indisponible).
+        setTarif(null);
+        setTarifResult(null);
+        const msg = result.ok
+          ? "Impossible de calculer le tarif"
+          : (result.message || "Impossible de calculer le tarif");
+        setError(msg);
         trackEvent({
           type: "form_validation_error",
-          metadata: { context: "tarif", mode, message: (result.ok ? "Impossible de calculer le tarif" : String(result.message || "")).slice(0, 160) },
+          metadata: { context: "tarif", mode, message: String(msg).slice(0, 160) },
           throttleMs: 1500,
         });
       }
